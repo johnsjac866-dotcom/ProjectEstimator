@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
 import { RG_FIELDS, getRGSubTypeLabel, getRGCategory } from "@/lib/roughGradingStages";
 
+function parseOps(jsonStr) {
+  try { const p = JSON.parse(jsonStr || '[]'); if (Array.isArray(p)) return p; if (p && typeof p === 'object' && Object.keys(p).length > 0) return [{ ...p, id: 'legacy' }]; } catch {} return [];
+}
+
 export default function RoughGradingSummary() {
   const { areaId } = useParams();
+  const opId = new URLSearchParams(window.location.search).get('opId');
   const [area, setArea] = useState(null);
   const [project, setProject] = useState(null);
   const [data, setData] = useState({});
@@ -18,9 +23,9 @@ export default function RoughGradingSummary() {
       setArea(a);
       const p = await base44.entities.Project.get(a.project_id);
       setProject(p);
-      if (a.rough_grading_data) {
-        try { setData(JSON.parse(a.rough_grading_data)); } catch {}
-      }
+      const ops = parseOps(a.rough_grading_data);
+      const entry = opId ? ops.find(o => o.id === opId) : ops[0];
+      setData(entry || {});
       setLoading(false);
     })();
   }, [areaId]);

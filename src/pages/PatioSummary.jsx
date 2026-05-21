@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer, AlertTriangle } from "lucide-react";
 import { PATIO_STAGES, getApplicableStages, getSelectedCategories, getVisibleFields } from "@/lib/patioStages";
 
+function parseOps(jsonStr) {
+  try { const p = JSON.parse(jsonStr || '[]'); if (Array.isArray(p)) return p; if (p && typeof p === 'object' && Object.keys(p).length > 0) return [{ ...p, id: 'legacy' }]; } catch {} return [];
+}
+
 export default function PatioSummary() {
   const { areaId } = useParams();
+  const opId = new URLSearchParams(window.location.search).get('opId');
   const [area, setArea] = useState(null);
   const [project, setProject] = useState(null);
   const [data, setData] = useState({});
@@ -18,9 +23,9 @@ export default function PatioSummary() {
       setArea(a);
       const p = await base44.entities.Project.get(a.project_id);
       setProject(p);
-      if (a.patio_data) {
-        try { setData(JSON.parse(a.patio_data)); } catch {}
-      }
+      const ops = parseOps(a.patio_data);
+      const entry = opId ? ops.find(o => o.id === opId) : ops[0];
+      setData(entry || {});
       setLoading(false);
     })();
   }, [areaId]);

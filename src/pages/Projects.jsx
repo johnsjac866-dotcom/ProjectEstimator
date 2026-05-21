@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, MapPin, ChevronRight, FolderOpen, FileText } from "lucide-react";
+import { Plus, MapPin, ChevronRight, FolderOpen, FileText, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Projects() {
@@ -25,6 +25,14 @@ export default function Projects() {
     const data = await base44.entities.Project.list("-created_date");
     setProjects(data);
     setLoading(false);
+  }
+
+  async function handleDelete(e, projectId) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Delete this project and all its data? This cannot be undone.')) return;
+    await base44.entities.Project.delete(projectId);
+    loadProjects();
   }
 
   async function handleCreate() {
@@ -82,13 +90,15 @@ export default function Projects() {
                     {p.address && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{p.address}</p>}
                     <div className="flex items-center justify-between mt-2">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === "Active" ? "bg-emerald-100 text-emerald-700" : p.status === "Completed" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>{p.status}</span>
-                      <button
-                        onClick={(e) => { e.preventDefault(); navigate(`/project-summary/${p.id}`); }}
-                        className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <FileText className="h-3 w-3" /> View Summary
-                      </button>
-                    </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={(e) => { e.preventDefault(); navigate(`/project-summary/${p.id}`); }} className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                          <FileText className="h-3 w-3" /> View Summary
+                        </button>
+                        <button onClick={(e) => handleDelete(e, p.id)} className="text-xs flex items-center gap-1 text-muted-foreground hover:text-destructive transition-colors">
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                </div>
                   </CardContent>
                 </Card>
               </Link>

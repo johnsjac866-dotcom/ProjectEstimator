@@ -9,14 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { DEMO_GROUPS, DEMO_FIELDS, getDemoSubTypes } from "@/lib/demolitionStages";
+import { parseOps } from "@/lib/opsUtils";
 
 const STEPS = ["Group", "Sub-Type", "Measurements", "Details"];
 
 export default function DemolitionWizard() {
   const { areaId } = useParams();
   const navigate = useNavigate();
+  const opId = new URLSearchParams(window.location.search).get('opId');
   const [area, setArea] = useState(null);
   const [data, setData] = useState({});
+  const [operations, setOperations] = useState([]);
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,8 +28,11 @@ export default function DemolitionWizard() {
     (async () => {
       const a = await base44.entities.Area.get(areaId);
       setArea(a);
-      if (a.demolition_data) {
-        try { setData(JSON.parse(a.demolition_data)); } catch {}
+      const ops = parseOps(a.demolition_data);
+      setOperations(ops);
+      if (opId) {
+        const existing = ops.find(o => o.id === opId);
+        if (existing) setData(existing);
       }
       setLoading(false);
     })();
@@ -39,9 +45,7 @@ export default function DemolitionWizard() {
       const updated = { ...d, [key]: value };
       const l = key === "sf_length" ? value : (d.sf_length || "");
       const w = key === "sf_width" ? value : (d.sf_width || "");
-      if (l && w && !isNaN(l) && !isNaN(w)) {
-        updated.sf = String(Math.round(parseFloat(l) * parseFloat(w)));
-      }
+      if (l && w && !isNaN(l) && !isNaN(w)) updated.sf = String(Math.round(parseFloat(l) * parseFloat(w)));
       return updated;
     });
   }
@@ -53,13 +57,14 @@ export default function DemolitionWizard() {
 
   async function handleSave() {
     setSaving(true);
-    const saveData = { ...data, ...(cy != null ? { cy: String(cy) } : {}) };
-    await base44.entities.Area.update(areaId, {
-      demolition_data: JSON.stringify(saveData),
-      status: "Complete",
-    });
+    const entryId = opId || String(Date.now());
+    const saveData = { ...data, ...(cy != null ? { cy: String(cy) } : {}), id: entryId };
+    const updatedOps = [...operations];
+    const idx = updatedOps.findIndex(o => o.id === entryId);
+    if (idx >= 0) updatedOps[idx] = saveData; else updatedOps.push(saveData);
+    await base44.entities.Area.update(areaId, { demolition_data: JSON.stringify(updatedOps), status: "Complete" });
     setSaving(false);
-    navigate(`/demolition-summary/${areaId}`);
+    navigate(`/demolition-summary/${areaId}?opId=${entryId}`);
   }
 
   function renderField(field) {
@@ -89,16 +94,10 @@ export default function DemolitionWizard() {
       </div>
     );
     if (field.type === "textarea") return (
-      <div key={field.key}>
-        <Label>{field.label}</Label>
-        <Textarea className="mt-1" rows={2} value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
-      </div>
+      <div key={field.key}><Label>{field.label}</Label><Textarea className="mt-1" rows={2} value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} /></div>
     );
     return (
-      <div key={field.key}>
-        <Label>{field.label}</Label>
-        <Input type={field.type === "number" ? "number" : "text"} className="mt-1" value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
-      </div>
+      <div key={field.key}><Label>{field.label}</Label><Input type={field.type === "number" ? "number" : "text"} className="mt-1" value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} /></div>
     );
   }
 
@@ -112,7 +111,6 @@ export default function DemolitionWizard() {
       <Link to={`/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft className="h-4 w-4" /> Back to Area
       </Link>
-
       <div className="mb-6">
         <p className="text-xs text-muted-foreground mb-2">Step {step + 1} of {STEPS.length} — {area?.name}</p>
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -120,125 +118,75 @@ export default function DemolitionWizard() {
         </div>
         <p className="text-xs text-muted-foreground mt-1">{STEPS[step]}</p>
       </div>
-
       <div className="bg-card border rounded-xl p-6 mb-6 space-y-5">
-        {/* Step 0: Group */}
         {step === 0 && (
           <>
-            <div>
-              <h2 className="text-lg font-bold">Choose Category Group</h2>
-              <p className="text-sm text-muted-foreground mt-1">Select the type of demolition work.</p>
-            </div>
+            <div><h2 className="text-lg font-bold">Choose Category Group</h2><p className="text-sm text-muted-foreground mt-1">Select the type of demolition work.</p></div>
             <RadioGroup value={data.group || ""} onValueChange={v => setData(d => ({ ...d, group: v, sub_type: "" }))}>
               <div className="space-y-2">
                 {DEMO_GROUPS.map(g => (
                   <label key={g.value} className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${data.group === g.value ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
-                    <RadioGroupItem value={g.value} />
-                    <span className="font-medium">{g.label}</span>
+                    <RadioGroupItem value={g.value} /><span className="font-medium">{g.label}</span>
                   </label>
                 ))}
               </div>
             </RadioGroup>
           </>
         )}
-
-        {/* Step 1: Sub-type */}
         {step === 1 && (
           <>
-            <div>
-              <h2 className="text-lg font-bold">Select Estimate Category</h2>
-              <p className="text-sm text-muted-foreground mt-1">Choose the specific demolition item.</p>
-            </div>
+            <div><h2 className="text-lg font-bold">Select Estimate Category</h2></div>
             <RadioGroup value={data.sub_type || ""} onValueChange={v => setData(d => ({ ...d, sub_type: v }))}>
               <div className="space-y-2">
                 {subTypes.map(t => (
                   <label key={t.value} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${data.sub_type === t.value ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
-                    <RadioGroupItem value={t.value} />
-                    <span className="text-sm font-medium">{t.label}</span>
+                    <RadioGroupItem value={t.value} /><span className="text-sm font-medium">{t.label}</span>
                   </label>
                 ))}
               </div>
             </RadioGroup>
           </>
         )}
-
-        {/* Step 2: Measurements */}
         {step === 2 && (
           <>
-            <div>
-              <h2 className="text-lg font-bold">Measurements</h2>
-            </div>
-
+            <div><h2 className="text-lg font-bold">Measurements</h2></div>
             {cfg.hasSFCalc && (
               <div className="space-y-2">
                 <Label>Square Footage</Label>
                 <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Length (ft)</Label>
-                    <Input type="number" className="mt-1" placeholder="0" value={data.sf_length || ""} onChange={e => setDim("sf_length", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Width (ft)</Label>
-                    <Input type="number" className="mt-1" placeholder="0" value={data.sf_width || ""} onChange={e => setDim("sf_width", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">SF (auto)</Label>
-                    <Input type="number" className="mt-1 bg-muted/50" placeholder="0" value={data.sf || ""} onChange={e => set("sf", e.target.value)} />
-                  </div>
+                  <div><Label className="text-xs text-muted-foreground">Length (ft)</Label><Input type="number" className="mt-1" placeholder="0" value={data.sf_length || ""} onChange={e => setDim("sf_length", e.target.value)} /></div>
+                  <div><Label className="text-xs text-muted-foreground">Width (ft)</Label><Input type="number" className="mt-1" placeholder="0" value={data.sf_width || ""} onChange={e => setDim("sf_width", e.target.value)} /></div>
+                  <div><Label className="text-xs text-muted-foreground">SF (auto)</Label><Input type="number" className="mt-1 bg-muted/50" placeholder="0" value={data.sf || ""} onChange={e => set("sf", e.target.value)} /></div>
                 </div>
               </div>
             )}
-
             {cfg.hasCYCalc && (
               <div className="space-y-2">
                 <Label>Depth &amp; Volume</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Depth (inches)</Label>
-                    <Input type="number" className="mt-1" placeholder="0" value={data.depth_inches || ""} onChange={e => set("depth_inches", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Cubic Yards (auto)</Label>
-                    <Input className="mt-1 bg-muted/50" readOnly value={cy != null ? cy : ""} placeholder="—" />
-                  </div>
+                  <div><Label className="text-xs text-muted-foreground">Depth (inches)</Label><Input type="number" className="mt-1" placeholder="0" value={data.depth_inches || ""} onChange={e => set("depth_inches", e.target.value)} /></div>
+                  <div><Label className="text-xs text-muted-foreground">Cubic Yards (auto)</Label><Input className="mt-1 bg-muted/50" readOnly value={cy != null ? cy : ""} placeholder="—" /></div>
                 </div>
               </div>
             )}
-
             {cfg.measurements.map(renderField)}
-
-            {cfg.measurements.length === 0 && !cfg.hasSFCalc && !cfg.hasCYCalc && (
-              <p className="text-sm text-muted-foreground italic">No measurements required for this sub-type.</p>
-            )}
+            {cfg.measurements.length === 0 && !cfg.hasSFCalc && !cfg.hasCYCalc && <p className="text-sm text-muted-foreground italic">No measurements required.</p>}
           </>
         )}
-
-        {/* Step 3: Details */}
         {step === 3 && (
           <>
-            <div>
-              <h2 className="text-lg font-bold">Details &amp; Decisions</h2>
-            </div>
-            {cfg.details.length > 0
-              ? <div className="space-y-5">{cfg.details.map(renderField)}</div>
-              : <p className="text-sm text-muted-foreground italic">No additional details required.</p>
-            }
-            <div>
-              <Label>Additional Notes</Label>
-              <Textarea className="mt-1" rows={3} placeholder="Any other notes..." value={data.notes || ""} onChange={e => set("notes", e.target.value)} />
-            </div>
+            <div><h2 className="text-lg font-bold">Details &amp; Decisions</h2></div>
+            {cfg.details.length > 0 ? <div className="space-y-5">{cfg.details.map(renderField)}</div> : <p className="text-sm text-muted-foreground italic">No additional details required.</p>}
+            <div><Label>Additional Notes</Label><Textarea className="mt-1" rows={3} placeholder="Any other notes..." value={data.notes || ""} onChange={e => set("notes", e.target.value)} /></div>
           </>
         )}
       </div>
-
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Previous
         </Button>
         <Button onClick={step === STEPS.length - 1 ? handleSave : () => setStep(s => s + 1)} disabled={saving || !canAdvance}>
-          {step === STEPS.length - 1
-            ? <>{saving ? "Saving..." : "Complete & View Summary"} <Check className="h-4 w-4 ml-2" /></>
-            : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
+          {step === STEPS.length - 1 ? <>{saving ? "Saving..." : "Complete & View Summary"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
         </Button>
       </div>
     </div>

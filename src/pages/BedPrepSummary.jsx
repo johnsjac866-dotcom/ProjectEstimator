@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
 import { BED_FIELDS, getSubTypeLabel, getSubTypeCategory, BED_MAIN_TYPES } from "@/lib/bedPrepStages";
 
+function parseOps(jsonStr) {
+  try { const p = JSON.parse(jsonStr || '[]'); if (Array.isArray(p)) return p; if (p && typeof p === 'object' && Object.keys(p).length > 0) return [{ ...p, id: 'legacy' }]; } catch {} return [];
+}
+
 export default function BedPrepSummary() {
   const { areaId } = useParams();
+  const opId = new URLSearchParams(window.location.search).get('opId');
   const [area, setArea] = useState(null);
   const [project, setProject] = useState(null);
   const [data, setData] = useState({});
@@ -18,9 +23,9 @@ export default function BedPrepSummary() {
       setArea(a);
       const p = await base44.entities.Project.get(a.project_id);
       setProject(p);
-      if (a.bed_prep_data) {
-        try { setData(JSON.parse(a.bed_prep_data)); } catch {}
-      }
+      const ops = parseOps(a.bed_prep_data);
+      const entry = opId ? ops.find(o => o.id === opId) : ops[0];
+      setData(entry || {});
       setLoading(false);
     })();
   }, [areaId]);
