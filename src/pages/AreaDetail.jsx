@@ -18,9 +18,11 @@ export default function AreaDetail() {
     setLoading(false);
   }
 
-  async function selectOperation() {
-    await base44.entities.Area.update(areaId, { operation_type: "Walkway/Patio", status: "In Progress" });
-    navigate(`/patio-wizard/${areaId}`);
+  async function selectOperation(type) {
+    await base44.entities.Area.update(areaId, { operation_type: type, status: "In Progress" });
+    if (type === "Walkway/Patio") navigate(`/patio-wizard/${areaId}`);
+    else if (type === "Bed Preparation") navigate(`/bed-prep-wizard/${areaId}`);
+    else loadArea();
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
@@ -79,18 +81,33 @@ export default function AreaDetail() {
         )}
 
         {!isSiteManagement && !isBedPrep && !hasPatio && (
-          <button
-            onClick={selectOperation}
-            className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-dashed border-border hover:border-amber-400 hover:bg-amber-50/50 transition-colors text-left"
-          >
-            <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-              <ClipboardList className="h-5 w-5 text-amber-700" />
-            </div>
-            <div>
-              <p className="font-semibold text-sm">Walkway / Patio</p>
-              <p className="text-xs text-muted-foreground">Configure patio/walkway stages and measurements</p>
-            </div>
-          </button>
+          <>
+            <p className="text-sm font-medium text-muted-foreground">Choose an operation type:</p>
+            <button
+              onClick={() => selectOperation("Walkway/Patio")}
+              className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-dashed border-border hover:border-amber-400 hover:bg-amber-50/50 transition-colors text-left"
+            >
+              <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                <ClipboardList className="h-5 w-5 text-amber-700" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Walkway / Patio</p>
+                <p className="text-xs text-muted-foreground">Configure patio/walkway stages and measurements</p>
+              </div>
+            </button>
+            <button
+              onClick={() => selectOperation("Bed Preparation")}
+              className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-dashed border-border hover:border-green-400 hover:bg-green-50/50 transition-colors text-left"
+            >
+              <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                <Leaf className="h-5 w-5 text-green-700" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Bed Preparation</p>
+                <p className="text-xs text-muted-foreground">Configure bed preparation type and measurements</p>
+              </div>
+            </button>
+          </>
         )}
 
         {hasPatio && (
