@@ -7,9 +7,11 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, MapPin, ChevronRight, FolderOpen } from "lucide-react";
+import { Plus, MapPin, ChevronRight, FolderOpen, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Projects() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -66,21 +68,31 @@ export default function Projects() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map(p => (
-            <Link key={p.id} to={`/project/${p.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-base">{p.name}</CardTitle>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                  {p.client_name && <CardDescription>{p.client_name}</CardDescription>}
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {p.address && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{p.address}</p>}
-                  <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${p.status === "Active" ? "bg-emerald-100 text-emerald-700" : p.status === "Completed" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>{p.status}</span>
-                </CardContent>
-              </Card>
-            </Link>
+            <div key={p.id} className="relative group/card">
+              <Link to={`/project/${p.id}`}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer group">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-base">{p.name}</CardTitle>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                    {p.client_name && <CardDescription>{p.client_name}</CardDescription>}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {p.address && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{p.address}</p>}
+                    <div className="flex items-center justify-between mt-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === "Active" ? "bg-emerald-100 text-emerald-700" : p.status === "Completed" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>{p.status}</span>
+                      <button
+                        onClick={(e) => { e.preventDefault(); navigate(`/project-summary/${p.id}`); }}
+                        className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <FileText className="h-3 w-3" /> View Summary
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
           ))}
         </div>
       )}

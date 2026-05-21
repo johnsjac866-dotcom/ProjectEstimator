@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, CheckCircle2, Circle } from "lucide-react";
 
-const OPERATIONS = [
+const ALL_OPERATIONS = [
   {
     type: "Site Management & Daily Cleanup",
     dataKey: "site_mgmt_data",
@@ -34,6 +34,13 @@ const OPERATIONS = [
   },
 ];
 
+function getOperationsForArea(area) {
+  if (area.operation_type === "Site Management & Daily Cleanup") {
+    return ALL_OPERATIONS.filter(op => op.type === "Site Management & Daily Cleanup");
+  }
+  return ALL_OPERATIONS.filter(op => op.type !== "Site Management & Daily Cleanup");
+}
+
 const colorMap = {
   blue: { bg: "bg-blue-50/50", border: "border-blue-200", icon: "text-blue-700", iconBg: "bg-blue-100", dot: "bg-blue-500" },
   amber: { bg: "bg-amber-50/50", border: "border-amber-200", icon: "text-amber-700", iconBg: "bg-amber-100", dot: "bg-amber-500" },
@@ -58,6 +65,7 @@ export default function AreaDetail() {
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
   if (!area) return <div className="text-center py-20 text-muted-foreground">Area not found</div>;
 
+  const OPERATIONS = getOperationsForArea(area);
   const configuredCount = OPERATIONS.filter(op => !!area[op.dataKey]).length;
 
   return (

@@ -15,6 +15,7 @@ import SiteManagementWizard from './pages/SiteManagementWizard';
 import SiteManagementSummary from './pages/SiteManagementSummary';
 import BedPrepWizard from './pages/BedPrepWizard';
 import BedPrepSummary from './pages/BedPrepSummary';
+import ProjectSummary from './pages/ProjectSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -52,6 +53,7 @@ const AuthenticatedApp = () => {
         <Route path="/site-management-summary/:areaId" element={<SiteManagementSummary />} />
         <Route path="/bed-prep-wizard/:areaId" element={<BedPrepWizard />} />
         <Route path="/bed-prep-summary/:areaId" element={<BedPrepSummary />} />
+        <Route path="/project-summary/:projectId" element={<ProjectSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
