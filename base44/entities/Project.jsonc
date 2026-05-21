@@ -1,0 +1,34 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Project Name"
+    },
+    "client_name": {
+      "type": "string",
+      "title": "Client Name"
+    },
+    "address": {
+      "type": "string",
+      "title": "Site Address"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Completed",
+        "On Hold"
+      ],
+      "title": "Status"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

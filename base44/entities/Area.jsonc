@@ -1,0 +1,38 @@
+{
+  "name": "Area",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "title": "Project ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Area Name"
+    },
+    "operation_type": {
+      "type": "string",
+      "enum": [
+        "Walkway/Patio"
+      ],
+      "title": "Operation Type"
+    },
+    "patio_data": {
+      "type": "string",
+      "title": "Patio Configuration Data"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Not Started",
+        "In Progress",
+        "Complete"
+      ],
+      "title": "Status"
+    }
+  },
+  "required": [
+    "project_id",
+    "name"
+  ]
+}

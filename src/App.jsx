@@ -5,7 +5,12 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+import Layout from './components/Layout';
+import Projects from './pages/Projects';
+import ProjectDetail from './pages/ProjectDetail';
+import AreaDetail from './pages/AreaDetail';
+import PatioWizard from './pages/PatioWizard';
+import PatioSummary from './pages/PatioSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -33,8 +38,14 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
-      <Route path="*" element={<PageNotFound />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<Projects />} />
+        <Route path="/project/:projectId" element={<ProjectDetail />} />
+        <Route path="/area/:areaId" element={<AreaDetail />} />
+        <Route path="/patio-wizard/:areaId" element={<PatioWizard />} />
+        <Route path="/patio-summary/:areaId" element={<PatioSummary />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Route>
     </Routes>
   );
 };
