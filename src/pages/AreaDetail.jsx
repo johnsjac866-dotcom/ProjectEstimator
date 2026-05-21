@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, CheckCircle2, Circle, Shovel } from "lucide-react";
 
 const ALL_OPERATIONS = [
   {
@@ -32,6 +32,15 @@ const ALL_OPERATIONS = [
     color: "green",
     description: "Till, no-till, lawn or reprofiling configuration",
   },
+  {
+    type: "Rough Grading & Hauling",
+    dataKey: "rough_grading_data",
+    wizardPath: (id) => `/rough-grading-wizard/${id}`,
+    summaryPath: (id) => `/rough-grading-summary/${id}`,
+    icon: Shovel,
+    color: "orange",
+    description: "Excavation, exportation, soil importation & spreading",
+  },
 ];
 
 function getOperationsForArea(area) {
@@ -42,9 +51,10 @@ function getOperationsForArea(area) {
 }
 
 const colorMap = {
-  blue: { bg: "bg-blue-50/50", border: "border-blue-200", icon: "text-blue-700", iconBg: "bg-blue-100", dot: "bg-blue-500" },
-  amber: { bg: "bg-amber-50/50", border: "border-amber-200", icon: "text-amber-700", iconBg: "bg-amber-100", dot: "bg-amber-500" },
-  green: { bg: "bg-green-50/50", border: "border-green-200", icon: "text-green-700", iconBg: "bg-green-100", dot: "bg-green-500" },
+  blue:   { bg: "bg-blue-50/50",   border: "border-blue-200",   icon: "text-blue-700",   iconBg: "bg-blue-100",   dot: "bg-blue-500" },
+  amber:  { bg: "bg-amber-50/50",  border: "border-amber-200",  icon: "text-amber-700",  iconBg: "bg-amber-100",  dot: "bg-amber-500" },
+  green:  { bg: "bg-green-50/50",  border: "border-green-200",  icon: "text-green-700",  iconBg: "bg-green-100",  dot: "bg-green-500" },
+  orange: { bg: "bg-orange-50/50", border: "border-orange-200", icon: "text-orange-700", iconBg: "bg-orange-100", dot: "bg-orange-500" },
 };
 
 export default function AreaDetail() {

@@ -15,7 +15,8 @@
       "enum": [
         "Walkway/Patio",
         "Site Management & Daily Cleanup",
-        "Bed Preparation"
+        "Bed Preparation",
+        "Rough Grading & Hauling"
       ],
       "title": "Operation Type"
     },
@@ -30,6 +31,10 @@
     "bed_prep_data": {
       "type": "string",
       "title": "Bed Preparation Configuration Data"
+    },
+    "rough_grading_data": {
+      "type": "string",
+      "title": "Rough Grading & Hauling Configuration Data"
     },
     "status": {
       "type": "string",

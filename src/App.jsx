@@ -15,6 +15,8 @@ import SiteManagementWizard from './pages/SiteManagementWizard';
 import SiteManagementSummary from './pages/SiteManagementSummary';
 import BedPrepWizard from './pages/BedPrepWizard';
 import BedPrepSummary from './pages/BedPrepSummary';
+import RoughGradingWizard from './pages/RoughGradingWizard';
+import RoughGradingSummary from './pages/RoughGradingSummary';
 import ProjectSummary from './pages/ProjectSummary';
 
 const AuthenticatedApp = () => {
@@ -54,6 +56,8 @@ const AuthenticatedApp = () => {
         <Route path="/bed-prep-wizard/:areaId" element={<BedPrepWizard />} />
         <Route path="/bed-prep-summary/:areaId" element={<BedPrepSummary />} />
         <Route path="/project-summary/:projectId" element={<ProjectSummary />} />
+        <Route path="/rough-grading-wizard/:areaId" element={<RoughGradingWizard />} />
+        <Route path="/rough-grading-summary/:areaId" element={<RoughGradingSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

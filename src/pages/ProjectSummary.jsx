@@ -2,18 +2,20 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, ChevronDown, ChevronRight, FileText, Circle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, ChevronDown, ChevronRight, FileText, Circle, CheckCircle2 } from "lucide-react";
 
 const OP_CONFIG = {
-  "Site Management & Daily Cleanup": { dataKey: "site_mgmt_data", summaryPath: (id) => `/site-management-summary/${id}`, icon: Settings, color: "blue" },
-  "Walkway/Patio":                   { dataKey: "patio_data",      summaryPath: (id) => `/patio-summary/${id}`,            icon: ClipboardList, color: "amber" },
-  "Bed Preparation":                  { dataKey: "bed_prep_data",   summaryPath: (id) => `/bed-prep-summary/${id}`,          icon: Leaf, color: "green" },
+  "Site Management & Daily Cleanup": { dataKey: "site_mgmt_data",    summaryPath: (id) => `/site-management-summary/${id}`, icon: Settings,    color: "blue" },
+  "Walkway/Patio":                   { dataKey: "patio_data",         summaryPath: (id) => `/patio-summary/${id}`,            icon: ClipboardList, color: "amber" },
+  "Bed Preparation":                  { dataKey: "bed_prep_data",      summaryPath: (id) => `/bed-prep-summary/${id}`,          icon: Leaf,          color: "green" },
+  "Rough Grading & Hauling":          { dataKey: "rough_grading_data", summaryPath: (id) => `/rough-grading-summary/${id}`,     icon: Shovel,        color: "orange" },
 };
 
 const colorMap = {
-  blue:  { icon: "text-blue-700",  iconBg: "bg-blue-100",  badge: "bg-blue-50 text-blue-700 border-blue-200" },
-  amber: { icon: "text-amber-700", iconBg: "bg-amber-100", badge: "bg-amber-50 text-amber-700 border-amber-200" },
-  green: { icon: "text-green-700", iconBg: "bg-green-100", badge: "bg-green-50 text-green-700 border-green-200" },
+  blue:   { icon: "text-blue-700",   iconBg: "bg-blue-100",   badge: "bg-blue-50 text-blue-700 border-blue-200" },
+  amber:  { icon: "text-amber-700",  iconBg: "bg-amber-100",  badge: "bg-amber-50 text-amber-700 border-amber-200" },
+  green:  { icon: "text-green-700",  iconBg: "bg-green-100",  badge: "bg-green-50 text-green-700 border-green-200" },
+  orange: { icon: "text-orange-700", iconBg: "bg-orange-100", badge: "bg-orange-50 text-orange-700 border-orange-200" },
 };
 
 // Which operations to show per area type
@@ -21,9 +23,7 @@ function getOpsForArea(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") {
     return ["Site Management & Daily Cleanup"];
   }
-  // For generic areas, show whichever ops have data or all non-SM ops
-  const all = ["Walkway/Patio", "Bed Preparation"];
-  return all;
+  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling"];
 }
 
 export default function ProjectSummary() {
