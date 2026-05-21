@@ -17,6 +17,8 @@ import BedPrepWizard from './pages/BedPrepWizard';
 import BedPrepSummary from './pages/BedPrepSummary';
 import RoughGradingWizard from './pages/RoughGradingWizard';
 import RoughGradingSummary from './pages/RoughGradingSummary';
+import DemolitionWizard from './pages/DemolitionWizard';
+import DemolitionSummary from './pages/DemolitionSummary';
 import ProjectSummary from './pages/ProjectSummary';
 
 const AuthenticatedApp = () => {
@@ -58,6 +60,8 @@ const AuthenticatedApp = () => {
         <Route path="/project-summary/:projectId" element={<ProjectSummary />} />
         <Route path="/rough-grading-wizard/:areaId" element={<RoughGradingWizard />} />
         <Route path="/rough-grading-summary/:areaId" element={<RoughGradingSummary />} />
+        <Route path="/demolition-wizard/:areaId" element={<DemolitionWizard />} />
+        <Route path="/demolition-summary/:areaId" element={<DemolitionSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

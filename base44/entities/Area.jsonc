@@ -16,7 +16,8 @@
         "Walkway/Patio",
         "Site Management & Daily Cleanup",
         "Bed Preparation",
-        "Rough Grading & Hauling"
+        "Rough Grading & Hauling",
+        "Demolition & Removals"
       ],
       "title": "Operation Type"
     },
@@ -35,6 +36,10 @@
     "rough_grading_data": {
       "type": "string",
       "title": "Rough Grading & Hauling Configuration Data"
+    },
+    "demolition_data": {
+      "type": "string",
+      "title": "Demolition & Removals Configuration Data"
     },
     "status": {
       "type": "string",
