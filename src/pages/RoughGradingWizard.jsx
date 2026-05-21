@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, ArrowRight, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, AlertTriangle, Leaf } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { RG_SUB_TYPES, RG_FIELDS, calcCY, calcCYFluff } from "@/lib/roughGradingStages";
 
 const STEPS = ["Sub-Type", "Measurements", "Details & Constraints"];
@@ -20,6 +21,8 @@ export default function RoughGradingWizard() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showBedPrepDialog, setShowBedPrepDialog] = useState(false);
+  const [savedAreaId, setSavedAreaId] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -50,12 +53,33 @@ export default function RoughGradingWizard() {
   const cyFluff = calcCYFluff(cy);
   const fields = RG_FIELDS[data.sub_type] || { step2: [], step3: [] };
 
+  const EXCAVATION_SUB_TYPES = ["excavation_hand", "excavation_machine"];
+
   async function handleSave() {
     setSaving(true);
     const saveData = { ...data, cy: cy != null ? String(cy) : "", cy_fluff: cyFluff != null ? String(cyFluff) : "" };
     await base44.entities.Area.update(areaId, { rough_grading_data: JSON.stringify(saveData), status: "Complete" });
+
+    // Auto-create Strip Sod demolition area if excavation + sod/vegetation removed
+    if (EXCAVATION_SUB_TYPES.includes(data.sub_type) && data.sod_vegetation_removed === "Yes" && area) {
+      const sodDemoData = JSON.stringify({
+        group: "vegetation",
+        sub_type: "strip_sod",
+        sf: saveData.sf || "",
+        sf_auto_from_rg: true,
+      });
+      await base44.entities.Area.create({
+        project_id: area.project_id,
+        name: `Strip Sod - ${area.name}`,
+        operation_type: "Demolition & Removals",
+        demolition_data: sodDemoData,
+        status: "In Progress",
+      });
+    }
+
     setSaving(false);
-    navigate(`/rough-grading-summary/${areaId}`);
+    setSavedAreaId(areaId);
+    setShowBedPrepDialog(true);
   }
 
   function renderField(field) {
@@ -112,6 +136,23 @@ export default function RoughGradingWizard() {
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
+
+  if (showBedPrepDialog) return (
+    <Dialog open onOpenChange={() => {}}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Leaf className="h-5 w-5 text-green-600" /> Bed Preparation Required</DialogTitle>
+          <DialogDescription>
+            Rough Grading &amp; Hauling is complete. Bed Preparation is typically required after rough grading — would you like to configure it now?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => navigate(`/rough-grading-summary/${savedAreaId}`)}>Dismiss</Button>
+          <Button onClick={() => navigate(`/bed-prep-wizard/${savedAreaId}`)}><Leaf className="h-4 w-4 mr-2" /> Start Bed Prep</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
     <div className="max-w-2xl mx-auto">
