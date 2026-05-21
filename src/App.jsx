@@ -11,6 +11,8 @@ import ProjectDetail from './pages/ProjectDetail';
 import AreaDetail from './pages/AreaDetail';
 import PatioWizard from './pages/PatioWizard';
 import PatioSummary from './pages/PatioSummary';
+import SiteManagementWizard from './pages/SiteManagementWizard';
+import SiteManagementSummary from './pages/SiteManagementSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -44,6 +46,8 @@ const AuthenticatedApp = () => {
         <Route path="/area/:areaId" element={<AreaDetail />} />
         <Route path="/patio-wizard/:areaId" element={<PatioWizard />} />
         <Route path="/patio-summary/:areaId" element={<PatioSummary />} />
+        <Route path="/site-management-wizard/:areaId" element={<SiteManagementWizard />} />
+        <Route path="/site-management-summary/:areaId" element={<SiteManagementSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

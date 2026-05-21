@@ -13,13 +13,18 @@
     "operation_type": {
       "type": "string",
       "enum": [
-        "Walkway/Patio"
+        "Walkway/Patio",
+        "Site Management & Daily Cleanup"
       ],
       "title": "Operation Type"
     },
     "patio_data": {
       "type": "string",
       "title": "Patio Configuration Data"
+    },
+    "site_mgmt_data": {
+      "type": "string",
+      "title": "Site Management Configuration Data"
     },
     "status": {
       "type": "string",

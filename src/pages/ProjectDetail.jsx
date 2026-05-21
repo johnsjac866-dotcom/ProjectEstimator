@@ -25,7 +25,20 @@ export default function ProjectDetail() {
       base44.entities.Area.filter({ project_id: projectId }),
     ]);
     setProject(p);
-    setAreas(a);
+    // Auto-create Site Management area if it doesn't exist
+    const hasSM = a.some(x => x.name === "Site Management & Daily Cleanup");
+    if (!hasSM) {
+      await base44.entities.Area.create({
+        project_id: projectId,
+        name: "Site Management & Daily Cleanup",
+        operation_type: "Site Management & Daily Cleanup",
+        status: "Not Started",
+      });
+      const updated = await base44.entities.Area.filter({ project_id: projectId });
+      setAreas(updated);
+    } else {
+      setAreas(a);
+    }
     setLoading(false);
   }
 
