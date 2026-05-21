@@ -2,13 +2,50 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, CheckCircle2, Circle } from "lucide-react";
+
+const OPERATIONS = [
+  {
+    type: "Site Management & Daily Cleanup",
+    dataKey: "site_mgmt_data",
+    wizardPath: (id) => `/site-management-wizard/${id}`,
+    summaryPath: (id) => `/site-management-summary/${id}`,
+    icon: Settings,
+    color: "blue",
+    description: "Parking, access, stormwater, moving items & removal",
+  },
+  {
+    type: "Walkway/Patio",
+    dataKey: "patio_data",
+    wizardPath: (id) => `/patio-wizard/${id}`,
+    summaryPath: (id) => `/patio-summary/${id}`,
+    icon: ClipboardList,
+    color: "amber",
+    description: "Patio & walkway stages, materials and measurements",
+  },
+  {
+    type: "Bed Preparation",
+    dataKey: "bed_prep_data",
+    wizardPath: (id) => `/bed-prep-wizard/${id}`,
+    summaryPath: (id) => `/bed-prep-summary/${id}`,
+    icon: Leaf,
+    color: "green",
+    description: "Till, no-till, lawn or reprofiling configuration",
+  },
+];
+
+const colorMap = {
+  blue: { bg: "bg-blue-50/50", border: "border-blue-200", icon: "text-blue-700", iconBg: "bg-blue-100", dot: "bg-blue-500" },
+  amber: { bg: "bg-amber-50/50", border: "border-amber-200", icon: "text-amber-700", iconBg: "bg-amber-100", dot: "bg-amber-500" },
+  green: { bg: "bg-green-50/50", border: "border-green-200", icon: "text-green-700", iconBg: "bg-green-100", dot: "bg-green-500" },
+};
 
 export default function AreaDetail() {
   const { areaId } = useParams();
   const navigate = useNavigate();
   const [area, setArea] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState({});
 
   useEffect(() => { loadArea(); }, [areaId]);
 
@@ -18,20 +55,10 @@ export default function AreaDetail() {
     setLoading(false);
   }
 
-  async function selectOperation(type) {
-    await base44.entities.Area.update(areaId, { operation_type: type, status: "In Progress" });
-    if (type === "Walkway/Patio") navigate(`/patio-wizard/${areaId}`);
-    else if (type === "Bed Preparation") navigate(`/bed-prep-wizard/${areaId}`);
-    else loadArea();
-  }
-
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
   if (!area) return <div className="text-center py-20 text-muted-foreground">Area not found</div>;
 
-  const hasPatio = area.operation_type === "Walkway/Patio";
-  const isSiteManagement = area.operation_type === "Site Management & Daily Cleanup";
-  const isBedPrep = area.operation_type === "Bed Preparation";
-  const hasData = hasPatio ? !!area.patio_data : isSiteManagement ? !!area.site_mgmt_data : !!area.bed_prep_data;
+  const configuredCount = OPERATIONS.filter(op => !!area[op.dataKey]).length;
 
   return (
     <div>
@@ -39,95 +66,59 @@ export default function AreaDetail() {
         <ArrowLeft className="h-4 w-4" /> Back to Project
       </Link>
       <h1 className="text-2xl font-bold tracking-tight mb-1">{area.name}</h1>
-      <p className="text-muted-foreground text-sm mb-6">Select an operation for this area</p>
+      <p className="text-muted-foreground text-sm mb-6">
+        {configuredCount === 0 ? "No operations configured yet" : `${configuredCount} operation${configuredCount > 1 ? "s" : ""} configured`}
+      </p>
 
-      <div className="max-w-md space-y-3">
-        {isSiteManagement && (
-          <div className="space-y-3">
-            <div className="p-4 rounded-lg border bg-blue-50/50 border-blue-200">
-              <p className="font-semibold text-sm flex items-center gap-2"><Settings className="h-4 w-4 text-blue-700" /> Site Management &amp; Daily Cleanup</p>
-              <p className="text-xs text-muted-foreground mt-1">{hasData ? "Configuration complete" : "Not started"}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate(`/site-management-wizard/${areaId}`)} variant="outline" className="flex-1">
-                {hasData ? "Edit Configuration" : "Start Setup"}
-              </Button>
-              {hasData && (
-                <Button onClick={() => navigate(`/site-management-summary/${areaId}`)} className="flex-1">
-                  <FileText className="h-4 w-4 mr-2" /> View Summary
-                </Button>
+      <div className="max-w-lg space-y-3">
+        {OPERATIONS.map((op) => {
+          const hasData = !!area[op.dataKey];
+          const Icon = op.icon;
+          const c = colorMap[op.color];
+          const isOpen = expanded[op.type];
+
+          return (
+            <div key={op.type} className={`rounded-xl border transition-all ${hasData ? `${c.bg} ${c.border}` : "border-border bg-card"}`}>
+              <button
+                className="w-full flex items-center gap-3 p-4 text-left"
+                onClick={() => setExpanded(e => ({ ...e, [op.type]: !e[op.type] }))}
+              >
+                <div className={`h-9 w-9 rounded-lg ${hasData ? c.iconBg : "bg-muted"} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className={`h-4 w-4 ${hasData ? c.icon : "text-muted-foreground"}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm">{op.type}</p>
+                  <p className="text-xs text-muted-foreground">{op.description}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {hasData ? (
+                    <CheckCircle2 className={`h-4 w-4 ${c.icon}`} />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground/40" />
+                  )}
+                  <Plus className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-45" : ""}`} />
+                </div>
+              </button>
+
+              {isOpen && (
+                <div className="px-4 pb-4 flex gap-2 border-t border-inherit pt-3 mt-0">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => navigate(op.wizardPath(areaId))}
+                  >
+                    {hasData ? "Edit Configuration" : "Start Setup"}
+                  </Button>
+                  {hasData && (
+                    <Button className="flex-1" onClick={() => navigate(op.summaryPath(areaId))}>
+                      <FileText className="h-4 w-4 mr-2" /> View Summary
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
-          </div>
-        )}
-
-        {isBedPrep && (
-          <div className="space-y-3">
-            <div className="p-4 rounded-lg border bg-green-50/50 border-green-200">
-              <p className="font-semibold text-sm flex items-center gap-2"><Leaf className="h-4 w-4 text-green-700" /> Bed Preparation</p>
-              <p className="text-xs text-muted-foreground mt-1">{hasData ? "Configuration complete" : "Not started"}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate(`/bed-prep-wizard/${areaId}`)} variant="outline" className="flex-1">
-                {hasData ? "Edit Configuration" : "Start Setup"}
-              </Button>
-              {hasData && (
-                <Button onClick={() => navigate(`/bed-prep-summary/${areaId}`)} className="flex-1">
-                  <FileText className="h-4 w-4 mr-2" /> View Summary
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {!isSiteManagement && !isBedPrep && !hasPatio && (
-          <>
-            <p className="text-sm font-medium text-muted-foreground">Choose an operation type:</p>
-            <button
-              onClick={() => selectOperation("Walkway/Patio")}
-              className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-dashed border-border hover:border-amber-400 hover:bg-amber-50/50 transition-colors text-left"
-            >
-              <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <ClipboardList className="h-5 w-5 text-amber-700" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Walkway / Patio</p>
-                <p className="text-xs text-muted-foreground">Configure patio/walkway stages and measurements</p>
-              </div>
-            </button>
-            <button
-              onClick={() => selectOperation("Bed Preparation")}
-              className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-dashed border-border hover:border-green-400 hover:bg-green-50/50 transition-colors text-left"
-            >
-              <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                <Leaf className="h-5 w-5 text-green-700" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Bed Preparation</p>
-                <p className="text-xs text-muted-foreground">Configure bed preparation type and measurements</p>
-              </div>
-            </button>
-          </>
-        )}
-
-        {hasPatio && (
-          <div className="space-y-3">
-            <div className="p-4 rounded-lg border bg-amber-50/50 border-amber-200">
-              <p className="font-semibold text-sm flex items-center gap-2"><ClipboardList className="h-4 w-4 text-amber-700" /> Walkway / Patio</p>
-              <p className="text-xs text-muted-foreground mt-1">{hasData ? "Configuration complete" : "In progress"}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate(`/patio-wizard/${areaId}`)} variant="outline" className="flex-1">
-                {hasData ? "Edit Configuration" : "Continue Setup"}
-              </Button>
-              {hasData && (
-                <Button onClick={() => navigate(`/patio-summary/${areaId}`)} className="flex-1">
-                  <FileText className="h-4 w-4 mr-2" /> View Summary
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
+          );
+        })}
       </div>
     </div>
   );

@@ -35,6 +35,18 @@ export default function BedPrepWizard() {
 
   function set(key, value) { setData(d => ({ ...d, [key]: value })); }
 
+  function setDimension(key, value, otherKey) {
+    setData(d => {
+      const updated = { ...d, [key]: value };
+      const l = key === "sf_length" ? value : (d.sf_length || "");
+      const w = key === "sf_width" ? value : (d.sf_width || "");
+      if (otherKey === "sf" && l && w && !isNaN(l) && !isNaN(w)) {
+        updated.sf = String(Math.round(parseFloat(l) * parseFloat(w)));
+      }
+      return updated;
+    });
+  }
+
   const subTypes = getSubTypes(data.main_type);
   const fields = BED_FIELDS[data.sub_type] || { measurements: [], decisions: [], constraints: [] };
 
@@ -70,6 +82,27 @@ export default function BedPrepWizard() {
         <div key={field.key}>
           <Label>{field.label}</Label>
           <Textarea className="mt-1" rows={3} value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
+        </div>
+      );
+    }
+    if (field.type === "number" && field.key === "sf") {
+      return (
+        <div key={field.key} className="space-y-2">
+          <Label>{field.label}</Label>
+          <div className="grid grid-cols-3 gap-2 items-end">
+            <div>
+              <Label className="text-xs text-muted-foreground">Length (ft)</Label>
+              <Input type="number" className="mt-1" placeholder="0" value={data.sf_length || ""} onChange={e => setDimension("sf_length", e.target.value, "sf")} />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Width (ft)</Label>
+              <Input type="number" className="mt-1" placeholder="0" value={data.sf_width || ""} onChange={e => setDimension("sf_width", e.target.value, "sf")} />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">SF (auto)</Label>
+              <Input type="number" className="mt-1 bg-muted/50" placeholder="0" value={data.sf || ""} onChange={e => set("sf", e.target.value)} />
+            </div>
+          </div>
         </div>
       );
     }
