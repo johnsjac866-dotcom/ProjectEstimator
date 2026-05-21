@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { RG_FIELDS, getRGSubTypeLabel, getRGCategory } from "@/lib/roughGradingStages";
 
 export default function RoughGradingSummary() {
@@ -31,7 +31,7 @@ export default function RoughGradingSummary() {
   const category = getRGCategory(data.sub_type);
   const subLabel = getRGSubTypeLabel(data.sub_type);
   const allFields = [...fields.step2, ...fields.step3];
-  const showSodNote = data.sod_vegetation_removed === "Yes";
+
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -64,16 +64,7 @@ export default function RoughGradingSummary() {
               <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
               {category}
             </div>
-            {showSodNote && (
-              <div className="mt-2 flex gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
-                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold">Also add to estimate:</p>
-                  <p>Demolition &amp; Removals - Vegetation &amp; Softscape Items - Strip Sod Manually (Update Disposal Fee)</p>
-                  <p className="text-xs mt-1">SF = top 1" of {data.sf || "—"} SF being removed</p>
-                </div>
-              </div>
-            )}
+
           </div>
         )}
 

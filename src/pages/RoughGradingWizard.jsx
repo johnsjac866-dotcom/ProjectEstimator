@@ -23,6 +23,7 @@ export default function RoughGradingWizard() {
   const [saving, setSaving] = useState(false);
   const [showBedPrepDialog, setShowBedPrepDialog] = useState(false);
   const [savedAreaId, setSavedAreaId] = useState(null);
+  const [sodAdded, setSodAdded] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -60,21 +61,16 @@ export default function RoughGradingWizard() {
     const saveData = { ...data, cy: cy != null ? String(cy) : "", cy_fluff: cyFluff != null ? String(cyFluff) : "" };
     await base44.entities.Area.update(areaId, { rough_grading_data: JSON.stringify(saveData), status: "Complete" });
 
-    // Auto-create Strip Sod demolition area if excavation + sod/vegetation removed
-    if (EXCAVATION_SUB_TYPES.includes(data.sub_type) && data.sod_vegetation_removed === "Yes" && area) {
+    // Auto-add Strip Sod demolition data to same area if excavation + sod/vegetation removed
+    if (EXCAVATION_SUB_TYPES.includes(data.sub_type) && data.sod_vegetation_removed === "Yes") {
       const sodDemoData = JSON.stringify({
         group: "vegetation",
         sub_type: "strip_sod",
         sf: saveData.sf || "",
         sf_auto_from_rg: true,
       });
-      await base44.entities.Area.create({
-        project_id: area.project_id,
-        name: `Strip Sod - ${area.name}`,
-        operation_type: "Demolition & Removals",
-        demolition_data: sodDemoData,
-        status: "In Progress",
-      });
+      await base44.entities.Area.update(areaId, { demolition_data: sodDemoData });
+      setSodAdded(true);
     }
 
     setSaving(false);
@@ -143,7 +139,7 @@ export default function RoughGradingWizard() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Leaf className="h-5 w-5 text-green-600" /> Bed Preparation Required</DialogTitle>
           <DialogDescription>
-            Rough Grading &amp; Hauling is complete. Bed Preparation is typically required after rough grading — would you like to configure it now?
+            Rough Grading &amp; Hauling is complete.{sodAdded && <span className="block mt-2 text-green-700 font-medium">✓ Demolition &amp; Removals — Strip Sod Manually operation has been automatically added to this area.</span>} Bed Preparation is typically required after rough grading — would you like to configure it now?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2">
