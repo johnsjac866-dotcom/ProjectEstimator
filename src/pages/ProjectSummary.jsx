@@ -95,7 +95,7 @@ export default function ProjectSummary() {
 
               {isOpen && (
                 <div className="border-t divide-y">
-                  {ops.map(op => {
+                  {ops.filter(op => parseOps(area[OP_CONFIG[op].dataKey]).length > 0).map(op => {
                     const cfg = OP_CONFIG[op];
                     const entries = parseOps(area[cfg.dataKey]);
                     const Icon = cfg.icon;
