@@ -13,6 +13,8 @@ import PatioWizard from './pages/PatioWizard';
 import PatioSummary from './pages/PatioSummary';
 import SiteManagementWizard from './pages/SiteManagementWizard';
 import SiteManagementSummary from './pages/SiteManagementSummary';
+import BedPrepWizard from './pages/BedPrepWizard';
+import BedPrepSummary from './pages/BedPrepSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -48,6 +50,8 @@ const AuthenticatedApp = () => {
         <Route path="/patio-summary/:areaId" element={<PatioSummary />} />
         <Route path="/site-management-wizard/:areaId" element={<SiteManagementWizard />} />
         <Route path="/site-management-summary/:areaId" element={<SiteManagementSummary />} />
+        <Route path="/bed-prep-wizard/:areaId" element={<BedPrepWizard />} />
+        <Route path="/bed-prep-summary/:areaId" element={<BedPrepSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

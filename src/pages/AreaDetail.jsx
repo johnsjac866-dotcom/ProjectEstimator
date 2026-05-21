@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ClipboardList, FileText, Settings } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf } from "lucide-react";
 
 export default function AreaDetail() {
   const { areaId } = useParams();
@@ -28,7 +28,8 @@ export default function AreaDetail() {
 
   const hasPatio = area.operation_type === "Walkway/Patio";
   const isSiteManagement = area.operation_type === "Site Management & Daily Cleanup";
-  const hasData = hasPatio ? !!area.patio_data : !!area.site_mgmt_data;
+  const isBedPrep = area.operation_type === "Bed Preparation";
+  const hasData = hasPatio ? !!area.patio_data : isSiteManagement ? !!area.site_mgmt_data : !!area.bed_prep_data;
 
   return (
     <div>
@@ -39,7 +40,7 @@ export default function AreaDetail() {
       <p className="text-muted-foreground text-sm mb-6">Select an operation for this area</p>
 
       <div className="max-w-md space-y-3">
-        {isSiteManagement ? (
+        {isSiteManagement && (
           <div className="space-y-3">
             <div className="p-4 rounded-lg border bg-blue-50/50 border-blue-200">
               <p className="font-semibold text-sm flex items-center gap-2"><Settings className="h-4 w-4 text-blue-700" /> Site Management &amp; Daily Cleanup</p>
@@ -56,7 +57,28 @@ export default function AreaDetail() {
               )}
             </div>
           </div>
-        ) : !hasPatio ? (
+        )}
+
+        {isBedPrep && (
+          <div className="space-y-3">
+            <div className="p-4 rounded-lg border bg-green-50/50 border-green-200">
+              <p className="font-semibold text-sm flex items-center gap-2"><Leaf className="h-4 w-4 text-green-700" /> Bed Preparation</p>
+              <p className="text-xs text-muted-foreground mt-1">{hasData ? "Configuration complete" : "Not started"}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate(`/bed-prep-wizard/${areaId}`)} variant="outline" className="flex-1">
+                {hasData ? "Edit Configuration" : "Start Setup"}
+              </Button>
+              {hasData && (
+                <Button onClick={() => navigate(`/bed-prep-summary/${areaId}`)} className="flex-1">
+                  <FileText className="h-4 w-4 mr-2" /> View Summary
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!isSiteManagement && !isBedPrep && !hasPatio && (
           <button
             onClick={selectOperation}
             className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-dashed border-border hover:border-amber-400 hover:bg-amber-50/50 transition-colors text-left"
@@ -69,7 +91,9 @@ export default function AreaDetail() {
               <p className="text-xs text-muted-foreground">Configure patio/walkway stages and measurements</p>
             </div>
           </button>
-        ) : (
+        )}
+
+        {hasPatio && (
           <div className="space-y-3">
             <div className="p-4 rounded-lg border bg-amber-50/50 border-amber-200">
               <p className="font-semibold text-sm flex items-center gap-2"><ClipboardList className="h-4 w-4 text-amber-700" /> Walkway / Patio</p>

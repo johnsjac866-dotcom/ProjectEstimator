@@ -14,7 +14,8 @@
       "type": "string",
       "enum": [
         "Walkway/Patio",
-        "Site Management & Daily Cleanup"
+        "Site Management & Daily Cleanup",
+        "Bed Preparation"
       ],
       "title": "Operation Type"
     },
@@ -25,6 +26,10 @@
     "site_mgmt_data": {
       "type": "string",
       "title": "Site Management Configuration Data"
+    },
+    "bed_prep_data": {
+      "type": "string",
+      "title": "Bed Preparation Configuration Data"
     },
     "status": {
       "type": "string",
