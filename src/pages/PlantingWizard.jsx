@@ -107,7 +107,7 @@ export default function PlantingWizard() {
       updated = [...ops, { ...form, id: generateId() }];
     }
     await base44.entities.Area.update(areaId, { planting_data: JSON.stringify(updated) });
-    navigate(`/planting-summary/${areaId}?opId=${opId || updated[updated.length - 1].id}`);
+    navigate(`/area/${areaId}`);
   }
 
   if (!area) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
@@ -247,7 +247,7 @@ export default function PlantingWizard() {
           </div>
 
           <Button className="w-full" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : opId ? "Update" : "Save & View Summary"}
+            {saving ? "Saving…" : "Save"}
           </Button>
         </div>
       )}

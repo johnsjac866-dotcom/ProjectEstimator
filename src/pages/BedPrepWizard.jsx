@@ -61,9 +61,9 @@ export default function BedPrepWizard() {
     const updatedOps = [...operations];
     const idx = updatedOps.findIndex(o => o.id === entryId);
     if (idx >= 0) updatedOps[idx] = newEntry; else updatedOps.push(newEntry);
-    await base44.entities.Area.update(areaId, { bed_prep_data: JSON.stringify(updatedOps), status: "Complete" });
+    await base44.entities.Area.update(areaId, { bed_prep_data: JSON.stringify(updatedOps) });
     setSaving(false);
-    navigate(`/bed-prep-summary/${areaId}?opId=${entryId}`);
+    navigate(`/area/${areaId}`);
   }
 
   function renderField(field) {
@@ -168,7 +168,7 @@ export default function BedPrepWizard() {
           <ArrowLeft className="h-4 w-4 mr-2" /> Previous
         </Button>
         <Button onClick={step === STEPS.length - 1 ? handleSave : () => setStep(s => s + 1)} disabled={saving || (step === 0 && !data.main_type) || (step === 1 && !data.sub_type)}>
-          {step === STEPS.length - 1 ? <>{saving ? "Saving..." : "Complete & View Summary"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
+          {step === STEPS.length - 1 ? <>{saving ? "Saving..." : "Save"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
         </Button>
       </div>
     </div>

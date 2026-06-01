@@ -42,9 +42,9 @@ export default function SiteManagementWizard() {
     const updatedOps = [...operations];
     const idx = updatedOps.findIndex(o => o.id === entryId);
     if (idx >= 0) updatedOps[idx] = newEntry; else updatedOps.push(newEntry);
-    await base44.entities.Area.update(areaId, { site_mgmt_data: JSON.stringify(updatedOps), status: "Complete" });
+    await base44.entities.Area.update(areaId, { site_mgmt_data: JSON.stringify(updatedOps) });
     setSaving(false);
-    navigate(`/site-management-summary/${areaId}?opId=${entryId}`);
+    navigate(`/area/${areaId}`);
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
@@ -70,7 +70,7 @@ export default function SiteManagementWizard() {
         <div className="flex gap-2">
           {!isLast && <Button variant="ghost" onClick={() => setCurrentStep(s => s + 1)}>Skip <SkipForward className="h-4 w-4 ml-1" /></Button>}
           <Button onClick={isLast ? handleSave : () => setCurrentStep(s => s + 1)} disabled={saving}>
-            {isLast ? <>{saving ? "Saving..." : "Complete & View Summary"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
+            {isLast ? <>{saving ? "Saving..." : "Save"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
           </Button>
         </div>
       </div>

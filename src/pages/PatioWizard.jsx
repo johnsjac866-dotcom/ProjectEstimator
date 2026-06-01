@@ -43,9 +43,9 @@ export default function PatioWizard() {
     const updatedOps = [...operations];
     const idx = updatedOps.findIndex(o => o.id === entryId);
     if (idx >= 0) updatedOps[idx] = newEntry; else updatedOps.push(newEntry);
-    await base44.entities.Area.update(areaId, { patio_data: JSON.stringify(updatedOps), status: "Complete" });
+    await base44.entities.Area.update(areaId, { patio_data: JSON.stringify(updatedOps) });
     setSaving(false);
-    navigate(`/patio-summary/${areaId}?opId=${entryId}`);
+    navigate(`/area/${areaId}`);
   }
 
   function handleNext() {
@@ -76,7 +76,7 @@ export default function PatioWizard() {
         <div className="flex gap-2">
           {!isLast && <Button variant="ghost" onClick={handleNext}>Skip <SkipForward className="h-4 w-4 ml-1" /></Button>}
           <Button onClick={handleNext} disabled={saving}>
-            {isLast ? <>{saving ? "Saving..." : "Complete & View Summary"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
+            {isLast ? <>{saving ? "Saving..." : "Save"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
           </Button>
         </div>
       </div>

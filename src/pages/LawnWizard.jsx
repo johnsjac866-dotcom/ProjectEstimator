@@ -251,13 +251,13 @@ export default function LawnWizard() {
           </div>
 
           <Button className="w-full" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : opId ? "Update" : "Save & View Summary"}
+            {saving ? "Saving…" : "Save"}
           </Button>
         </div>
       )}
 
       {/* Bed Prep Prompt Dialog */}
-      <Dialog open={showBedPrepPrompt} onOpenChange={() => navigate(`/lawn-summary/${areaId}?opId=${savedOpId}`)}>
+      <Dialog open={showBedPrepPrompt} onOpenChange={() => navigate(`/area/${areaId}`)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Bed Preparation Required?</DialogTitle>
@@ -267,7 +267,7 @@ export default function LawnWizard() {
             <Button className="flex-1" onClick={() => navigate(`/bed-prep-wizard/${areaId}`)}>
               Start Bed Prep Form
             </Button>
-            <Button variant="outline" className="flex-1" onClick={() => navigate(`/lawn-summary/${areaId}?opId=${savedOpId}`)}>
+            <Button variant="outline" className="flex-1" onClick={() => navigate(`/area/${areaId}`)}>
               Dismiss
             </Button>
           </div>

@@ -67,7 +67,7 @@ export default function BedEdgingWizard() {
       updated = [...ops, { ...form, id: generateId() }];
     }
     await base44.entities.Area.update(areaId, { bed_edging_data: JSON.stringify(updated) });
-    navigate(`/bed-edging-summary/${areaId}?opId=${opId || updated[updated.length - 1].id}`);
+    navigate(`/area/${areaId}`);
   }
 
   function handleSelectType(type) {
@@ -225,7 +225,7 @@ export default function BedEdgingWizard() {
           </div>
 
           <Button className="w-full" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : opId ? "Update" : "Save & View Summary"}
+            {saving ? "Saving…" : "Save"}
           </Button>
         </div>
       )}

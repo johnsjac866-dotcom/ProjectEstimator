@@ -66,7 +66,7 @@ export default function RoughGradingWizard() {
     const updatedOps = [...operations];
     const idx = updatedOps.findIndex(o => o.id === entryId);
     if (idx >= 0) updatedOps[idx] = saveData; else updatedOps.push(saveData);
-    await base44.entities.Area.update(areaId, { rough_grading_data: JSON.stringify(updatedOps), status: "Complete" });
+    await base44.entities.Area.update(areaId, { rough_grading_data: JSON.stringify(updatedOps) });
 
     // Auto-add Strip Sod demolition entry to same area if excavation + sod/vegetation removed
     if (EXCAVATION_SUB_TYPES.includes(data.sub_type) && data.sod_vegetation_removed === "Yes") {
@@ -132,7 +132,7 @@ export default function RoughGradingWizard() {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => navigate(`/rough-grading-summary/${areaId}?opId=${savedOpId}`)}>Dismiss</Button>
+          <Button variant="outline" onClick={() => navigate(`/area/${areaId}`)}>Dismiss</Button>
           <Button onClick={() => navigate(`/bed-prep-wizard/${areaId}`)}><Leaf className="h-4 w-4 mr-2" /> Start Bed Prep</Button>
         </DialogFooter>
       </DialogContent>
@@ -201,7 +201,7 @@ export default function RoughGradingWizard() {
           <ArrowLeft className="h-4 w-4 mr-2" /> Previous
         </Button>
         <Button onClick={step === STEPS.length - 1 ? handleSave : () => setStep(s => s + 1)} disabled={saving || (step === 0 && !data.sub_type)}>
-          {step === STEPS.length - 1 ? <>{saving ? "Saving..." : "Complete & View Summary"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
+          {step === STEPS.length - 1 ? <>{saving ? "Saving..." : "Save"} <Check className="h-4 w-4 ml-2" /></> : <>Next <ArrowRight className="h-4 w-4 ml-2" /></>}
         </Button>
       </div>
     </div>

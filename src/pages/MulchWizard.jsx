@@ -86,7 +86,7 @@ export default function MulchWizard() {
       updated = [...ops, { ...entry, id: generateId() }];
     }
     await base44.entities.Area.update(areaId, { mulch_data: JSON.stringify(updated) });
-    navigate(`/mulch-summary/${areaId}?opId=${opId || updated[updated.length - 1].id}`);
+    navigate(`/area/${areaId}`);
   }
 
   if (!area) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
@@ -179,7 +179,7 @@ export default function MulchWizard() {
           </div>
 
           <Button className="w-full" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : opId ? "Update" : "Save & View Summary"}
+            {saving ? "Saving…" : "Save"}
           </Button>
         </div>
       )}
