@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, CheckCircle2, Circle, Shovel, Hammer, Pencil, ChevronDown, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 
 const ALL_OPERATIONS = [
@@ -13,7 +15,7 @@ const ALL_OPERATIONS = [
   { type: "Demolition & Removals", dataKey: "demolition_data", wizardPath: (id) => `/demolition-wizard/${id}`, summaryPath: (id, opId) => `/demolition-summary/${id}?opId=${opId}`, icon: Hammer, color: "red", description: "Hardscape and vegetation/softscape demolition & removals" },
 ];
 
-function getOperationsForArea(area) {
+function getAvailableOps(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") return ALL_OPERATIONS.filter(op => op.type === "Site Management & Daily Cleanup");
   return ALL_OPERATIONS.filter(op => op.type !== "Site Management & Daily Cleanup");
 }
@@ -36,6 +38,8 @@ export default function AreaDetail() {
   const [area, setArea] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState({});
+  const [showOpPicker, setShowOpPicker] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => { loadArea(); }, [areaId]);
 
@@ -48,65 +52,125 @@ export default function AreaDetail() {
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
   if (!area) return <div className="text-center py-20 text-muted-foreground">Area not found</div>;
 
-  const OPERATIONS = getOperationsForArea(area);
-  const totalEntries = OPERATIONS.reduce((sum, op) => sum + parseOps(area[op.dataKey]).length, 0);
+  const availableOps = getAvailableOps(area);
+  const configuredOps = availableOps.filter(op => parseOps(area[op.dataKey]).length > 0);
+  const totalEntries = configuredOps.reduce((sum, op) => sum + parseOps(area[op.dataKey]).length, 0);
+
+  const filteredPickerOps = availableOps.filter(op =>
+    op.type.toLowerCase().includes(search.toLowerCase()) ||
+    op.description.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div>
       <Link to={`/project/${area.project_id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft className="h-4 w-4" /> Back to Project
       </Link>
-      <h1 className="text-2xl font-bold tracking-tight mb-1">{area.name}</h1>
-      <p className="text-muted-foreground text-sm mb-6">
-        {totalEntries === 0 ? "No operations configured yet" : `${totalEntries} operation${totalEntries !== 1 ? "s" : ""} configured`}
-      </p>
 
-      <div className="max-w-lg space-y-3">
-        {OPERATIONS.map((op) => {
-          const entries = parseOps(area[op.dataKey]);
-          const hasData = entries.length > 0;
-          const Icon = op.icon;
-          const c = colorMap[op.color];
-          const isOpen = expanded[op.type];
-
-          return (
-            <div key={op.type} className={`rounded-xl border transition-all ${hasData ? `${c.bg} ${c.border}` : "border-border bg-card"}`}>
-              <button className="w-full flex items-center gap-3 p-4 text-left" onClick={() => setExpanded(e => ({ ...e, [op.type]: !e[op.type] }))}>
-                <div className={`h-9 w-9 rounded-lg ${hasData ? c.iconBg : "bg-muted"} flex items-center justify-center flex-shrink-0`}>
-                  <Icon className={`h-4 w-4 ${hasData ? c.icon : "text-muted-foreground"}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">{op.type}</p>
-                  <p className="text-xs text-muted-foreground">{hasData ? `${entries.length} entry${entries.length !== 1 ? " entries" : ""}` : op.description}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {hasData ? <CheckCircle2 className={`h-4 w-4 ${c.icon}`} /> : <Circle className="h-4 w-4 text-muted-foreground/40" />}
-                  {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                </div>
-              </button>
-
-              {isOpen && (
-                <div className="px-4 pb-4 border-t border-inherit pt-3 space-y-2">
-                  {entries.map((entry, idx) => (
-                    <div key={entry.id} className="flex items-center gap-2 bg-background/70 rounded-lg px-3 py-2 border border-inherit">
-                      <span className="text-xs font-medium flex-1 capitalize">{getEntryLabel(entry, idx)}</span>
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => navigate(`${op.wizardPath(areaId)}?opId=${entry.id}`)}>
-                        <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => navigate(op.summaryPath(areaId, entry.id))}>
-                        <FileText className="h-3.5 w-3.5 mr-1" /> View
-                      </Button>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full mt-1" onClick={() => navigate(op.wizardPath(areaId))}>
-                    <Plus className="h-4 w-4 mr-2" /> Add {entries.length > 0 ? "Another" : "First"} {op.type}
-                  </Button>
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight mb-1">{area.name}</h1>
+          <p className="text-muted-foreground text-sm">
+            {totalEntries === 0 ? "No operations configured yet" : `${totalEntries} operation${totalEntries !== 1 ? "s" : ""} configured`}
+          </p>
+        </div>
+        <Button onClick={() => { setSearch(""); setShowOpPicker(true); }}>
+          <Plus className="h-4 w-4 mr-2" /> Add Operation
+        </Button>
       </div>
+
+      {configuredOps.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-xl">
+          <Layers className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No operations yet</p>
+          <p className="text-sm mt-1">Click "Add Operation" to get started</p>
+        </div>
+      ) : (
+        <div className="max-w-lg space-y-3">
+          {configuredOps.map((op) => {
+            const entries = parseOps(area[op.dataKey]);
+            const Icon = op.icon;
+            const c = colorMap[op.color];
+            const isOpen = expanded[op.type];
+
+            return (
+              <div key={op.type} className={`rounded-xl border ${c.bg} ${c.border}`}>
+                <button className="w-full flex items-center gap-3 p-4 text-left" onClick={() => setExpanded(e => ({ ...e, [op.type]: !e[op.type] }))}>
+                  <div className={`h-9 w-9 rounded-lg ${c.iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`h-4 w-4 ${c.icon}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{op.type}</p>
+                    <p className="text-xs text-muted-foreground">{entries.length} entr{entries.length !== 1 ? "ies" : "y"}</p>
+                  </div>
+                  {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                </button>
+
+                {isOpen && (
+                  <div className="px-4 pb-4 border-t border-inherit pt-3 space-y-2">
+                    {entries.map((entry, idx) => (
+                      <div key={entry.id} className="flex items-center gap-2 bg-background/70 rounded-lg px-3 py-2 border border-inherit">
+                        <span className="text-xs font-medium flex-1 capitalize">{getEntryLabel(entry, idx)}</span>
+                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => navigate(`${op.wizardPath(areaId)}?opId=${entry.id}`)}>
+                          <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => navigate(op.summaryPath(areaId, entry.id))}>
+                          <FileText className="h-3.5 w-3.5 mr-1" /> View
+                        </Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" className="w-full mt-1" onClick={() => navigate(op.wizardPath(areaId))}>
+                      <Plus className="h-4 w-4 mr-2" /> Add Another {op.type}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Operation Picker Dialog */}
+      <Dialog open={showOpPicker} onOpenChange={setShowOpPicker}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Operation</DialogTitle>
+          </DialogHeader>
+          <div className="relative mt-1 mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Search operations..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {filteredPickerOps.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No operations found</p>
+            ) : filteredPickerOps.map(op => {
+              const Icon = op.icon;
+              const c = colorMap[op.color];
+              return (
+                <button
+                  key={op.type}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/40 transition-colors text-left"
+                  onClick={() => { setShowOpPicker(false); navigate(op.wizardPath(areaId)); }}
+                >
+                  <div className={`h-9 w-9 rounded-lg ${c.iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`h-4 w-4 ${c.icon}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{op.type}</p>
+                    <p className="text-xs text-muted-foreground">{op.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

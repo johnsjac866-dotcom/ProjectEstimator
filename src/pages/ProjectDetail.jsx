@@ -70,7 +70,11 @@ export default function ProjectDetail() {
           {project.client_name && <p className="text-muted-foreground text-sm">{project.client_name}</p>}
           {project.address && <p className="text-muted-foreground text-xs flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" />{project.address}</p>}
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(`/project-summary/${projectId}`)}>
+            View Summary
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Add Area</Button>
           </DialogTrigger>
@@ -82,6 +86,7 @@ export default function ProjectDetail() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {areas.length === 0 ? (
