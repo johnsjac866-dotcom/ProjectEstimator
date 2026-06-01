@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -18,6 +18,7 @@ const ALL_OPERATIONS = [
   { type: "Mulch", dataKey: "mulch_data", wizardPath: (id) => `/mulch-wizard/${id}`, summaryPath: (id, opId) => `/mulch-summary/${id}?opId=${opId}`, icon: Wind, color: "yellow", description: "Organic or stone mulch with SF/CY/weight calculations" },
   { type: "Drainage", dataKey: "drainage_data", wizardPath: (id) => `/drainage-wizard/${id}`, summaryPath: (id, opId) => `/drainage-summary/${id}?opId=${opId}`, icon: Droplets, color: "sky", description: "Buried downspout, curtain drain, french drain, dry stream bed" },
   { type: "Lawn Repair & Install", dataKey: "lawn_data", wizardPath: (id) => `/lawn-wizard/${id}`, summaryPath: (id, opId) => `/lawn-summary/${id}?opId=${opId}`, icon: Leaf, color: "lime", description: "Sod installation, seed install, or top dress lawn" },
+  { type: "Boulders/Accents & Structures", dataKey: "boulders_data", wizardPath: (id) => `/boulders-wizard/${id}`, summaryPath: (id, opId) => `/boulders-summary/${id}?opId=${opId}`, icon: Mountain, color: "stone", description: "Boulders, accents, fence, arbor, or raised garden beds" },
 ];
 
 function getAvailableOps(area) {
@@ -36,6 +37,7 @@ const colorMap = {
   yellow: { bg: "bg-yellow-50/50", border: "border-yellow-200", icon: "text-yellow-700", iconBg: "bg-yellow-100" },
   sky:    { bg: "bg-sky-50/50",    border: "border-sky-200",    icon: "text-sky-700",    iconBg: "bg-sky-100" },
   lime:   { bg: "bg-lime-50/50",   border: "border-lime-200",   icon: "text-lime-700",   iconBg: "bg-lime-100" },
+  stone:  { bg: "bg-stone-50/50", border: "border-stone-200", icon: "text-stone-700", iconBg: "bg-stone-100" },
 };
 
 function getEntryLabel(entry, idx) {

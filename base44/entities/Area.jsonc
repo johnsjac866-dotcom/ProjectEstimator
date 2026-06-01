@@ -22,7 +22,8 @@
         "Planting",
         "Mulch",
         "Drainage",
-        "Lawn Repair & Install"
+        "Lawn Repair & Install",
+        "Boulders/Accents & Structures"
       ],
       "title": "Operation Type"
     },
@@ -65,6 +66,10 @@
     "lawn_data": {
       "type": "string",
       "title": "Lawn Repair & Install Configuration Data"
+    },
+    "boulders_data": {
+      "type": "string",
+      "title": "Boulders/Accents & Structures Configuration Data"
     },
     "status": {
       "type": "string",

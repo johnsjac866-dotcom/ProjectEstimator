@@ -30,6 +30,8 @@ import DrainageWizard from './pages/DrainageWizard';
 import DrainageSummary from './pages/DrainageSummary';
 import LawnWizard from './pages/LawnWizard';
 import LawnSummary from './pages/LawnSummary';
+import BouldersWizard from './pages/BouldersWizard';
+import BouldersSummary from './pages/BouldersSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -82,6 +84,8 @@ const AuthenticatedApp = () => {
         <Route path="/drainage-summary/:areaId" element={<DrainageSummary />} />
         <Route path="/lawn-wizard/:areaId" element={<LawnWizard />} />
         <Route path="/lawn-summary/:areaId" element={<LawnSummary />} />
+        <Route path="/boulders-wizard/:areaId" element={<BouldersWizard />} />
+        <Route path="/boulders-summary/:areaId" element={<BouldersSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
