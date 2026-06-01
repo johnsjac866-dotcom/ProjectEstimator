@@ -89,13 +89,7 @@ export default function LawnWizard() {
     await base44.entities.Area.update(areaId, { lawn_data: JSON.stringify(updated) });
     const finalOpId = opId || newOpId;
     setSavedOpId(finalOpId);
-
-    // Prompt bed prep for Seed Install
-    if (lawnType === "Seed Install" && form.bed_prep_needed === "Yes") {
-      setShowBedPrepPrompt(true);
-    } else {
-      navigate(`/lawn-summary/${areaId}?opId=${finalOpId}`);
-    }
+    setShowBedPrepPrompt(true);
     setSaving(false);
   }
 
@@ -263,18 +257,18 @@ export default function LawnWizard() {
       )}
 
       {/* Bed Prep Prompt Dialog */}
-      <Dialog open={showBedPrepPrompt} onOpenChange={setShowBedPrepPrompt}>
+      <Dialog open={showBedPrepPrompt} onOpenChange={() => navigate(`/lawn-summary/${areaId}?opId=${savedOpId}`)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Add Bed Preparation?</DialogTitle>
+            <DialogTitle>Bed Preparation Required?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">Bed Preparation was marked as needed. Would you like to add a Bed Preparation operation now?</p>
+          <p className="text-sm text-muted-foreground">Is bed preparation required for this area? You can start a Bed Prep form now or dismiss to continue.</p>
           <div className="flex gap-3 mt-2">
             <Button className="flex-1" onClick={() => navigate(`/bed-prep-wizard/${areaId}`)}>
-              Yes, Add Bed Prep
+              Start Bed Prep Form
             </Button>
             <Button variant="outline" className="flex-1" onClick={() => navigate(`/lawn-summary/${areaId}?opId=${savedOpId}`)}>
-              Skip for Now
+              Dismiss
             </Button>
           </div>
         </DialogContent>
