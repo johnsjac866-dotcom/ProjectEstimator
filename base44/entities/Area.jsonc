@@ -18,7 +18,8 @@
         "Bed Preparation",
         "Rough Grading & Hauling",
         "Demolition & Removals",
-        "Bed Edging"
+        "Bed Edging",
+        "Planting"
       ],
       "title": "Operation Type"
     },
@@ -45,6 +46,10 @@
     "bed_edging_data": {
       "type": "string",
       "title": "Bed Edging Configuration Data"
+    },
+    "planting_data": {
+      "type": "string",
+      "title": "Planting Configuration Data"
     },
     "status": {
       "type": "string",

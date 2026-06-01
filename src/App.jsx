@@ -22,6 +22,8 @@ import DemolitionSummary from './pages/DemolitionSummary';
 import ProjectSummary from './pages/ProjectSummary';
 import BedEdgingWizard from './pages/BedEdgingWizard';
 import BedEdgingSummary from './pages/BedEdgingSummary';
+import PlantingWizard from './pages/PlantingWizard';
+import PlantingSummary from './pages/PlantingSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,6 +68,8 @@ const AuthenticatedApp = () => {
         <Route path="/demolition-summary/:areaId" element={<DemolitionSummary />} />
         <Route path="/bed-edging-wizard/:areaId" element={<BedEdgingWizard />} />
         <Route path="/bed-edging-summary/:areaId" element={<BedEdgingSummary />} />
+        <Route path="/planting-wizard/:areaId" element={<PlantingWizard />} />
+        <Route path="/planting-summary/:areaId" element={<PlantingSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
