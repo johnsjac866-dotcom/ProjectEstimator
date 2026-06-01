@@ -17,7 +17,8 @@
         "Site Management & Daily Cleanup",
         "Bed Preparation",
         "Rough Grading & Hauling",
-        "Demolition & Removals"
+        "Demolition & Removals",
+        "Bed Edging"
       ],
       "title": "Operation Type"
     },
@@ -40,6 +41,10 @@
     "demolition_data": {
       "type": "string",
       "title": "Demolition & Removals Configuration Data"
+    },
+    "bed_edging_data": {
+      "type": "string",
+      "title": "Bed Edging Configuration Data"
     },
     "status": {
       "type": "string",

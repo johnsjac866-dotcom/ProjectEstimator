@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
 const OP_CONFIG = {
@@ -11,6 +11,7 @@ const OP_CONFIG = {
   "Bed Preparation":                  { dataKey: "bed_prep_data",      summaryPath: (aId, opId) => `/bed-prep-summary/${aId}?opId=${opId}`,          wizardPath: (aId, opId) => opId ? `/bed-prep-wizard/${aId}?opId=${opId}` : `/bed-prep-wizard/${aId}`,                   newPath: (aId) => `/bed-prep-wizard/${aId}`,          icon: Leaf,          color: "green" },
   "Rough Grading & Hauling":          { dataKey: "rough_grading_data", summaryPath: (aId, opId) => `/rough-grading-summary/${aId}?opId=${opId}`,     wizardPath: (aId, opId) => opId ? `/rough-grading-wizard/${aId}?opId=${opId}` : `/rough-grading-wizard/${aId}`,         newPath: (aId) => `/rough-grading-wizard/${aId}`,     icon: Shovel,        color: "orange" },
   "Demolition & Removals":            { dataKey: "demolition_data",    summaryPath: (aId, opId) => `/demolition-summary/${aId}?opId=${opId}`,        wizardPath: (aId, opId) => opId ? `/demolition-wizard/${aId}?opId=${opId}` : `/demolition-wizard/${aId}`,             newPath: (aId) => `/demolition-wizard/${aId}`,        icon: Hammer,        color: "red" },
+  "Bed Edging":                       { dataKey: "bed_edging_data",    summaryPath: (aId, opId) => `/bed-edging-summary/${aId}?opId=${opId}`,          wizardPath: (aId, opId) => opId ? `/bed-edging-wizard/${aId}?opId=${opId}` : `/bed-edging-wizard/${aId}`,             newPath: (aId) => `/bed-edging-wizard/${aId}`,        icon: Scissors,      color: "purple" },
 };
 
 const colorMap = {
@@ -19,11 +20,12 @@ const colorMap = {
   green:  { icon: "text-green-700",  iconBg: "bg-green-100",  badge: "bg-green-50 text-green-700 border-green-200" },
   orange: { icon: "text-orange-700", iconBg: "bg-orange-100", badge: "bg-orange-50 text-orange-700 border-orange-200" },
   red:    { icon: "text-red-700",    iconBg: "bg-red-100",    badge: "bg-red-50 text-red-700 border-red-200" },
+  purple: { icon: "text-purple-700", iconBg: "bg-purple-100", badge: "bg-purple-50 text-purple-700 border-purple-200" },
 };
 
 function getOpsForArea(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") return ["Site Management & Daily Cleanup"];
-  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals"];
+  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging"];
 }
 
 function getEntryLabel(entry, idx) {

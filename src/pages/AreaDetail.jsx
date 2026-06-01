@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -13,6 +13,7 @@ const ALL_OPERATIONS = [
   { type: "Bed Preparation", dataKey: "bed_prep_data", wizardPath: (id) => `/bed-prep-wizard/${id}`, summaryPath: (id, opId) => `/bed-prep-summary/${id}?opId=${opId}`, icon: Leaf, color: "green", description: "Till, no-till, lawn or reprofiling configuration" },
   { type: "Rough Grading & Hauling", dataKey: "rough_grading_data", wizardPath: (id) => `/rough-grading-wizard/${id}`, summaryPath: (id, opId) => `/rough-grading-summary/${id}?opId=${opId}`, icon: Shovel, color: "orange", description: "Excavation, exportation, soil importation & spreading" },
   { type: "Demolition & Removals", dataKey: "demolition_data", wizardPath: (id) => `/demolition-wizard/${id}`, summaryPath: (id, opId) => `/demolition-summary/${id}?opId=${opId}`, icon: Hammer, color: "red", description: "Hardscape and vegetation/softscape demolition & removals" },
+  { type: "Bed Edging", dataKey: "bed_edging_data", wizardPath: (id) => `/bed-edging-wizard/${id}`, summaryPath: (id, opId) => `/bed-edging-summary/${id}?opId=${opId}`, icon: Scissors, color: "purple", description: "Brick, metal, bullet, natural edge, poly or limestone edging" },
 ];
 
 function getAvailableOps(area) {
@@ -26,6 +27,7 @@ const colorMap = {
   green:  { bg: "bg-green-50/50",  border: "border-green-200",  icon: "text-green-700",  iconBg: "bg-green-100" },
   orange: { bg: "bg-orange-50/50", border: "border-orange-200", icon: "text-orange-700", iconBg: "bg-orange-100" },
   red:    { bg: "bg-red-50/50",    border: "border-red-200",    icon: "text-red-700",    iconBg: "bg-red-100" },
+  purple: { bg: "bg-purple-50/50", border: "border-purple-200", icon: "text-purple-700", iconBg: "bg-purple-100" },
 };
 
 function getEntryLabel(entry, idx) {
