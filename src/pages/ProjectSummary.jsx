@@ -15,6 +15,7 @@ const OP_CONFIG = {
   "Planting":                         { dataKey: "planting_data",      summaryPath: (aId, opId) => `/planting-summary/${aId}?opId=${opId}`,            wizardPath: (aId, opId) => opId ? `/planting-wizard/${aId}?opId=${opId}` : `/planting-wizard/${aId}`,                 newPath: (aId) => `/planting-wizard/${aId}`,          icon: Sprout,        color: "teal" },
   "Mulch":                            { dataKey: "mulch_data",          summaryPath: (aId, opId) => `/mulch-summary/${aId}?opId=${opId}`,                wizardPath: (aId, opId) => opId ? `/mulch-wizard/${aId}?opId=${opId}` : `/mulch-wizard/${aId}`,                         newPath: (aId) => `/mulch-wizard/${aId}`,              icon: Wind,          color: "yellow" },
   "Drainage":                         { dataKey: "drainage_data",       summaryPath: (aId, opId) => `/drainage-summary/${aId}?opId=${opId}`,             wizardPath: (aId, opId) => opId ? `/drainage-wizard/${aId}?opId=${opId}` : `/drainage-wizard/${aId}`,                  newPath: (aId) => `/drainage-wizard/${aId}`,           icon: Droplets,      color: "sky" },
+  "Lawn Repair & Install":            { dataKey: "lawn_data",           summaryPath: (aId, opId) => `/lawn-summary/${aId}?opId=${opId}`,                  wizardPath: (aId, opId) => opId ? `/lawn-wizard/${aId}?opId=${opId}` : `/lawn-wizard/${aId}`,                          newPath: (aId) => `/lawn-wizard/${aId}`,               icon: Leaf,          color: "lime" },
 };
 
 const colorMap = {
@@ -27,11 +28,12 @@ const colorMap = {
   teal:   { icon: "text-teal-700",   iconBg: "bg-teal-100",   badge: "bg-teal-50 text-teal-700 border-teal-200" },
   yellow: { icon: "text-yellow-700", iconBg: "bg-yellow-100", badge: "bg-yellow-50 text-yellow-700 border-yellow-200" },
   sky:    { icon: "text-sky-700",    iconBg: "bg-sky-100",    badge: "bg-sky-50 text-sky-700 border-sky-200" },
+  lime:   { icon: "text-lime-700",   iconBg: "bg-lime-100",   badge: "bg-lime-50 text-lime-700 border-lime-200" },
 };
 
 function getOpsForArea(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") return ["Site Management & Daily Cleanup"];
-  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage"];
+  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install"];
 }
 
 function getEntryLabel(entry, idx) {

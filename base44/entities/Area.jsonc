@@ -21,7 +21,8 @@
         "Bed Edging",
         "Planting",
         "Mulch",
-        "Drainage"
+        "Drainage",
+        "Lawn Repair & Install"
       ],
       "title": "Operation Type"
     },
@@ -60,6 +61,10 @@
     "drainage_data": {
       "type": "string",
       "title": "Drainage Configuration Data"
+    },
+    "lawn_data": {
+      "type": "string",
+      "title": "Lawn Repair & Install Configuration Data"
     },
     "status": {
       "type": "string",
