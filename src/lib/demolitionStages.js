@@ -110,14 +110,13 @@ export const DEMO_FIELDS = {
       { key: "time_fill_holes",          label: "Time to fill holes (hrs)",         type: "text" },
       { key: "tons_material",            label: "Tons of material",                 type: "number" },
       { key: "loading_tarping_time",     label: "Loading / tarping time - brush & stumps combined (hrs)", type: "text" },
-      { key: "round_trip_brush",         label: "Round trip disposal time - brush", type: "text" },
+      { key: "round_trip_disposal",      label: "Round trip disposal time (hrs)",   type: "text" },
       { key: "stump_size",               label: "Stump size",                       type: "select", options: ["Tree", "Large", "Medium", "Small"] },
     ],
     details: [
       { key: "machine_use",              label: "Machine use?",                     type: "radio", options: ["Yes", "No"] },
       { key: "machine_type",             label: "Machine type",                     type: "radio", options: ["Dingo", "Vermeer"], condition: { key: "machine_use", value: "Yes" } },
       { key: "machine_access_width",     label: "Machine access path width (ft)",   type: "number", condition: { key: "machine_use", value: "Yes" } },
-      { key: "round_trip_stumps",        label: "Round trip disposal time - stumps", type: "text" },
     ],
   },
   perennials_dig: {
