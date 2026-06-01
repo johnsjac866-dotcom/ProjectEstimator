@@ -1,118 +1,171 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
-
-function Row({ label, value }) {
-  if (!value && value !== 0) return null;
-  return (
-    <div className="flex justify-between py-2 border-b last:border-0 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right max-w-[60%]">{value}</span>
-    </div>
-  );
-}
-
-function Note({ children }) {
-  return <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 mt-2">⚠️ {children}</div>;
-}
 
 const OBSTRUCTION_NOTE = "Check for tree roots, pipes, or other obstructions within top three inches of soil";
 
+const EDGE_TYPE_FIELDS = {
+  "Brick": [
+    { label: "Width", key: "brick_width" },
+    { label: "Linear Feet — Straight", key: "brick_lf_straight" },
+    { label: "Linear Feet — Curved", key: "brick_lf_curved" },
+    { label: "Color", key: "brick_color" },
+    { label: "Ends cut to reduce gaps?", key: "brick_ends_cut" },
+  ],
+  "Metal": [
+    { label: "Metal Type", key: "metal_type" },
+    { label: "Linear Feet", key: "metal_lf" },
+    { label: "Corners", key: "metal_corners" },
+    { label: "Splicers", key: "metal_splicers" },
+  ],
+  "Bullet": [
+    { label: "Linear Feet", key: "bullet_lf" },
+    { label: "Color", key: "bullet_color" },
+  ],
+  "Natural Edge": [
+    { label: "Method", key: "natural_method" },
+    { label: "Linear Feet", key: "natural_lf" },
+  ],
+  "Poly": [
+    { label: "Linear Feet", key: "poly_lf" },
+    { label: "Corners — 90°", key: "poly_corners_90" },
+    { label: "Corners — 45°", key: "poly_corners_45" },
+    { label: "Splicers", key: "poly_splicers" },
+  ],
+  "Snapped Limestone": [
+    { label: "Linear Feet", key: "snapped_lf" },
+    { label: "Ends cut to reduce gaps?", key: "snapped_ends_cut" },
+    { label: "Corners", key: "snapped_corners" },
+    { label: "Splicers", key: "snapped_splicers" },
+  ],
+};
+
+const CATEGORY_MAP = {
+  "Brick":             "Bed Edging - Brick",
+  "Metal":             null, // resolved dynamically
+  "Bullet":            "Bed Edging - Bullet",
+  "Natural Edge":      "Bed Edging - Natural Edge",
+  "Poly":              "Bed Edging - Poly",
+  "Snapped Limestone": "Bed Edging - Snapped Limestone",
+};
+
+function getCategory(data) {
+  if (data.edge_type === "Metal") return `Bed Edging - ${data.metal_type || "Metal"}`;
+  return CATEGORY_MAP[data.edge_type] || null;
+}
+
 export default function BedEdgingSummary() {
   const { areaId } = useParams();
-  const navigate = useNavigate();
+  const opId = new URLSearchParams(window.location.search).get("opId");
   const [area, setArea] = useState(null);
   const [project, setProject] = useState(null);
-  const [entry, setEntry] = useState(null);
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const opId = urlParams.get("opId");
+  const [data, setData] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       const a = await base44.entities.Area.get(areaId);
       setArea(a);
-      const ops = parseOps(a.bed_edging_data);
-      const found = opId ? ops.find(o => o.id === opId) : ops[ops.length - 1];
-      setEntry(found || null);
       const p = await base44.entities.Project.get(a.project_id);
       setProject(p);
+      const ops = parseOps(a.bed_edging_data);
+      const entry = opId ? ops.find(o => o.id === opId) : ops[0];
+      setData(entry || {});
+      setLoading(false);
     })();
-  }, [areaId, opId]);
+  }, [areaId]);
 
-  if (!area || !entry) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
 
-  const { edge_type } = entry;
+  const fields = EDGE_TYPE_FIELDS[data.edge_type] || [];
+  const category = getCategory(data);
+  const hasObstructionNote = ["Brick", "Metal", "Bullet", "Poly", "Snapped Limestone"].includes(data.edge_type);
+  const hasRollingNote = data.edge_type === "Metal";
 
   return (
-    <div className="max-w-lg">
-      <Link to={`/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-        <ArrowLeft className="h-4 w-4" /> Back to Area
-      </Link>
-
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Bed Edging Summary</p>
-          <h1 className="text-2xl font-bold tracking-tight">{edge_type}</h1>
-          {project && <p className="text-sm text-muted-foreground mt-0.5">{project.name} · {area.name}</p>}
-        </div>
-        <Button variant="outline" size="sm" onClick={() => navigate(`/bed-edging-wizard/${areaId}?opId=${entry.id}`)}>
-          <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <Link to={`/project-summary/${area?.project_id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Back to Project Summary
+        </Link>
+        <Button variant="outline" onClick={() => window.print()}>
+          <Printer className="h-4 w-4 mr-2" /> Print
         </Button>
       </div>
 
-      <div className="rounded-xl border p-4 space-y-0">
-        <Row label="Edge Type" value={edge_type} />
+      <div className="bg-card border rounded-xl p-8 print:border-0 space-y-6">
+        {/* Header */}
+        <div className="border-b pb-6">
+          <h1 className="text-2xl font-bold">Bed Edging Summary</h1>
+          <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+            <div><span className="text-muted-foreground">Project:</span> <span className="font-medium">{project?.name}</span></div>
+            <div><span className="text-muted-foreground">Client:</span> <span className="font-medium">{project?.client_name || "—"}</span></div>
+            <div><span className="text-muted-foreground">Address:</span> <span className="font-medium">{project?.address || "—"}</span></div>
+            <div><span className="text-muted-foreground">Area:</span> <span className="font-medium">{area?.name}</span></div>
+          </div>
+        </div>
 
-        {edge_type === "Brick" && <>
-          <Row label="Width" value={entry.brick_width} />
-          <Row label="Linear Feet — Straight" value={entry.brick_lf_straight} />
-          <Row label="Linear Feet — Curved" value={entry.brick_lf_curved} />
-          <Row label="Color" value={entry.brick_color} />
-          <Row label="Ends cut to reduce gaps?" value={entry.brick_ends_cut} />
-          <Note>{OBSTRUCTION_NOTE}</Note>
-        </>}
+        {/* Estimate Category */}
+        {category && (
+          <div>
+            <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2">Estimate Category</h2>
+            <div className="flex items-center gap-2 text-sm py-1.5 px-3 rounded bg-purple-50 border border-purple-200 text-purple-800">
+              <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+              {category}
+            </div>
+          </div>
+        )}
 
-        {edge_type === "Metal" && <>
-          <Row label="Metal Type" value={entry.metal_type} />
-          <Row label="Linear Feet" value={entry.metal_lf} />
-          <Row label="Corners" value={entry.metal_corners} />
-          <Row label="Splicers" value={entry.metal_splicers} />
-          <Note>{OBSTRUCTION_NOTE}</Note>
-          <Note>Cannot do with rolling topography</Note>
-        </>}
+        {/* Edge Type label */}
+        <div className="text-sm">
+          <span className="text-muted-foreground">Edge Type:</span>{" "}
+          <span className="font-medium text-primary">{data.edge_type}</span>
+        </div>
 
-        {edge_type === "Bullet" && <>
-          <Row label="Linear Feet" value={entry.bullet_lf} />
-          <Row label="Color" value={entry.bullet_color} />
-          <Note>{OBSTRUCTION_NOTE}</Note>
-        </>}
+        {/* Details */}
+        {fields.length > 0 && (
+          <div className="border rounded-lg p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
+            <div className="space-y-2">
+              {fields.map(field => {
+                const val = data[field.key];
+                if (!val && val !== 0) return null;
+                return (
+                  <div key={field.key} className="flex items-start gap-2 text-sm">
+                    <span className="h-2 w-2 rounded-full bg-purple-400 flex-shrink-0 mt-1.5" />
+                    <span className="text-muted-foreground">{field.label}:</span>
+                    <span className="font-medium">{String(val)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-        {edge_type === "Natural Edge" && <>
-          <Row label="Method" value={entry.natural_method} />
-          <Row label="Linear Feet" value={entry.natural_lf} />
-        </>}
-
-        {edge_type === "Poly" && <>
-          <Row label="Linear Feet" value={entry.poly_lf} />
-          <Row label="Corners — 90°" value={entry.poly_corners_90} />
-          <Row label="Corners — 45°" value={entry.poly_corners_45} />
-          <Row label="Splicers" value={entry.poly_splicers} />
-          <Note>{OBSTRUCTION_NOTE}</Note>
-        </>}
-
-        {edge_type === "Snapped Limestone" && <>
-          <Row label="Linear Feet" value={entry.snapped_lf} />
-          <Row label="Ends cut to reduce gaps?" value={entry.snapped_ends_cut} />
-          <Row label="Corners" value={entry.snapped_corners} />
-          <Row label="Splicers" value={entry.snapped_splicers} />
-          <Note>{OBSTRUCTION_NOTE}</Note>
-        </>}
-
-        {entry.notes && <Row label="Notes" value={entry.notes} />}
+        {/* Notes */}
+        {(data.notes || hasObstructionNote || hasRollingNote) && (
+          <div className="border rounded-lg p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Notes</h3>
+            <div className="space-y-2">
+              {data.notes && <p className="text-sm">{data.notes}</p>}
+              {hasObstructionNote && (
+                <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <span className="flex-shrink-0">⚠️</span>
+                  <span>{OBSTRUCTION_NOTE}</span>
+                </div>
+              )}
+              {hasRollingNote && (
+                <div className="flex items-start gap-2 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  <span className="flex-shrink-0">⚠️</span>
+                  <span>Cannot do with rolling topography</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
