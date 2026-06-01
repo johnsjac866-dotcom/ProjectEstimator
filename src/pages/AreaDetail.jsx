@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -57,6 +57,24 @@ export default function AreaDetail() {
     const a = await base44.entities.Area.get(areaId);
     setArea(a);
     setLoading(false);
+    // Auto-set In Progress if operations exist but status is Not Started
+    const ops = ALL_OPERATIONS.filter(op => op.type !== "Site Management & Daily Cleanup");
+    const allOps = [...ops, ALL_OPERATIONS.find(o => o.type === "Site Management & Daily Cleanup")].filter(Boolean);
+    const hasOps = allOps.some(op => parseOps(a[op.dataKey]).length > 0);
+    if (hasOps && (!a.status || a.status === "Not Started")) {
+      await base44.entities.Area.update(areaId, { status: "In Progress" });
+      setArea({ ...a, status: "In Progress" });
+    }
+  }
+
+  async function markComplete() {
+    await base44.entities.Area.update(areaId, { status: "Complete" });
+    setArea(a => ({ ...a, status: "Complete" }));
+  }
+
+  async function markInProgress() {
+    await base44.entities.Area.update(areaId, { status: "In Progress" });
+    setArea(a => ({ ...a, status: "In Progress" }));
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
@@ -80,13 +98,29 @@ export default function AreaDetail() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight mb-1">{area.name}</h1>
-          <p className="text-muted-foreground text-sm">
-            {totalEntries === 0 ? "No operations configured yet" : `${totalEntries} operation${totalEntries !== 1 ? "s" : ""} configured`}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${area.status === "Complete" ? "bg-emerald-100 text-emerald-700" : area.status === "In Progress" ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"}`}>
+              {area.status || "Not Started"}
+            </span>
+            <span className="text-muted-foreground text-sm">
+              {totalEntries === 0 ? "No operations configured yet" : `${totalEntries} operation${totalEntries !== 1 ? "s" : ""} configured`}
+            </span>
+          </div>
         </div>
-        <Button onClick={() => { setSearch(""); setShowOpPicker(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Add Operation
-        </Button>
+        <div className="flex gap-2">
+          {area.status !== "Complete" ? (
+            <Button variant="outline" onClick={markComplete}>
+              <CheckCircle2 className="h-4 w-4 mr-2" /> Mark Complete
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={markInProgress}>
+              Reopen
+            </Button>
+          )}
+          <Button onClick={() => { setSearch(""); setShowOpPicker(true); }}>
+            <Plus className="h-4 w-4 mr-2" /> Add Operation
+          </Button>
+        </div>
       </div>
 
       {configuredOps.length === 0 ? (
