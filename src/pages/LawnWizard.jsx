@@ -68,9 +68,10 @@ export default function LawnWizard() {
   const sf = length > 0 && width > 0 ? (length * width) : null;
   const sfDisplay = sf ? sf.toFixed(1) : null;
 
-  // Sod: rolls = sf / 10, pins = rolls * 3
+  // Sod: rolls = sf / 10, pins = rolls * 3 (only on slope), pallets = 1 per 15 rolls if >= 15
   const rolls = sf ? Math.ceil(sf / 10) : null;
-  const pins = rolls ? rolls * 3 : null;
+  const pins = (rolls && form.on_slope === "Yes") ? rolls * 3 : null;
+  const pallets = (rolls && rolls >= 15) ? Math.ceil(rolls / 15) : null;
 
   // Fertilizer SF defaults to same SF
   const fertSF = form.fertilizer_sf_override || sfDisplay;
@@ -79,7 +80,7 @@ export default function LawnWizard() {
     setSaving(true);
     const ops = parseOps(area.lawn_data);
     const newOpId = generateId();
-    const entry = { ...form, lawn_type: lawnType, sub_type: lawnType, sf: sfDisplay, rolls, pins };
+    const entry = { ...form, lawn_type: lawnType, sub_type: lawnType, sf: sfDisplay, rolls, pins, pallets };
     let updated;
     if (opId) {
       updated = ops.map(o => o.id === opId ? entry : o);
@@ -143,6 +144,13 @@ export default function LawnWizard() {
           {lawnType === "Sod Installation" && (
             <>
               {rolls && <CalcBox label="Rolls Needed (10 SF/roll)" value={rolls} unit="rolls" />}
+              {pallets && <CalcBox label="Pallets Needed (1 per 15 rolls)" value={pallets} unit="pallets" />}
+
+              <div>
+                <Label>On a Slope?</Label>
+                <SelectButtons value={form.on_slope} onChange={v => set("on_slope", v)} options={["Yes", "No"]} />
+              </div>
+
               {pins && <CalcBox label="Pins Needed (3/roll)" value={pins} unit="pins" />}
 
               <div>
