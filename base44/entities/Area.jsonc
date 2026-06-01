@@ -20,7 +20,8 @@
         "Demolition & Removals",
         "Bed Edging",
         "Planting",
-        "Mulch"
+        "Mulch",
+        "Drainage"
       ],
       "title": "Operation Type"
     },
@@ -55,6 +56,10 @@
     "mulch_data": {
       "type": "string",
       "title": "Mulch Configuration Data"
+    },
+    "drainage_data": {
+      "type": "string",
+      "title": "Drainage Configuration Data"
     },
     "status": {
       "type": "string",

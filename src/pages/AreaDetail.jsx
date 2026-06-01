@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -16,6 +16,7 @@ const ALL_OPERATIONS = [
   { type: "Bed Edging", dataKey: "bed_edging_data", wizardPath: (id) => `/bed-edging-wizard/${id}`, summaryPath: (id, opId) => `/bed-edging-summary/${id}?opId=${opId}`, icon: Scissors, color: "purple", description: "Brick, metal, bullet, natural edge, poly or limestone edging" },
   { type: "Planting", dataKey: "planting_data", wizardPath: (id) => `/planting-wizard/${id}`, summaryPath: (id, opId) => `/planting-summary/${id}?opId=${opId}`, icon: Sprout, color: "teal", description: "Trees & shrubs, perennials, bulbs or annuals planting" },
   { type: "Mulch", dataKey: "mulch_data", wizardPath: (id) => `/mulch-wizard/${id}`, summaryPath: (id, opId) => `/mulch-summary/${id}?opId=${opId}`, icon: Wind, color: "yellow", description: "Organic or stone mulch with SF/CY/weight calculations" },
+  { type: "Drainage", dataKey: "drainage_data", wizardPath: (id) => `/drainage-wizard/${id}`, summaryPath: (id, opId) => `/drainage-summary/${id}?opId=${opId}`, icon: Droplets, color: "sky", description: "Buried downspout, curtain drain, french drain, dry stream bed" },
 ];
 
 function getAvailableOps(area) {
@@ -32,6 +33,7 @@ const colorMap = {
   purple: { bg: "bg-purple-50/50", border: "border-purple-200", icon: "text-purple-700", iconBg: "bg-purple-100" },
   teal:   { bg: "bg-teal-50/50",   border: "border-teal-200",   icon: "text-teal-700",   iconBg: "bg-teal-100" },
   yellow: { bg: "bg-yellow-50/50", border: "border-yellow-200", icon: "text-yellow-700", iconBg: "bg-yellow-100" },
+  sky:    { bg: "bg-sky-50/50",    border: "border-sky-200",    icon: "text-sky-700",    iconBg: "bg-sky-100" },
 };
 
 function getEntryLabel(entry, idx) {

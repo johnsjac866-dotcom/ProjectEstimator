@@ -26,6 +26,8 @@ import PlantingWizard from './pages/PlantingWizard';
 import PlantingSummary from './pages/PlantingSummary';
 import MulchWizard from './pages/MulchWizard';
 import MulchSummary from './pages/MulchSummary';
+import DrainageWizard from './pages/DrainageWizard';
+import DrainageSummary from './pages/DrainageSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -74,6 +76,8 @@ const AuthenticatedApp = () => {
         <Route path="/planting-summary/:areaId" element={<PlantingSummary />} />
         <Route path="/mulch-wizard/:areaId" element={<MulchWizard />} />
         <Route path="/mulch-summary/:areaId" element={<MulchSummary />} />
+        <Route path="/drainage-wizard/:areaId" element={<DrainageWizard />} />
+        <Route path="/drainage-summary/:areaId" element={<DrainageSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
