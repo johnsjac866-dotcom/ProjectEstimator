@@ -24,6 +24,8 @@ import BedEdgingWizard from './pages/BedEdgingWizard';
 import BedEdgingSummary from './pages/BedEdgingSummary';
 import PlantingWizard from './pages/PlantingWizard';
 import PlantingSummary from './pages/PlantingSummary';
+import MulchWizard from './pages/MulchWizard';
+import MulchSummary from './pages/MulchSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -70,6 +72,8 @@ const AuthenticatedApp = () => {
         <Route path="/bed-edging-summary/:areaId" element={<BedEdgingSummary />} />
         <Route path="/planting-wizard/:areaId" element={<PlantingWizard />} />
         <Route path="/planting-summary/:areaId" element={<PlantingSummary />} />
+        <Route path="/mulch-wizard/:areaId" element={<MulchWizard />} />
+        <Route path="/mulch-summary/:areaId" element={<MulchSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors, Sprout } from "lucide-react";
+import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors, Sprout, Wind } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
 const OP_CONFIG = {
@@ -13,6 +13,7 @@ const OP_CONFIG = {
   "Demolition & Removals":            { dataKey: "demolition_data",    summaryPath: (aId, opId) => `/demolition-summary/${aId}?opId=${opId}`,        wizardPath: (aId, opId) => opId ? `/demolition-wizard/${aId}?opId=${opId}` : `/demolition-wizard/${aId}`,             newPath: (aId) => `/demolition-wizard/${aId}`,        icon: Hammer,        color: "red" },
   "Bed Edging":                       { dataKey: "bed_edging_data",    summaryPath: (aId, opId) => `/bed-edging-summary/${aId}?opId=${opId}`,          wizardPath: (aId, opId) => opId ? `/bed-edging-wizard/${aId}?opId=${opId}` : `/bed-edging-wizard/${aId}`,             newPath: (aId) => `/bed-edging-wizard/${aId}`,        icon: Scissors,      color: "purple" },
   "Planting":                         { dataKey: "planting_data",      summaryPath: (aId, opId) => `/planting-summary/${aId}?opId=${opId}`,            wizardPath: (aId, opId) => opId ? `/planting-wizard/${aId}?opId=${opId}` : `/planting-wizard/${aId}`,                 newPath: (aId) => `/planting-wizard/${aId}`,          icon: Sprout,        color: "teal" },
+  "Mulch":                            { dataKey: "mulch_data",          summaryPath: (aId, opId) => `/mulch-summary/${aId}?opId=${opId}`,                wizardPath: (aId, opId) => opId ? `/mulch-wizard/${aId}?opId=${opId}` : `/mulch-wizard/${aId}`,                         newPath: (aId) => `/mulch-wizard/${aId}`,              icon: Wind,          color: "yellow" },
 };
 
 const colorMap = {
@@ -23,11 +24,12 @@ const colorMap = {
   red:    { icon: "text-red-700",    iconBg: "bg-red-100",    badge: "bg-red-50 text-red-700 border-red-200" },
   purple: { icon: "text-purple-700", iconBg: "bg-purple-100", badge: "bg-purple-50 text-purple-700 border-purple-200" },
   teal:   { icon: "text-teal-700",   iconBg: "bg-teal-100",   badge: "bg-teal-50 text-teal-700 border-teal-200" },
+  yellow: { icon: "text-yellow-700", iconBg: "bg-yellow-100", badge: "bg-yellow-50 text-yellow-700 border-yellow-200" },
 };
 
 function getOpsForArea(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") return ["Site Management & Daily Cleanup"];
-  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting"];
+  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch"];
 }
 
 function getEntryLabel(entry, idx) {
