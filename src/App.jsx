@@ -35,6 +35,8 @@ import BouldersWizard from './pages/BouldersWizard';
 import BouldersSummary from './pages/BouldersSummary';
 import HardscapeRepairWizard from './pages/HardscapeRepairWizard';
 import HardscapeRepairSummary from './pages/HardscapeRepairSummary';
+import MaintenanceWizard from './pages/MaintenanceWizard';
+import MaintenanceSummary from './pages/MaintenanceSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -92,6 +94,8 @@ const AuthenticatedApp = () => {
         <Route path="/boulders-summary/:areaId" element={<BouldersSummary />} />
         <Route path="/hardscape-repair-wizard/:areaId" element={<HardscapeRepairWizard />} />
         <Route path="/hardscape-repair-summary/:areaId" element={<HardscapeRepairSummary />} />
+        <Route path="/maintenance-wizard/:areaId" element={<MaintenanceWizard />} />
+        <Route path="/maintenance-summary/:areaId" element={<MaintenanceSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

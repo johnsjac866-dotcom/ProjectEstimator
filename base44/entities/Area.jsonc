@@ -24,7 +24,8 @@
         "Drainage",
         "Lawn Repair & Install",
         "Boulders/Accents & Structures",
-        "Hardscape - Repair Existing"
+        "Hardscape - Repair Existing",
+        "Maintenance"
       ],
       "title": "Operation Type"
     },
@@ -75,6 +76,10 @@
     "hardscape_repair_data": {
       "type": "string",
       "title": "Hardscape Repair Existing Configuration Data"
+    },
+    "maintenance_data": {
+      "type": "string",
+      "title": "Maintenance Configuration Data"
     },
     "status": {
       "type": "string",

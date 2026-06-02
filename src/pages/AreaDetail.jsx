@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2 } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2, Wrench } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -20,6 +20,7 @@ const ALL_OPERATIONS = [
   { type: "Lawn Repair & Install", dataKey: "lawn_data", wizardPath: (id) => `/lawn-wizard/${id}`, summaryPath: (id, opId) => `/lawn-summary/${id}?opId=${opId}`, icon: Leaf, color: "lime", description: "Sod installation, seed install, or top dress lawn" },
   { type: "Boulders/Accents & Structures", dataKey: "boulders_data", wizardPath: (id) => `/boulders-wizard/${id}`, summaryPath: (id, opId) => `/boulders-summary/${id}?opId=${opId}`, icon: Mountain, color: "stone", description: "Boulders, accents, fence, arbor, or raised garden beds" },
   { type: "Hardscape - Repair Existing", dataKey: "hardscape_repair_data", wizardPath: (id) => `/hardscape-repair-wizard/${id}`, summaryPath: (id, opId) => `/hardscape-repair-summary/${id}?opId=${opId}`, icon: Hammer, color: "cyan", description: "Repair existing patio or walkway — surface, base, leveling & edge" },
+  { type: "Maintenance", dataKey: "maintenance_data", wizardPath: (id) => `/maintenance-wizard/${id}`, summaryPath: (id, opId) => `/maintenance-summary/${id}?opId=${opId}`, icon: Wrench, color: "rose", description: "Weeding and general maintenance tasks" },
 ];
 
 function getAvailableOps(area) {
@@ -40,6 +41,7 @@ const colorMap = {
   lime:   { bg: "bg-lime-50/50",   border: "border-lime-200",   icon: "text-lime-700",   iconBg: "bg-lime-100" },
   stone:  { bg: "bg-stone-50/50", border: "border-stone-200", icon: "text-stone-700", iconBg: "bg-stone-100" },
   cyan:   { bg: "bg-cyan-50/50",  border: "border-cyan-200",  icon: "text-cyan-700",  iconBg: "bg-cyan-100" },
+  rose:   { bg: "bg-rose-50/50",  border: "border-rose-200",  icon: "text-rose-700",  iconBg: "bg-rose-100" },
 };
 
 function getEntryLabel(entry, idx) {
