@@ -92,7 +92,11 @@ function entryDescription(dataKey, entry) {
   }
   if (dataKey === "bed_edging_data") {
     const sub = entry.sub_type || entry.edge_type || "";
-    return [sub, fmt("LF", entry.lf), fmt("Color", entry.color), fmt("Height", entry.height), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    const lfVal = entry.metal_lf || entry.bullet_lf || entry.natural_lf || entry.poly_lf || entry.snapped_lf ||
+      (entry.brick_lf_straight || entry.brick_lf_curved
+        ? parseFloat(entry.brick_lf_straight || 0) + parseFloat(entry.brick_lf_curved || 0)
+        : null);
+    return [sub, lfVal ? `LF: ${lfVal}` : null, fmt("Color", entry.color || entry.brick_color || entry.bullet_color), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "mulch_data") {
     const sub = entry.sub_type || entry.mulch_type || "";
@@ -149,7 +153,11 @@ function totalsFromEntries(dataKey, entries) {
   entries.forEach(e => {
     const sfVal = parseFloat(e.sf || e.treatment_sf || e.total_sf || 0);
     const cyVal = parseFloat(e.cy || e.cy_fluff || e.total_cy || 0);
-    const lfVal = parseFloat(e.lf || e.new_edge_lf || 0);
+    // Bed edging stores LF in type-specific fields
+    const edgingLF = parseFloat(e.metal_lf || 0) + parseFloat(e.bullet_lf || 0) +
+      parseFloat(e.natural_lf || 0) + parseFloat(e.poly_lf || 0) + parseFloat(e.snapped_lf || 0) +
+      parseFloat(e.brick_lf_straight || 0) + parseFloat(e.brick_lf_curved || 0);
+    const lfVal = parseFloat(e.lf || e.new_edge_lf || 0) + edgingLF;
     const hrsVal = parseFloat(e.time_estimate || 0);
     const rollsVal = parseFloat(e.rolls || 0);
     const palletsVal = parseFloat(e.pallets || 0);
