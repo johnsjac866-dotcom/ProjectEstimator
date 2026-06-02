@@ -2,15 +2,10 @@ export const SM_STAGES = [
   {
     id: "tax_status",
     title: "Tax Status",
-    description: "Select whether Site Management & Daily Cleanup items are taxable or non-taxable.",
+    description: "Select all that apply — Non-Taxable, Taxable, or both.",
     fields: [
-      {
-        key: "tax_status",
-        label: "Tax Status",
-        type: "radio",
-        options: ["Non-Taxable", "Taxable"],
-        required: true,
-      },
+      { key: "tax_status_nontaxable", label: "Non-Taxable", type: "checkbox" },
+      { key: "tax_status_taxable",    label: "Taxable",     type: "checkbox" },
     ],
   },
   {

@@ -16,7 +16,7 @@ const CATEGORY_ORDER = [
   { label: "Drainage",                                                 taxable: false, dataKey: "drainage_data",      match: () => true },
   { label: "Walkway / Patio",                                         taxable: false, dataKey: "patio_data",         match: () => true },
   { label: "Structures - Fencing/Arbors/Gazebos/Pavilions, Etc",     taxable: false, dataKey: "boulders_data",      match: e => ["Structures - Fence","Structures - Arbor"].includes(e.sub_type) },
-  { label: "Site Management & Daily Cleanup (Non-Taxable)",           taxable: false, dataKey: "site_mgmt_data",     match: () => true },
+  { label: "Site Management & Daily Cleanup (Non-Taxable)",           taxable: false, dataKey: "site_mgmt_data",     match: e => !!e.tax_status_nontaxable || e.tax_status === "Non-Taxable" },
   // ── TAXABLE ──
   { label: "Demolition & Removals - Vegetation & Softscape Items",   taxable: true,  dataKey: "demolition_data",    match: e => e.group === "vegetation" },
   { label: "Bed Preparation - Planting Bed",                         taxable: true,  dataKey: "bed_prep_data",      match: e => ["till","no_till","reprofiling"].includes(e.main_type) },
@@ -29,7 +29,7 @@ const CATEGORY_ORDER = [
   { label: "Planting - Perennials",                                  taxable: true,  dataKey: "planting_data",      match: e => e.plant_category === "Perennials" },
   { label: "Planting - Bulbs",                                       taxable: true,  dataKey: "planting_data",      match: e => e.plant_category === "Bulbs" },
   { label: "Lawn Repair & Install",                                  taxable: true,  dataKey: "lawn_data",          match: () => true },
-  { label: "Site Management & Daily Cleanup (Taxable)",              taxable: true,  dataKey: "site_mgmt_data",     match: () => false }, // placeholder for future
+  { label: "Site Management & Daily Cleanup (Taxable)",              taxable: true,  dataKey: "site_mgmt_data",     match: e => !!e.tax_status_taxable || e.tax_status === "Taxable" },
 ];
 
 // Map a single entry to its human-readable key fields for display
