@@ -157,6 +157,26 @@ function totalsFromEntries(dataKey, entries) {
   return parts.join("  ·  ");
 }
 
+// Get a grouping key (human-readable sub-type label) for an entry
+function getSubTypeKey(dataKey, entry) {
+  if (dataKey === "demolition_data") return entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "Other";
+  if (dataKey === "rough_grading_data") return entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "Other";
+  if (dataKey === "drainage_data") return entry.sub_type || entry.drainage_type || "Other";
+  if (dataKey === "patio_data") return entry.sub_type || entry.patio_type || "Other";
+  if (dataKey === "site_mgmt_data") return "Site Management";
+  if (dataKey === "bed_prep_data") {
+    const cat = entry.category ? entry.category.replace(/_/g, " ") : "";
+    const sub = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
+    return [cat, sub].filter(Boolean).join(" — ") || "Other";
+  }
+  if (dataKey === "planting_data") return entry.plant_category || entry.sub_type || "Other";
+  if (dataKey === "bed_edging_data") return entry.sub_type || entry.edge_type || "Other";
+  if (dataKey === "mulch_data") return entry.sub_type || entry.mulch_type || "Other";
+  if (dataKey === "lawn_data") return entry.sub_type || entry.lawn_type || "Other";
+  if (dataKey === "boulders_data") return entry.sub_type || "Other";
+  return "Other";
+}
+
 export default function EstimationSummary() {
   const { projectId } = useParams();
   const [project, setProject] = useState(null);
@@ -220,6 +240,10 @@ export default function EstimationSummary() {
                     <p className="font-semibold text-sm">{cat.label}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {cat.rows.length} entr{cat.rows.length !== 1 ? "ies" : "y"}
+                      {(() => {
+                        const subKeys = [...new Set(cat.rows.map(r => getSubTypeKey(cat.dataKey, r.entry)))];
+                        return subKeys.length > 1 ? <span className="ml-2">· {subKeys.length} sub-types</span> : null;
+                      })()}
                       {totals ? <span className="ml-2 font-medium text-foreground">{totals}</span> : null}
                     </p>
                   </div>
@@ -227,32 +251,60 @@ export default function EstimationSummary() {
                 </button>
 
                 {isOpen && (
-                  <div className="border-t divide-y bg-muted/20">
-                    {/* Group by area */}
-                    {Object.entries(
-                      cat.rows.reduce((acc, { area, entry }) => {
-                        if (!acc[area.id]) acc[area.id] = { area, entries: [] };
-                        acc[area.id].entries.push(entry);
-                        return acc;
-                      }, {})
-                    ).map(([areaId, { area, entries }]) => {
-                      const areaTotal = totalsFromEntries(cat.dataKey, entries);
-                      return (
-                        <div key={areaId} className="px-4 py-3">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                            {area.name}
-                            {areaTotal ? <span className="ml-2 normal-case font-medium text-foreground">{areaTotal}</span> : null}
-                          </p>
-                          <div className="space-y-1 ml-2">
-                            {entries.map((entry, idx) => (
-                              <div key={entry.id || idx} className="text-xs bg-background rounded-lg px-3 py-1.5 border text-muted-foreground">
-                                {entryDescription(cat.dataKey, entry) || `Entry #${idx + 1}`}
+                  <div className="border-t bg-muted/20">
+                    {/* Group by sub-type first, then by area within each sub-type */}
+                    {(() => {
+                      // Build: { subTypeKey → { entries: [{area,entry}], label } }
+                      const subGroups = {};
+                      cat.rows.forEach(({ area, entry }) => {
+                        const key = getSubTypeKey(cat.dataKey, entry);
+                        if (!subGroups[key]) subGroups[key] = { label: key, rows: [] };
+                        subGroups[key].rows.push({ area, entry });
+                      });
+                      const subGroupEntries = Object.entries(subGroups);
+                      const multipleSubTypes = subGroupEntries.length > 1;
+
+                      return subGroupEntries.map(([subKey, { label, rows }]) => {
+                        const subTotal = totalsFromEntries(cat.dataKey, rows.map(r => r.entry));
+                        // Group rows by area within this sub-type
+                        const byArea = rows.reduce((acc, { area, entry }) => {
+                          if (!acc[area.id]) acc[area.id] = { area, entries: [] };
+                          acc[area.id].entries.push(entry);
+                          return acc;
+                        }, {});
+
+                        return (
+                          <div key={subKey} className={multipleSubTypes ? "border-t first:border-t-0" : ""}>
+                            {multipleSubTypes && (
+                              <div className="flex items-center gap-2 px-4 py-2 bg-muted/40">
+                                <span className="text-xs font-bold text-foreground">{label}</span>
+                                {subTotal && <span className="text-xs text-muted-foreground">— {subTotal}</span>}
                               </div>
-                            ))}
+                            )}
+                            <div className="divide-y">
+                              {Object.entries(byArea).map(([areaId, { area, entries }]) => {
+                                const areaTotal = totalsFromEntries(cat.dataKey, entries);
+                                return (
+                                  <div key={areaId} className="px-4 py-3">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                                      {area.name}
+                                      {areaTotal ? <span className="ml-2 normal-case font-medium text-foreground">{areaTotal}</span> : null}
+                                    </p>
+                                    <div className="space-y-1 ml-2">
+                                      {entries.map((entry, idx) => (
+                                        <div key={entry.id || idx} className="text-xs bg-background rounded-lg px-3 py-1.5 border text-muted-foreground">
+                                          {entryDescription(cat.dataKey, entry) || `Entry #${idx + 1}`}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 )}
               </div>
