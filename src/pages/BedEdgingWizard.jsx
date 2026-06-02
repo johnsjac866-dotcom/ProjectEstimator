@@ -114,6 +114,11 @@ export default function BedEdgingWizard() {
             <span className="font-semibold">{edgeType}</span>
           </div>
 
+          <div>
+            <Label>Time Estimate (hrs)</Label>
+            <Input type="number" className="mt-1" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+          </div>
+
           {edgeType === "Brick" && (
             <>
               <div>

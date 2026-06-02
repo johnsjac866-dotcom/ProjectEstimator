@@ -125,6 +125,12 @@ export default function BouldersWizard() {
             <span className="font-semibold">{structureType}</span>
           </div>
 
+          {/* Time Estimate — all types */}
+          <div>
+            <Label>Time Estimate (hrs)</Label>
+            <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+          </div>
+
           {/* BOULDERS / ACCENTS */}
           {structureType === "Boulders / Accents" && (
             <>

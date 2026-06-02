@@ -4,6 +4,7 @@ export const PATIO_STAGES = [
     title: "Initial Patio/Walkway Checks",
     description: "Verify site access and logistics before proceeding.",
     fields: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "vermeer_dingo_access", label: "Can Vermeer or Dingo access patio/walkway site?", type: "select", options: ["Yes", "No", "Limited"] },
       { key: "vermeer_lift_pallet", label: "Can Vermeer lift a full pallet?", type: "select", options: ["Yes", "No"] },
       { key: "material_delivery", label: "Can material be delivered to job site?", type: "select", options: ["Yes", "No", "With Restrictions"] },

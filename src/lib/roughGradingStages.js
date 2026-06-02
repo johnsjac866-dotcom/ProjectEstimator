@@ -9,6 +9,7 @@ export const RG_SUB_TYPES = [
 export const RG_FIELDS = {
   excavation_hand: {
     step2: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "distance_to_parking", label: "Distance to parking spot (ft)", type: "number" },
     ],
     step3: [
@@ -24,6 +25,7 @@ export const RG_FIELDS = {
   },
   excavation_machine: {
     step2: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "machine_type", label: "Vermeer or Dingo?", type: "radio", options: ["Vermeer", "Dingo"] },
       { key: "machine_access_width", label: "Machine access path width (ft)", type: "number" },
     ],
@@ -41,6 +43,7 @@ export const RG_FIELDS = {
   },
   importation_hand: {
     step2: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "carry_distance", label: "Carry distance (ft)", type: "number" },
       { key: "soil_type", label: "Soil type", type: "text" },
     ],
@@ -48,6 +51,7 @@ export const RG_FIELDS = {
   },
   importation_machine: {
     step2: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "machine_type", label: "Vermeer or Dingo?", type: "radio", options: ["Vermeer", "Dingo"] },
       { key: "machine_access_width", label: "Machine access path width (ft)", type: "number" },
       { key: "soil_type", label: "Soil type", type: "text" },

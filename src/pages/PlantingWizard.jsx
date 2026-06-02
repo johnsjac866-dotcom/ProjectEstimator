@@ -224,6 +224,10 @@ export default function PlantingWizard() {
           {/* Shared fields for all types */}
           <div className="space-y-4 border-t pt-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Additional Time Factors</p>
+            <div>
+              <Label>Time Estimate (hrs)</Label>
+              <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Rocky Soil</Label>

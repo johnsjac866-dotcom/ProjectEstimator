@@ -33,6 +33,7 @@ export const DEMO_FIELDS = {
   deck_timber_wall: {
     hasSFCalc: true, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "thickness",           label: "Thickness (in)",                   type: "number" },
       { key: "thickness_base",      label: "Thickness of base (in)",           type: "number" },
     ],
@@ -50,6 +51,7 @@ export const DEMO_FIELDS = {
   patio: {
     hasSFCalc: true, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "thickness",           label: "Thickness (in)",                   type: "number" },
       { key: "removal_of_base",     label: "Removal of base?",                 type: "radio", options: ["Yes", "No"] },
       { key: "thickness_base",      label: "Thickness of base (in)",           type: "number", condition: { key: "removal_of_base", value: "Yes" } },
@@ -67,6 +69,7 @@ export const DEMO_FIELDS = {
   hand_removal_reuse: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "scope_quantity",      label: "Scope quantity",                   type: "text" },
       { key: "pallet_count",        label: "Pallet count (if needed)",         type: "number" },
     ],
@@ -77,6 +80,7 @@ export const DEMO_FIELDS = {
   stone_retaining_wall: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "lf",                  label: "Linear Feet (LF)",                 type: "number" },
       { key: "width",               label: "Width (ft)",                       type: "number" },
       { key: "wall_height",         label: "Wall height (ft, if relevant)",    type: "number" },
@@ -136,6 +140,7 @@ export const DEMO_FIELDS = {
   perennials_herbicide: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "treatment_sf",        label: "Treatment area SF",                type: "number" },
     ],
     details: [
@@ -147,6 +152,7 @@ export const DEMO_FIELDS = {
   transplant_direct: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "count_small",         label: "Small (1 gal) — count",           type: "number" },
       { key: "count_medium",        label: "Medium (3 gal) — count",          type: "number" },
       { key: "count_large",         label: "Large (5 gal) — count",           type: "number" },
@@ -160,6 +166,7 @@ export const DEMO_FIELDS = {
   transplant_dig_hold: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "count_small",         label: "Small (1 gal) — count",           type: "number" },
       { key: "count_medium",        label: "Medium (3 gal) — count",          type: "number" },
       { key: "count_large",         label: "Large (5 gal) — count",           type: "number" },
@@ -177,6 +184,7 @@ export const DEMO_FIELDS = {
   herbicide_cut_treat: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "treatment_sf",        label: "Treatment area SF",                type: "number" },
     ],
     details: [
@@ -227,6 +235,7 @@ export const DEMO_FIELDS = {
   weed_fabric: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "sf",                  label: "Square Footage (SF)",              type: "number" },
       { key: "bags_needed",         label: "Bags needed (if applicable)",      type: "number" },
     ],
@@ -249,6 +258,7 @@ export const DEMO_FIELDS = {
   misc_items: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "material_type",       label: "Material type",                    type: "text" },
       { key: "approx_time",         label: "Approximate time (hrs)",           type: "text" },
     ],

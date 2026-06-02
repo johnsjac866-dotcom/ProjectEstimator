@@ -15,6 +15,7 @@ export const HARDSCAPE_REPAIR_STAGES = [
       { key: "length", label: "Length (ft)", type: "number" },
       { key: "width", label: "Width (ft)", type: "number" },
       { key: "sf", label: "Square Footage (SF)", type: "number", hint: "Auto-calculated from Length × Width, or enter manually." },
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
     ],
   },
   {

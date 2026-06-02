@@ -31,6 +31,7 @@ export const BED_SUB_TYPES = {
 export const BED_FIELDS = {
   till_1in: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "amendment_depth", label: "Amendment depth (1\")", type: "text", defaultValue: "1\"" },
       { key: "access_path_distance", label: "Access path distance", type: "text" },
@@ -50,6 +51,7 @@ export const BED_FIELDS = {
   },
   till_3in: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "amendment_depth", label: "Amendment depth (3\")", type: "text", defaultValue: "3\"" },
       { key: "access_path_distance", label: "Access path distance", type: "text" },
@@ -69,6 +71,7 @@ export const BED_FIELDS = {
   },
   notill_hand: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "amendment_depth", label: "Amendment depth (1\")", type: "text", defaultValue: "1\"" },
       { key: "access_path_distance", label: "Access path distance", type: "text" },
@@ -85,6 +88,7 @@ export const BED_FIELDS = {
   },
   notill_machine: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "amendment_depth", label: "Amendment depth (1\")", type: "text", defaultValue: "1\"" },
       { key: "access_path_distance", label: "Access path distance", type: "text" },
@@ -101,6 +105,7 @@ export const BED_FIELDS = {
   },
   notill_deadsod: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
     ],
     decisions: [
@@ -114,6 +119,7 @@ export const BED_FIELDS = {
   },
   lawn_none: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
     ],
     decisions: [
@@ -127,6 +133,7 @@ export const BED_FIELDS = {
   },
   lawn_1in: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "amendment_depth", label: "Amendment depth (1\")", type: "text", defaultValue: "1\"" },
     ],
@@ -142,6 +149,7 @@ export const BED_FIELDS = {
   },
   repro_hardscape: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "lf_new_bed_edge", label: "LF along new bed edge", type: "number" },
       { key: "lf_existing_hardscape", label: "LF along existing hardscape", type: "number" },
@@ -160,6 +168,7 @@ export const BED_FIELDS = {
   },
   repro_narrow: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "lf_new_bed_edge", label: "LF along new bed edge", type: "number" },
       { key: "depth_elevation_change", label: "Depth / elevation change", type: "text" },
@@ -176,6 +185,7 @@ export const BED_FIELDS = {
   },
   repro_sloped: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "lf_new_bed_edge", label: "LF along new bed edge", type: "number" },
       { key: "depth_elevation_change", label: "Depth / elevation change", type: "text" },
@@ -192,6 +202,7 @@ export const BED_FIELDS = {
   },
   repro_soil: {
     measurements: [
+      { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "lf_new_bed_edge", label: "LF along new bed edge", type: "number" },
       { key: "depth_elevation_change", label: "Depth / elevation change", type: "text" },

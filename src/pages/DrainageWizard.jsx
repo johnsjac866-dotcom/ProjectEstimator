@@ -157,6 +157,12 @@ export default function DrainageWizard() {
             <span className="font-semibold">{drainType}</span>
           </div>
 
+          {/* Time Estimate */}
+          <div>
+            <Label>Time Estimate (hrs)</Label>
+            <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+          </div>
+
           {/* LF — all types */}
           <div>
             <Label>Linear Feet (LF)</Label>

@@ -133,6 +133,10 @@ export default function LawnWizard() {
           {/* Dimensions — all types */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dimensions</p>
+            <div>
+              <Label>Time Estimate (hrs)</Label>
+              <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Length (ft)</Label><Input className="mt-1" type="number" value={form.length || ""} onChange={e => set("length", e.target.value)} placeholder="0" /></div>
               <div><Label>Width (ft)</Label><Input className="mt-1" type="number" value={form.width || ""} onChange={e => set("width", e.target.value)} placeholder="0" /></div>

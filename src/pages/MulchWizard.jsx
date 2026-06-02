@@ -129,6 +129,10 @@ export default function MulchWizard() {
           {/* Dimensions */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dimensions</p>
+            <div>
+              <Label>Time Estimate (hrs)</Label>
+              <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+            </div>
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Length (ft)</Label>
