@@ -17,6 +17,7 @@ const CATEGORY_ORDER = [
   { label: "Walkway / Patio",                                         taxable: false, dataKey: "patio_data",         match: () => true },
   { label: "Structures - Fencing/Arbors/Gazebos/Pavilions, Etc",     taxable: false, dataKey: "boulders_data",      match: e => ["Structures - Fence","Structures - Arbor"].includes(e.sub_type) },
   { label: "Hardscape - Repair Existing",                             taxable: false, dataKey: "hardscape_repair_data", match: () => true },
+  { label: "Maintenance",                                              taxable: false, dataKey: "maintenance_data",      match: () => true },
   { label: "Site Management & Daily Cleanup (Non-Taxable)",           taxable: false, dataKey: "site_mgmt_data",     match: e => !!e.tax_status_nontaxable || e.tax_status === "Non-Taxable" },
   // ── TAXABLE ──
   { label: "Demolition & Removals - Vegetation & Softscape Items",   taxable: true,  dataKey: "demolition_data",    match: e => e.group === "vegetation" },
@@ -35,22 +36,23 @@ const CATEGORY_ORDER = [
 
 // Map a single entry to its human-readable key fields for display
 function fmt(label, val) { return val ? `${label}: ${val}` : null; }
+function fmtTime(val) { return val ? `${val} hrs` : null; }
 function entryDescription(dataKey, entry) {
   if (dataKey === "demolition_data") {
     const sub = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
-    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("LF", entry.lf), entry.item_notes ? `Notes: ${entry.item_notes}` : null].filter(Boolean).join(" · ");
+    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("LF", entry.lf), fmtTime(entry.time_estimate), entry.item_notes ? `Notes: ${entry.item_notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "rough_grading_data") {
     const sub = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
-    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("CY (fluff)", entry.cy_fluff), entry.depth_in ? `Depth: ${entry.depth_in}"` : null, entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("CY (fluff)", entry.cy_fluff), entry.depth_in ? `Depth: ${entry.depth_in}"` : null, fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "drainage_data") {
     const sub = entry.sub_type || entry.drainage_type || "";
-    return [sub, fmt("LF", entry.lf), fmt("SF", entry.sf), fmt("Pipe Dia.", entry.pipe_diameter), fmt("Basin Qty", entry.basin_qty), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    return [sub, fmt("LF", entry.lf), fmt("SF", entry.sf), fmt("Pipe Dia.", entry.pipe_diameter), fmt("Basin Qty", entry.basin_qty), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "patio_data") {
     const sub = entry.sub_type || entry.patio_type || "";
-    return [sub, fmt("SF", entry.sf), fmt("Material", entry.material), fmt("Pattern", entry.pattern), fmt("Base Depth", entry.base_depth), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    return [sub, fmt("SF", entry.sf), fmt("LF", entry.lf), fmt("Material", entry.material), fmt("Pattern", entry.pattern), fmt("Base Depth", entry.base_depth), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "site_mgmt_data") {
     const taxParts = [
@@ -58,7 +60,6 @@ function entryDescription(dataKey, entry) {
       (entry.tax_status_taxable || entry.tax_status === "Taxable") ? "Taxable" : null,
     ].filter(Boolean);
     const tax = taxParts.length ? `Tax: ${taxParts.join(" & ")}` : null;
-    // Collect notable items
     const items = [];
     if (entry.street_occupancy_permit) items.push("Street Permit");
     if (entry.job_box) items.push("Job Box");
@@ -71,12 +72,12 @@ function entryDescription(dataKey, entry) {
     if (entry.parking_coordination) items.push(`Parking Coord. (${entry.parking_days || "?"}d)`);
     if (entry.moving_items) items.push(`Moving Items (${entry.moving_items_hours || "?"}hrs)`);
     if (entry.remove_reinstall) items.push("Remove & Reinstall");
-    return [tax, items.join(", ")].filter(Boolean).join(" · ");
+    return [tax, items.join(", "), fmtTime(entry.time_estimate)].filter(Boolean).join(" · ");
   }
   if (dataKey === "bed_prep_data") {
     const sub = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
     const cat = entry.category ? entry.category.replace(/_/g, " ") : "";
-    return [cat, sub, fmt("SF", entry.sf), fmt("Depth", entry.depth), entry.risk_factor ? `Risk: ${entry.risk_factor}` : null, entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    return [cat, sub, fmt("SF", entry.sf), fmt("Depth", entry.depth), entry.risk_factor ? `Risk: ${entry.risk_factor}` : null, fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "planting_data") {
     const cat = entry.plant_category || "";
@@ -85,20 +86,21 @@ function entryDescription(dataKey, entry) {
       entry.count ? `Qty: ${entry.count}` : null,
       entry.size ? `Size: ${entry.size}` : null,
       entry.spacing ? `Spacing: ${entry.spacing}"` : null,
+      fmtTime(entry.time_estimate),
       entry.notes ? `Notes: ${entry.notes}` : null,
     ].filter(Boolean).join(" · ");
   }
   if (dataKey === "bed_edging_data") {
     const sub = entry.sub_type || entry.edge_type || "";
-    return [sub, fmt("LF", entry.lf), fmt("Color", entry.color), fmt("Height", entry.height), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    return [sub, fmt("LF", entry.lf), fmt("Color", entry.color), fmt("Height", entry.height), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "mulch_data") {
     const sub = entry.sub_type || entry.mulch_type || "";
-    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("Depth", entry.depth), fmt("Color/Type", entry.color_type), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("Depth", entry.depth), fmt("Color/Type", entry.color_type), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "lawn_data") {
     const sub = entry.sub_type || entry.lawn_type || "";
-    return [sub, fmt("SF", entry.sf), fmt("Rolls", entry.rolls), fmt("Pallets", entry.pallets), fmt("Pins", entry.pins), entry.on_slope ? "On Slope" : null, entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    return [sub, fmt("SF", entry.sf), fmt("Rolls", entry.rolls), fmt("Pallets", entry.pallets), fmt("Pins", entry.pins), entry.on_slope ? "On Slope" : null, fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "boulders_data") {
     const sub = entry.sub_type || "";
@@ -106,11 +108,12 @@ function entryDescription(dataKey, entry) {
       entry.count_24_30 ? `24-30": ${entry.count_24_30}` : null,
       entry.count_18_24 ? `18-24": ${entry.count_18_24}` : null,
       entry.count_12_18 ? `12-18": ${entry.count_12_18}` : null,
+      fmtTime(entry.time_estimate),
       entry.notes ? `Notes: ${entry.notes}` : null,
     ].filter(Boolean).join(" · ");
-    if (sub === "Structures - Fence") return [fmt("LF", entry.lf), entry.height ? `Height: ${entry.height}ft` : null, fmt("Material", entry.material), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
-    if (sub === "Structures - Arbor") return [fmt("Count", entry.count), fmt("Material", entry.material), fmt("Size", entry.size), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
-    if (sub === "Raised Garden Bed") return [fmt("Qty", entry.quantity), fmt("SF", entry.total_sf), fmt("CY", entry.total_cy), fmt("Material", entry.material), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    if (sub === "Structures - Fence") return [fmt("LF", entry.lf), entry.height ? `Height: ${entry.height}ft` : null, fmt("Material", entry.material), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    if (sub === "Structures - Arbor") return [fmt("Count", entry.count), fmt("Material", entry.material), fmt("Size", entry.size), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    if (sub === "Raised Garden Bed") return [fmt("Qty", entry.quantity), fmt("SF", entry.total_sf), fmt("CY", entry.total_cy), fmt("Material", entry.material), fmtTime(entry.time_estimate), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
     return sub;
   }
   if (dataKey === "hardscape_repair_data") {
@@ -118,11 +121,22 @@ function entryDescription(dataKey, entry) {
       entry.repair_type || "",
       entry.material_type || "",
       fmt("SF", entry.sf),
+      fmt("LF", entry.lf),
       entry.new_material_needed === "Yes" ? `New Material: ${entry.new_material_qty || "?"}${entry.new_material_unit || "SF"}` : null,
       entry.new_base_needed === "Yes" ? `Base: ${entry.new_base_type || "?"}` : null,
       entry.new_leveling_needed === "Yes" ? `Leveling: ${entry.new_leveling_type || "?"}` : null,
       entry.new_edge_needed === "Yes" ? `Edge: ${entry.new_edge_type || "?"} (${entry.new_edge_lf || "?"}LF)` : null,
       fmt("Machine", entry.machine_access),
+      fmtTime(entry.time_estimate),
+    ].filter(Boolean).join(" · ");
+  }
+  if (dataKey === "maintenance_data") {
+    return [
+      entry.maintenance_type || "",
+      fmt("SF", entry.sf),
+      fmtTime(entry.time_estimate),
+      entry.herbicide === "Yes" ? `Herbicide: ${entry.herbicide_sf || "?"}SF` : null,
+      entry.notes ? `Notes: ${entry.notes}` : null,
     ].filter(Boolean).join(" · ");
   }
   return entry.sub_type || entry.type || "";
@@ -130,18 +144,20 @@ function entryDescription(dataKey, entry) {
 
 // Aggregate totals from entries in a category bucket
 function totalsFromEntries(dataKey, entries) {
-  let sf = 0, cy = 0, lf = 0, rolls = 0, pallets = 0, pins = 0;
-  let hasSF = false, hasCY = false, hasLF = false, hasRolls = false, hasPallets = false, hasPins = false;
+  let sf = 0, cy = 0, lf = 0, hrs = 0, rolls = 0, pallets = 0, pins = 0;
+  let hasSF = false, hasCY = false, hasLF = false, hasHrs = false, hasRolls = false, hasPallets = false, hasPins = false;
   entries.forEach(e => {
     const sfVal = parseFloat(e.sf || e.treatment_sf || e.total_sf || 0);
     const cyVal = parseFloat(e.cy || e.cy_fluff || e.total_cy || 0);
-    const lfVal = parseFloat(e.lf || 0);
+    const lfVal = parseFloat(e.lf || e.new_edge_lf || 0);
+    const hrsVal = parseFloat(e.time_estimate || 0);
     const rollsVal = parseFloat(e.rolls || 0);
     const palletsVal = parseFloat(e.pallets || 0);
     const pinsVal = parseFloat(e.pins || 0);
     if (sfVal) { sf += sfVal; hasSF = true; }
     if (cyVal) { cy += cyVal; hasCY = true; }
     if (lfVal) { lf += lfVal; hasLF = true; }
+    if (hrsVal) { hrs += hrsVal; hasHrs = true; }
     if (rollsVal) { rolls += rollsVal; hasRolls = true; }
     if (palletsVal) { pallets += palletsVal; hasPallets = true; }
     if (pinsVal) { pins += pinsVal; hasPins = true; }
@@ -159,6 +175,7 @@ function totalsFromEntries(dataKey, entries) {
   if (hasSF) parts.push(`${parseFloat(sf.toFixed(1))} SF`);
   if (hasCY) parts.push(`${parseFloat(cy.toFixed(2))} CY`);
   if (hasLF) parts.push(`${parseFloat(lf.toFixed(1))} LF`);
+  if (hasHrs) parts.push(`${parseFloat(hrs.toFixed(1))} hrs`);
   if (hasRolls) parts.push(`${parseFloat(rolls.toFixed(0))} Rolls`);
   if (hasPallets) parts.push(`${parseFloat(pallets.toFixed(0))} Pallets`);
   if (hasPins) parts.push(`${parseFloat(pins.toFixed(0))} Pins`);
