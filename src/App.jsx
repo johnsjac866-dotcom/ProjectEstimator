@@ -28,6 +28,7 @@ import MulchWizard from './pages/MulchWizard';
 import MulchSummary from './pages/MulchSummary';
 import DrainageWizard from './pages/DrainageWizard';
 import DrainageSummary from './pages/DrainageSummary';
+import EstimationSummary from './pages/EstimationSummary';
 import LawnWizard from './pages/LawnWizard';
 import LawnSummary from './pages/LawnSummary';
 import BouldersWizard from './pages/BouldersWizard';
@@ -70,6 +71,7 @@ const AuthenticatedApp = () => {
         <Route path="/bed-prep-wizard/:areaId" element={<BedPrepWizard />} />
         <Route path="/bed-prep-summary/:areaId" element={<BedPrepSummary />} />
         <Route path="/project-summary/:projectId" element={<ProjectSummary />} />
+        <Route path="/estimation-summary/:projectId" element={<EstimationSummary />} />
         <Route path="/rough-grading-wizard/:areaId" element={<RoughGradingWizard />} />
         <Route path="/rough-grading-summary/:areaId" element={<RoughGradingSummary />} />
         <Route path="/demolition-wizard/:areaId" element={<DemolitionWizard />} />

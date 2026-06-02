@@ -71,6 +71,9 @@ export default function ProjectDetail() {
           {project.address && <p className="text-muted-foreground text-xs flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" />{project.address}</p>}
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(`/estimation-summary/${projectId}`)}>
+            Estimation Summary
+          </Button>
           <Button variant="outline" onClick={() => navigate(`/project-summary/${projectId}`)}>
             View Summary
           </Button>
