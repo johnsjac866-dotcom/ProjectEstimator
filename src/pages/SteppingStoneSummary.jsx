@@ -62,6 +62,7 @@ export default function SteppingStoneSummary() {
         <Row label="Stone Count (calculated)" value={stoneCountCalc} />
         <Row label="Stone Count (override)" value={entry.stone_count} />
         <Row label="Stone Type" value={entry.stone_type} />
+        <Row label="Stone Size" value={entry.stone_size} />
 
         <div className="pt-2 border-t" />
         <h2 className="font-semibold text-base">Existing Stones</h2>

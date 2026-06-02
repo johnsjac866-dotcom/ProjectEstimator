@@ -96,11 +96,6 @@ export default function SteppingStoneWizard() {
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pathway Dimensions</p>
 
           <div>
-            <Label>Patio or Walkway?</Label>
-            <SelectButtons value={form.pathway_type} onChange={v => set("pathway_type", v)} options={["Patio", "Walkway"]} />
-          </div>
-
-          <div>
             <Label>Linear Feet (LF)</Label>
             <Input className="mt-1" type="number" value={form.lf || ""} onChange={e => set("lf", e.target.value)} placeholder="0" />
           </div>
@@ -129,6 +124,11 @@ export default function SteppingStoneWizard() {
           <div>
             <Label>Stone Type</Label>
             <Input className="mt-1" value={form.stone_type || ""} onChange={e => set("stone_type", e.target.value)} placeholder="e.g. Flagstone, Bluestone, Limestone" />
+          </div>
+
+          <div>
+            <Label>Stone Size</Label>
+            <Input className="mt-1" value={form.stone_size || ""} onChange={e => set("stone_size", e.target.value)} placeholder='e.g. 18" x 18", 24" x 24"' />
           </div>
         </div>
 
