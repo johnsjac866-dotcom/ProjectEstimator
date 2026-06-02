@@ -18,6 +18,8 @@ export default function ProjectDetail() {
   const [areaName, setAreaName] = useState("");
   const [editingField, setEditingField] = useState(null); // 'name' | 'address'
   const [editValue, setEditValue] = useState("");
+  const [editingAreaId, setEditingAreaId] = useState(null);
+  const [editingAreaName, setEditingAreaName] = useState("");
 
   useEffect(() => { load(); }, [projectId]);
 
@@ -60,6 +62,22 @@ export default function ProjectDetail() {
     await base44.entities.Project.update(projectId, { [editingField]: editValue });
     setProject(p => ({ ...p, [editingField]: editValue }));
     setEditingField(null);
+  }
+
+  function startEditArea(e, area) {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingAreaId(area.id);
+    setEditingAreaName(area.name);
+  }
+
+  async function saveAreaName(e, id) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!editingAreaName.trim()) return;
+    await base44.entities.Area.update(id, { name: editingAreaName });
+    setAreas(prev => prev.map(a => a.id === id ? { ...a, name: editingAreaName } : a));
+    setEditingAreaId(null);
   }
 
   async function handleDeleteArea(e, id) {
@@ -141,9 +159,31 @@ export default function ProjectDetail() {
             <Link key={a.id} to={`/area/${a.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer group">
                 <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-base">{a.name}</CardTitle>
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-start justify-between gap-2">
+                    {editingAreaId === a.id ? (
+                      <div className="flex items-center gap-1 flex-1" onClick={e => e.preventDefault()}>
+                        <Input
+                          autoFocus
+                          value={editingAreaName}
+                          onChange={e => setEditingAreaName(e.target.value)}
+                          className="h-7 text-sm flex-1"
+                          onKeyDown={e => {
+                            if (e.key === "Enter") saveAreaName(e, a.id);
+                            if (e.key === "Escape") { e.stopPropagation(); setEditingAreaId(null); }
+                          }}
+                        />
+                        <button onClick={e => saveAreaName(e, a.id)} className="text-emerald-600 hover:text-emerald-700"><Check className="h-3.5 w-3.5" /></button>
+                        <button onClick={e => { e.preventDefault(); e.stopPropagation(); setEditingAreaId(null); }} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ) : (
+                      <CardTitle className="text-base flex-1">{a.name}</CardTitle>
+                    )}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {editingAreaId !== a.id && (
+                        <button onClick={e => startEditArea(e, a)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       <button onClick={(e) => handleDeleteArea(e, a.id)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
