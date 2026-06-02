@@ -25,7 +25,8 @@
         "Lawn Repair & Install",
         "Boulders/Accents & Structures",
         "Hardscape - Repair Existing",
-        "Maintenance"
+        "Maintenance",
+        "Pathway - Stepping Stones"
       ],
       "title": "Operation Type"
     },
@@ -80,6 +81,10 @@
     "maintenance_data": {
       "type": "string",
       "title": "Maintenance Configuration Data"
+    },
+    "stepping_stone_data": {
+      "type": "string",
+      "title": "Pathway - Stepping Stones Configuration Data"
     },
     "status": {
       "type": "string",

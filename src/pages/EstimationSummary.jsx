@@ -18,6 +18,7 @@ const CATEGORY_ORDER = [
   { label: "Structures - Fencing/Arbors/Gazebos/Pavilions, Etc",     taxable: false, dataKey: "boulders_data",      match: e => ["Structures - Fence","Structures - Arbor"].includes(e.sub_type) },
   { label: "Hardscape - Repair Existing",                             taxable: false, dataKey: "hardscape_repair_data", match: () => true },
   { label: "Maintenance",                                              taxable: false, dataKey: "maintenance_data",      match: () => true },
+  { label: "Pathway - Stepping Stones",                               taxable: false, dataKey: "stepping_stone_data",   match: () => true },
   { label: "Site Management & Daily Cleanup (Non-Taxable)",           taxable: false, dataKey: "site_mgmt_data",     match: e => !!e.tax_status_nontaxable || e.tax_status === "Non-Taxable" },
   // ── TAXABLE ──
   { label: "Demolition & Removals - Vegetation & Softscape Items",   taxable: true,  dataKey: "demolition_data",    match: e => e.group === "vegetation" },
@@ -134,6 +135,21 @@ function entryDescription(dataKey, entry) {
       fmtTime(entry.time_estimate),
     ].filter(Boolean).join(" · ");
   }
+  if (dataKey === "stepping_stone_data") {
+    const count = entry.stone_count || entry.stone_count_calc || (entry.lf ? Math.ceil(parseFloat(entry.lf) / 2) : null);
+    return [
+      entry.pathway_type || "Stepping Stone",
+      fmt("LF", entry.lf),
+      count ? `Stones: ${count}` : null,
+      fmt("Type", entry.stone_type),
+      entry.existing_stones === "Yes" ? `Existing Stones${entry.releveling === "Yes" ? " (Releveling)" : ""}` : null,
+      entry.additional_stones ? `Add'l stones: ${entry.additional_stones}` : null,
+      fmt("Base", entry.existing_base),
+      fmt("Machine", entry.machine),
+      fmtTime(entry.time_estimate),
+      entry.notes ? `Notes: ${entry.notes}` : null,
+    ].filter(Boolean).join(" · ");
+  }
   if (dataKey === "maintenance_data") {
     return [
       entry.maintenance_type || "",
@@ -212,6 +228,8 @@ function getSubTypeKey(dataKey, entry) {
   if (dataKey === "mulch_data") return entry.sub_type || entry.mulch_type || "Other";
   if (dataKey === "lawn_data") return entry.sub_type || entry.lawn_type || "Other";
   if (dataKey === "boulders_data") return entry.sub_type || "Other";
+  if (dataKey === "maintenance_data") return entry.maintenance_type || "Maintenance";
+  if (dataKey === "stepping_stone_data") return entry.pathway_type || "Stepping Stone";
   return "Other";
 }
 

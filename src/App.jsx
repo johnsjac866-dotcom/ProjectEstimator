@@ -37,6 +37,8 @@ import HardscapeRepairWizard from './pages/HardscapeRepairWizard';
 import HardscapeRepairSummary from './pages/HardscapeRepairSummary';
 import MaintenanceWizard from './pages/MaintenanceWizard';
 import MaintenanceSummary from './pages/MaintenanceSummary';
+import SteppingStoneWizard from './pages/SteppingStoneWizard';
+import SteppingStoneSummary from './pages/SteppingStoneSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -96,6 +98,8 @@ const AuthenticatedApp = () => {
         <Route path="/hardscape-repair-summary/:areaId" element={<HardscapeRepairSummary />} />
         <Route path="/maintenance-wizard/:areaId" element={<MaintenanceWizard />} />
         <Route path="/maintenance-summary/:areaId" element={<MaintenanceSummary />} />
+        <Route path="/stepping-stone-wizard/:areaId" element={<SteppingStoneWizard />} />
+        <Route path="/stepping-stone-summary/:areaId" element={<SteppingStoneSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

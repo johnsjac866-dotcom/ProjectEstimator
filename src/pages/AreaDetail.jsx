@@ -21,6 +21,7 @@ const ALL_OPERATIONS = [
   { type: "Boulders/Accents & Structures", dataKey: "boulders_data", wizardPath: (id) => `/boulders-wizard/${id}`, summaryPath: (id, opId) => `/boulders-summary/${id}?opId=${opId}`, icon: Mountain, color: "stone", description: "Boulders, accents, fence, arbor, or raised garden beds" },
   { type: "Hardscape - Repair Existing", dataKey: "hardscape_repair_data", wizardPath: (id) => `/hardscape-repair-wizard/${id}`, summaryPath: (id, opId) => `/hardscape-repair-summary/${id}?opId=${opId}`, icon: Hammer, color: "cyan", description: "Repair existing patio or walkway — surface, base, leveling & edge" },
   { type: "Maintenance", dataKey: "maintenance_data", wizardPath: (id) => `/maintenance-wizard/${id}`, summaryPath: (id, opId) => `/maintenance-summary/${id}?opId=${opId}`, icon: Wrench, color: "rose", description: "Weeding and general maintenance tasks" },
+  { type: "Pathway - Stepping Stones", dataKey: "stepping_stone_data", wizardPath: (id) => `/stepping-stone-wizard/${id}`, summaryPath: (id, opId) => `/stepping-stone-summary/${id}?opId=${opId}`, icon: Layers, color: "indigo", description: "Stepping stone pathway on compacted soil" },
 ];
 
 function getAvailableOps(area) {
@@ -42,6 +43,7 @@ const colorMap = {
   stone:  { bg: "bg-stone-50/50", border: "border-stone-200", icon: "text-stone-700", iconBg: "bg-stone-100" },
   cyan:   { bg: "bg-cyan-50/50",  border: "border-cyan-200",  icon: "text-cyan-700",  iconBg: "bg-cyan-100" },
   rose:   { bg: "bg-rose-50/50",  border: "border-rose-200",  icon: "text-rose-700",  iconBg: "bg-rose-100" },
+  indigo: { bg: "bg-indigo-50/50", border: "border-indigo-200", icon: "text-indigo-700", iconBg: "bg-indigo-100" },
 };
 
 function getEntryLabel(entry, idx) {
