@@ -96,6 +96,7 @@ export const DEMO_FIELDS = {
   woody_flush_cut: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "time_to_cut",         label: "Time to cut (hrs)",                type: "text" },
       { key: "time_fill_holes",     label: "Time to fill holes (hrs)",         type: "text" },
       { key: "tons_material",       label: "Tons of material",                 type: "number" },
@@ -109,6 +110,7 @@ export const DEMO_FIELDS = {
   woody_incl_stumps: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",            label: "Time Estimate (hrs)",              type: "number" },
       { key: "time_to_cut",              label: "Time to cut (hrs)",                type: "text" },
       { key: "time_remove_stump",        label: "Time to remove stump & root mass (hrs)", type: "text" },
       { key: "time_fill_holes",          label: "Time to fill holes (hrs)",         type: "text" },
@@ -126,6 +128,7 @@ export const DEMO_FIELDS = {
   perennials_dig: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "approx_time_dig",     label: "Approximate time to dig (hrs)",    type: "text" },
       { key: "tons_material",       label: "Tons of material",                 type: "number" },
     ],
@@ -196,6 +199,7 @@ export const DEMO_FIELDS = {
   strip_sod: {
     hasSFCalc: true, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",               label: "Time Estimate (hrs)",                     type: "number" },
       { key: "distance_from_truck",         label: "Distance from truck (ft)",                type: "number" },
       { key: "extra_time_over_100ft",       label: "Added time for distance over 100ft (hrs)", type: "text" },
       { key: "extra_labor_edges",           label: "Extra labor for edges/slopes/bumpy lawn (hrs)", type: "text" },
@@ -207,6 +211,7 @@ export const DEMO_FIELDS = {
   landscape_edging: {
     hasSFCalc: false, hasCYCalc: false,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "lf",                  label: "Linear Feet (LF)",                 type: "number" },
       { key: "time_to_remove",      label: "Time to remove (hrs)",             type: "text" },
       { key: "material",            label: "Material type",                    type: "select", options: ["Plastic", "Poly", "Brick/Bullet", "Concrete", "Other"] },
@@ -221,6 +226,7 @@ export const DEMO_FIELDS = {
   stone_mulch: {
     hasSFCalc: true, hasCYCalc: true,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "time_to_remove",      label: "Time to remove (hrs)",             type: "text" },
     ],
     details: [
@@ -248,6 +254,7 @@ export const DEMO_FIELDS = {
   wood_mulch: {
     hasSFCalc: true, hasCYCalc: true,
     measurements: [
+      { key: "time_estimate",       label: "Time Estimate (hrs)",              type: "number" },
       { key: "removal_time",        label: "Removal time (hrs)",               type: "text" },
     ],
     details: [
