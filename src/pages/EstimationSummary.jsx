@@ -16,6 +16,7 @@ const CATEGORY_ORDER = [
   { label: "Drainage",                                                 taxable: false, dataKey: "drainage_data",      match: () => true },
   { label: "Walkway / Patio",                                         taxable: false, dataKey: "patio_data",         match: () => true },
   { label: "Structures - Fencing/Arbors/Gazebos/Pavilions, Etc",     taxable: false, dataKey: "boulders_data",      match: e => ["Structures - Fence","Structures - Arbor"].includes(e.sub_type) },
+  { label: "Hardscape - Repair Existing",                             taxable: false, dataKey: "hardscape_repair_data", match: () => true },
   { label: "Site Management & Daily Cleanup (Non-Taxable)",           taxable: false, dataKey: "site_mgmt_data",     match: e => !!e.tax_status_nontaxable || e.tax_status === "Non-Taxable" },
   // ── TAXABLE ──
   { label: "Demolition & Removals - Vegetation & Softscape Items",   taxable: true,  dataKey: "demolition_data",    match: e => e.group === "vegetation" },
@@ -111,6 +112,18 @@ function entryDescription(dataKey, entry) {
     if (sub === "Structures - Arbor") return [fmt("Count", entry.count), fmt("Material", entry.material), fmt("Size", entry.size), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
     if (sub === "Raised Garden Bed") return [fmt("Qty", entry.quantity), fmt("SF", entry.total_sf), fmt("CY", entry.total_cy), fmt("Material", entry.material), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
     return sub;
+  }
+  if (dataKey === "hardscape_repair_data") {
+    return [
+      entry.repair_type || "",
+      entry.material_type || "",
+      fmt("SF", entry.sf),
+      entry.new_material_needed === "Yes" ? `New Material: ${entry.new_material_qty || "?"}${entry.new_material_unit || "SF"}` : null,
+      entry.new_base_needed === "Yes" ? `Base: ${entry.new_base_type || "?"}` : null,
+      entry.new_leveling_needed === "Yes" ? `Leveling: ${entry.new_leveling_type || "?"}` : null,
+      entry.new_edge_needed === "Yes" ? `Edge: ${entry.new_edge_type || "?"} (${entry.new_edge_lf || "?"}LF)` : null,
+      fmt("Machine", entry.machine_access),
+    ].filter(Boolean).join(" · ");
   }
   return entry.sub_type || entry.type || "";
 }

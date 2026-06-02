@@ -23,7 +23,8 @@
         "Mulch",
         "Drainage",
         "Lawn Repair & Install",
-        "Boulders/Accents & Structures"
+        "Boulders/Accents & Structures",
+        "Hardscape - Repair Existing"
       ],
       "title": "Operation Type"
     },
@@ -70,6 +71,10 @@
     "boulders_data": {
       "type": "string",
       "title": "Boulders/Accents & Structures Configuration Data"
+    },
+    "hardscape_repair_data": {
+      "type": "string",
+      "title": "Hardscape Repair Existing Configuration Data"
     },
     "status": {
       "type": "string",

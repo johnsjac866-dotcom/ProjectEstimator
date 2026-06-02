@@ -19,6 +19,7 @@ const ALL_OPERATIONS = [
   { type: "Drainage", dataKey: "drainage_data", wizardPath: (id) => `/drainage-wizard/${id}`, summaryPath: (id, opId) => `/drainage-summary/${id}?opId=${opId}`, icon: Droplets, color: "sky", description: "Buried downspout, curtain drain, french drain, dry stream bed" },
   { type: "Lawn Repair & Install", dataKey: "lawn_data", wizardPath: (id) => `/lawn-wizard/${id}`, summaryPath: (id, opId) => `/lawn-summary/${id}?opId=${opId}`, icon: Leaf, color: "lime", description: "Sod installation, seed install, or top dress lawn" },
   { type: "Boulders/Accents & Structures", dataKey: "boulders_data", wizardPath: (id) => `/boulders-wizard/${id}`, summaryPath: (id, opId) => `/boulders-summary/${id}?opId=${opId}`, icon: Mountain, color: "stone", description: "Boulders, accents, fence, arbor, or raised garden beds" },
+  { type: "Hardscape - Repair Existing", dataKey: "hardscape_repair_data", wizardPath: (id) => `/hardscape-repair-wizard/${id}`, summaryPath: (id, opId) => `/hardscape-repair-summary/${id}?opId=${opId}`, icon: Hammer, color: "cyan", description: "Repair existing patio or walkway — surface, base, leveling & edge" },
 ];
 
 function getAvailableOps(area) {
@@ -38,6 +39,7 @@ const colorMap = {
   sky:    { bg: "bg-sky-50/50",    border: "border-sky-200",    icon: "text-sky-700",    iconBg: "bg-sky-100" },
   lime:   { bg: "bg-lime-50/50",   border: "border-lime-200",   icon: "text-lime-700",   iconBg: "bg-lime-100" },
   stone:  { bg: "bg-stone-50/50", border: "border-stone-200", icon: "text-stone-700", iconBg: "bg-stone-100" },
+  cyan:   { bg: "bg-cyan-50/50",  border: "border-cyan-200",  icon: "text-cyan-700",  iconBg: "bg-cyan-100" },
 };
 
 function getEntryLabel(entry, idx) {
