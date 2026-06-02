@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -77,6 +77,13 @@ export default function AreaDetail() {
   async function markInProgress() {
     await base44.entities.Area.update(areaId, { status: "In Progress" });
     setArea(a => ({ ...a, status: "In Progress" }));
+  }
+
+  async function handleDeleteEntry(op, entryId) {
+    const entries = parseOps(area[op.dataKey]);
+    const updated = entries.filter(e => e.id !== entryId);
+    await base44.entities.Area.update(areaId, { [op.dataKey]: JSON.stringify(updated) });
+    setArea(a => ({ ...a, [op.dataKey]: JSON.stringify(updated) }));
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
@@ -163,6 +170,9 @@ export default function AreaDetail() {
                         <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => navigate(op.summaryPath(areaId, entry.id))}>
                           <FileText className="h-3.5 w-3.5 mr-1" /> View
                         </Button>
+                        <button className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleDeleteEntry(op, entry.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     ))}
                     <Button variant="outline" className="w-full mt-1" onClick={() => navigate(op.wizardPath(areaId))}>

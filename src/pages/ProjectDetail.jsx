@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, ArrowLeft, ChevronRight, Layers, MapPin, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, ChevronRight, Layers, MapPin, Trash2, Pencil, Check, X } from "lucide-react";
 
 export default function ProjectDetail() {
   const { projectId } = useParams();
@@ -16,6 +16,8 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [areaName, setAreaName] = useState("");
+  const [editingField, setEditingField] = useState(null); // 'name' | 'address'
+  const [editValue, setEditValue] = useState("");
 
   useEffect(() => { load(); }, [projectId]);
 
@@ -49,6 +51,17 @@ export default function ProjectDetail() {
     load();
   }
 
+  function startEdit(field) {
+    setEditingField(field);
+    setEditValue(project[field] || "");
+  }
+
+  async function saveEdit() {
+    await base44.entities.Project.update(projectId, { [editingField]: editValue });
+    setProject(p => ({ ...p, [editingField]: editValue }));
+    setEditingField(null);
+  }
+
   async function handleDeleteArea(e, id) {
     e.preventDefault();
     e.stopPropagation();
@@ -65,10 +78,35 @@ export default function ProjectDetail() {
         <ArrowLeft className="h-4 w-4" /> Back to Projects
       </Link>
       <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
+        <div className="space-y-1">
+          {/* Editable Name */}
+          {editingField === "name" ? (
+            <div className="flex items-center gap-2">
+              <Input autoFocus value={editValue} onChange={e => setEditValue(e.target.value)} className="text-xl font-bold h-9 w-64" onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingField(null); }} />
+              <button onClick={saveEdit} className="text-emerald-600 hover:text-emerald-700"><Check className="h-4 w-4" /></button>
+              <button onClick={() => setEditingField(null)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group">
+              <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
+              <button onClick={() => startEdit("name")} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity"><Pencil className="h-3.5 w-3.5" /></button>
+            </div>
+          )}
           {project.client_name && <p className="text-muted-foreground text-sm">{project.client_name}</p>}
-          {project.address && <p className="text-muted-foreground text-xs flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" />{project.address}</p>}
+          {/* Editable Address */}
+          {editingField === "address" ? (
+            <div className="flex items-center gap-2">
+              <Input autoFocus value={editValue} onChange={e => setEditValue(e.target.value)} className="h-7 text-xs w-64" onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingField(null); }} />
+              <button onClick={saveEdit} className="text-emerald-600 hover:text-emerald-700"><Check className="h-3.5 w-3.5" /></button>
+              <button onClick={() => setEditingField(null)} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 group">
+              <MapPin className="h-3 w-3 text-muted-foreground" />
+              <p className="text-muted-foreground text-xs">{project.address || "Add address..."}</p>
+              <button onClick={() => startEdit("address")} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity"><Pencil className="h-3 w-3" /></button>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate(`/estimation-summary/${projectId}`)}>

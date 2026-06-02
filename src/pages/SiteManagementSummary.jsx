@@ -52,9 +52,14 @@ export default function SiteManagementSummary() {
             <div><span className="text-muted-foreground">Address:</span> <span className="font-medium">{project?.address || "—"}</span></div>
             <div>
               <span className="text-muted-foreground">Tax Status:</span>
-              <span className={`ml-1 font-semibold ${data.tax_status === "Taxable" ? "text-amber-700" : "text-emerald-700"}`}>
-                {data.tax_status || "—"}
-              </span>
+              {(data.tax_status_nontaxable || data.tax_status_taxable || data.tax_status) ? (
+                <span className="ml-1 font-semibold text-foreground">
+                  {[
+                    (data.tax_status_nontaxable || data.tax_status === "Non-Taxable") ? "Non-Taxable" : null,
+                    (data.tax_status_taxable || data.tax_status === "Taxable") ? "Taxable" : null,
+                  ].filter(Boolean).join(" & ")}
+                </span>
+              ) : <span className="ml-1">—</span>}
             </div>
           </div>
         </div>

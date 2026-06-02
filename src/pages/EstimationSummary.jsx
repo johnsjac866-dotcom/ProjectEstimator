@@ -33,75 +33,127 @@ const CATEGORY_ORDER = [
 ];
 
 // Map a single entry to its human-readable key fields for display
+function fmt(label, val) { return val ? `${label}: ${val}` : null; }
 function entryDescription(dataKey, entry) {
   if (dataKey === "demolition_data") {
-    const subLabel = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
-    return [
-      subLabel,
-      entry.sf ? `SF: ${entry.sf}` : null,
-      entry.lf ? `LF: ${entry.lf}` : null,
-    ].filter(Boolean).join(" · ");
+    const sub = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
+    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("LF", entry.lf), entry.item_notes ? `Notes: ${entry.item_notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "rough_grading_data") {
-    return [
-      entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "",
-      entry.sf ? `SF: ${entry.sf}` : null,
-      entry.cy ? `CY: ${entry.cy}` : null,
-      entry.cy_fluff ? `CY (fluff): ${entry.cy_fluff}` : null,
-    ].filter(Boolean).join(" · ");
+    const sub = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
+    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("CY (fluff)", entry.cy_fluff), entry.depth_in ? `Depth: ${entry.depth_in}"` : null, entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "drainage_data") {
-    return [entry.sub_type || entry.drainage_type || "", entry.lf ? `LF: ${entry.lf}` : null, entry.sf ? `SF: ${entry.sf}` : null].filter(Boolean).join(" · ");
+    const sub = entry.sub_type || entry.drainage_type || "";
+    return [sub, fmt("LF", entry.lf), fmt("SF", entry.sf), fmt("Pipe Dia.", entry.pipe_diameter), fmt("Basin Qty", entry.basin_qty), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "patio_data") {
-    return [entry.sub_type || entry.patio_type || "", entry.sf ? `SF: ${entry.sf}` : null].filter(Boolean).join(" · ");
+    const sub = entry.sub_type || entry.patio_type || "";
+    return [sub, fmt("SF", entry.sf), fmt("Material", entry.material), fmt("Pattern", entry.pattern), fmt("Base Depth", entry.base_depth), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "site_mgmt_data") {
-    return entry.sub_type || entry.type || "";
+    const taxParts = [
+      (entry.tax_status_nontaxable || entry.tax_status === "Non-Taxable") ? "Non-Taxable" : null,
+      (entry.tax_status_taxable || entry.tax_status === "Taxable") ? "Taxable" : null,
+    ].filter(Boolean);
+    const tax = taxParts.length ? `Tax: ${taxParts.join(" & ")}` : null;
+    // Collect notable items
+    const items = [];
+    if (entry.street_occupancy_permit) items.push("Street Permit");
+    if (entry.job_box) items.push("Job Box");
+    if (entry.jobsite_trailer) items.push("Jobsite Trailer");
+    if (entry.porta_potty) items.push("Porta Potty");
+    if (entry.ground_protection) items.push("Ground Protection");
+    if (entry.tree_protection) items.push("Tree Protection");
+    if (entry.silt_fence) items.push("Silt Fence");
+    if (entry.erosion_logs) items.push("Erosion Logs");
+    if (entry.parking_coordination) items.push(`Parking Coord. (${entry.parking_days || "?"}d)`);
+    if (entry.moving_items) items.push(`Moving Items (${entry.moving_items_hours || "?"}hrs)`);
+    if (entry.remove_reinstall) items.push("Remove & Reinstall");
+    return [tax, items.join(", ")].filter(Boolean).join(" · ");
   }
   if (dataKey === "bed_prep_data") {
-    const subLabel = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
-    return [subLabel, entry.sf ? `SF: ${entry.sf}` : null].filter(Boolean).join(" · ");
+    const sub = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
+    const cat = entry.category ? entry.category.replace(/_/g, " ") : "";
+    return [cat, sub, fmt("SF", entry.sf), fmt("Depth", entry.depth), entry.risk_factor ? `Risk: ${entry.risk_factor}` : null, entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "planting_data") {
-    return [entry.plant_category || "", entry.sub_type || ""].filter(Boolean).join(" · ");
+    const cat = entry.plant_category || "";
+    const sub = entry.sub_type || entry.plant_type || "";
+    return [cat, sub,
+      entry.count ? `Qty: ${entry.count}` : null,
+      entry.size ? `Size: ${entry.size}` : null,
+      entry.spacing ? `Spacing: ${entry.spacing}"` : null,
+      entry.notes ? `Notes: ${entry.notes}` : null,
+    ].filter(Boolean).join(" · ");
   }
   if (dataKey === "bed_edging_data") {
-    return [entry.sub_type || entry.edge_type || "", entry.lf ? `LF: ${entry.lf}` : null].filter(Boolean).join(" · ");
+    const sub = entry.sub_type || entry.edge_type || "";
+    return [sub, fmt("LF", entry.lf), fmt("Color", entry.color), fmt("Height", entry.height), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "mulch_data") {
-    return [entry.sub_type || entry.mulch_type || "", entry.sf ? `SF: ${entry.sf}` : null, entry.cy ? `CY: ${entry.cy}` : null].filter(Boolean).join(" · ");
+    const sub = entry.sub_type || entry.mulch_type || "";
+    return [sub, fmt("SF", entry.sf), fmt("CY", entry.cy), fmt("Depth", entry.depth), fmt("Color/Type", entry.color_type), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "lawn_data") {
-    return [entry.sub_type || entry.lawn_type || "", entry.sf ? `SF: ${entry.sf}` : null, entry.rolls ? `Rolls: ${entry.rolls}` : null].filter(Boolean).join(" · ");
+    const sub = entry.sub_type || entry.lawn_type || "";
+    return [sub, fmt("SF", entry.sf), fmt("Rolls", entry.rolls), fmt("Pallets", entry.pallets), fmt("Pins", entry.pins), entry.on_slope ? "On Slope" : null, entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
   }
   if (dataKey === "boulders_data") {
     const sub = entry.sub_type || "";
-    if (sub === "Boulders / Accents") return [`24-30": ${entry.count_24_30 || 0}`, `18-24": ${entry.count_18_24 || 0}`, `12-18": ${entry.count_12_18 || 0}`].join(" · ");
-    if (sub === "Structures - Fence") return [`LF: ${entry.lf || "—"}`, `Height: ${entry.height || "—"}ft`].join(" · ");
-    if (sub === "Structures - Arbor") return [`Count: ${entry.count || "—"}`, `Material: ${entry.material || "—"}`].join(" · ");
-    if (sub === "Raised Garden Bed") return [`Qty: ${entry.quantity || "—"}`, entry.total_sf ? `SF: ${entry.total_sf}` : null, entry.total_cy ? `CY: ${entry.total_cy}` : null].filter(Boolean).join(" · ");
+    if (sub === "Boulders / Accents") return [
+      entry.count_24_30 ? `24-30": ${entry.count_24_30}` : null,
+      entry.count_18_24 ? `18-24": ${entry.count_18_24}` : null,
+      entry.count_12_18 ? `12-18": ${entry.count_12_18}` : null,
+      entry.notes ? `Notes: ${entry.notes}` : null,
+    ].filter(Boolean).join(" · ");
+    if (sub === "Structures - Fence") return [fmt("LF", entry.lf), entry.height ? `Height: ${entry.height}ft` : null, fmt("Material", entry.material), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    if (sub === "Structures - Arbor") return [fmt("Count", entry.count), fmt("Material", entry.material), fmt("Size", entry.size), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
+    if (sub === "Raised Garden Bed") return [fmt("Qty", entry.quantity), fmt("SF", entry.total_sf), fmt("CY", entry.total_cy), fmt("Material", entry.material), entry.notes ? `Notes: ${entry.notes}` : null].filter(Boolean).join(" · ");
     return sub;
   }
   return entry.sub_type || entry.type || "";
 }
 
-// Aggregate SF/CY/LF totals from entries in a category bucket
+// Aggregate totals from entries in a category bucket
 function totalsFromEntries(dataKey, entries) {
-  let sf = 0, cy = 0, lf = 0;
-  let hasSF = false, hasCY = false, hasLF = false;
+  let sf = 0, cy = 0, lf = 0, rolls = 0, pallets = 0, pins = 0;
+  let hasSF = false, hasCY = false, hasLF = false, hasRolls = false, hasPallets = false, hasPins = false;
   entries.forEach(e => {
     const sfVal = parseFloat(e.sf || e.treatment_sf || e.total_sf || 0);
     const cyVal = parseFloat(e.cy || e.cy_fluff || e.total_cy || 0);
     const lfVal = parseFloat(e.lf || 0);
+    const rollsVal = parseFloat(e.rolls || 0);
+    const palletsVal = parseFloat(e.pallets || 0);
+    const pinsVal = parseFloat(e.pins || 0);
     if (sfVal) { sf += sfVal; hasSF = true; }
     if (cyVal) { cy += cyVal; hasCY = true; }
     if (lfVal) { lf += lfVal; hasLF = true; }
+    if (rollsVal) { rolls += rollsVal; hasRolls = true; }
+    if (palletsVal) { pallets += palletsVal; hasPallets = true; }
+    if (pinsVal) { pins += pinsVal; hasPins = true; }
   });
+  // For boulders, total by size
+  let b2430 = 0, b1824 = 0, b1218 = 0;
+  if (dataKey === "boulders_data") {
+    entries.forEach(e => {
+      b2430 += parseFloat(e.count_24_30 || 0);
+      b1824 += parseFloat(e.count_18_24 || 0);
+      b1218 += parseFloat(e.count_12_18 || 0);
+    });
+  }
   const parts = [];
-  if (hasSF) parts.push(`${sf.toFixed(1)} SF`);
-  if (hasCY) parts.push(`${cy.toFixed(2)} CY`);
-  if (hasLF) parts.push(`${lf.toFixed(1)} LF`);
+  if (hasSF) parts.push(`${parseFloat(sf.toFixed(1))} SF`);
+  if (hasCY) parts.push(`${parseFloat(cy.toFixed(2))} CY`);
+  if (hasLF) parts.push(`${parseFloat(lf.toFixed(1))} LF`);
+  if (hasRolls) parts.push(`${parseFloat(rolls.toFixed(0))} Rolls`);
+  if (hasPallets) parts.push(`${parseFloat(pallets.toFixed(0))} Pallets`);
+  if (hasPins) parts.push(`${parseFloat(pins.toFixed(0))} Pins`);
+  if (dataKey === "boulders_data") {
+    if (b2430) parts.push(`24-30": ${b2430}`);
+    if (b1824) parts.push(`18-24": ${b1824}`);
+    if (b1218) parts.push(`12-18": ${b1218}`);
+  }
   return parts.join("  ·  ");
 }
 
