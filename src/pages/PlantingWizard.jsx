@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
+import FlagField from "@/components/FlagField";
 import { parseOps } from "@/lib/opsUtils";
 
 const PLANTING_TYPES = ["Trees & Shrubs", "Perennials", "Bulbs", "Annuals"];
@@ -86,6 +87,18 @@ export default function PlantingWizard() {
   }, [areaId]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function toggleFlag(key, label) {
+    setForm(f => {
+      const flags = f._flags || [];
+      const flagLabels = f._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...f, _flags: flags.filter(x => x !== key), _flag_labels: updated };
+      }
+      return { ...f, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
 
   function addPlant() {
     setForm(f => ({ ...f, plants: [...(f.plants || []), { id: generateId(), type: "", count: "", size: "" }] }));
@@ -296,31 +309,28 @@ export default function PlantingWizard() {
           {/* Shared fields for all types */}
           <div className="space-y-4 border-t pt-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Additional Time Factors</p>
-            <div>
-              <Label>Time Estimate (hrs)</Label>
-              <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
-            </div>
+            <FlagField fieldKey="time_estimate" label="Time Estimate (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+              <Input type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+            </FlagField>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Rocky Soil</Label>
+              <FlagField fieldKey="additional_time_rocky" label="Rocky Soil" flags={form._flags || []} onToggle={toggleFlag}>
                 <YesNo value={form.additional_time_rocky} onChange={v => set("additional_time_rocky", v)} />
-              </div>
-              <div>
-                <Label>Roots</Label>
+              </FlagField>
+              <FlagField fieldKey="additional_time_roots" label="Roots" flags={form._flags || []} onToggle={toggleFlag}>
                 <YesNo value={form.additional_time_roots} onChange={v => set("additional_time_roots", v)} />
-              </div>
+              </FlagField>
             </div>
-            <div><Label>Delivery Method</Label><Input className="mt-1" value={form.delivery_method} onChange={e => set("delivery_method", e.target.value)} placeholder="e.g. Truck delivery, Pick up" /></div>
-            <div>
-              <Label>Water Access?</Label>
+            <FlagField fieldKey="delivery_method" label="Delivery Method" flags={form._flags || []} onToggle={toggleFlag}>
+              <Input value={form.delivery_method} onChange={e => set("delivery_method", e.target.value)} placeholder="e.g. Truck delivery, Pick up" />
+            </FlagField>
+            <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
               <YesNo value={form.water_access} onChange={v => set("water_access", v)} />
-            </div>
+            </FlagField>
           </div>
 
-          <div>
-            <Label>Additional Notes</Label>
-            <Textarea className="mt-1" value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
-          </div>
+          <FlagField fieldKey="notes" label="Additional Notes" flags={form._flags || []} onToggle={toggleFlag}>
+            <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
+          </FlagField>
 
           <Button className="w-full" onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save"}

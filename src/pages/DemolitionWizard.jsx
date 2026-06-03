@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { DEMO_GROUPS, DEMO_FIELDS, getDemoSubTypes } from "@/lib/demolitionStages";
 import { parseOps } from "@/lib/opsUtils";
+import FlagField from "@/components/FlagField";
 
 const STEPS = ["Group", "Sub-Type", "Measurements", "Details"];
 
@@ -39,6 +40,19 @@ export default function DemolitionWizard() {
   }, [areaId]);
 
   function set(key, value) { setData(d => ({ ...d, [key]: value })); }
+
+  function toggleFlag(key, label) {
+    setData(d => {
+      const flags = d._flags || [];
+      const flagLabels = d._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...d, _flags: flags.filter(f => f !== key), _flag_labels: updated };
+      }
+      return { ...d, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
+  const flags = data._flags || [];
 
   function setDim(key, value) {
     setData(d => {
@@ -71,8 +85,7 @@ export default function DemolitionWizard() {
     const show = !field.condition || data[field.condition.key] === field.condition.value;
     if (!show) return null;
     if (field.type === "radio") return (
-      <div key={field.key} className="space-y-2">
-        <Label>{field.label}</Label>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
         <RadioGroup value={data[field.key] || ""} onValueChange={v => set(field.key, v)}>
           <div className="flex flex-wrap gap-2">
             {field.options.map(o => (
@@ -82,22 +95,25 @@ export default function DemolitionWizard() {
             ))}
           </div>
         </RadioGroup>
-      </div>
+      </FlagField>
     );
     if (field.type === "select") return (
-      <div key={field.key}>
-        <Label>{field.label}</Label>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
         <Select value={data[field.key] || ""} onValueChange={v => set(field.key, v)}>
-          <SelectTrigger className="mt-1"><SelectValue placeholder="Select..." /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
           <SelectContent>{field.options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
         </Select>
-      </div>
+      </FlagField>
     );
     if (field.type === "textarea") return (
-      <div key={field.key}><Label>{field.label}</Label><Textarea className="mt-1" rows={2} value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} /></div>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
+        <Textarea rows={2} value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
+      </FlagField>
     );
     return (
-      <div key={field.key}><Label>{field.label}</Label><Input type={field.type === "number" ? "number" : "text"} className="mt-1" value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} /></div>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
+        <Input type={field.type === "number" ? "number" : "text"} value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
+      </FlagField>
     );
   }
 
@@ -177,7 +193,9 @@ export default function DemolitionWizard() {
           <>
             <div><h2 className="text-lg font-bold">Details &amp; Decisions</h2></div>
             {cfg.details.length > 0 ? <div className="space-y-5">{cfg.details.map(renderField)}</div> : <p className="text-sm text-muted-foreground italic">No additional details required.</p>}
-            <div><Label>Additional Notes</Label><Textarea className="mt-1" rows={3} placeholder="Any other notes..." value={data.notes || ""} onChange={e => set("notes", e.target.value)} /></div>
+            <FlagField fieldKey="notes" label="Additional Notes" flags={flags} onToggle={toggleFlag}>
+              <Textarea rows={3} placeholder="Any other notes..." value={data.notes || ""} onChange={e => set("notes", e.target.value)} />
+            </FlagField>
           </>
         )}
       </div>

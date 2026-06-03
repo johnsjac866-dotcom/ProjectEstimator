@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { BED_MAIN_TYPES, BED_FIELDS, getSubTypes } from "@/lib/bedPrepStages";
 import { parseOps } from "@/lib/opsUtils";
+import FlagField from "@/components/FlagField";
 
 const STEPS = ["Main Type", "Sub-Type", "Measurements & Decisions", "Constraints & Risk Factors"];
 
@@ -41,6 +42,18 @@ export default function BedPrepWizard() {
 
   function set(key, value) { setData(d => ({ ...d, [key]: value })); }
 
+  function toggleFlag(key, label) {
+    setData(d => {
+      const flags = d._flags || [];
+      const flagLabels = d._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...d, _flags: flags.filter(f => f !== key), _flag_labels: updated };
+      }
+      return { ...d, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
+
   function setDimension(key, value) {
     setData(d => {
       const updated = { ...d, [key]: value };
@@ -66,43 +79,48 @@ export default function BedPrepWizard() {
     navigate(`/area/${areaId}`);
   }
 
+  const flags = data._flags || [];
+
   function renderField(field) {
     if (field.type === "checkbox") return (
-      <label key={field.key} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${data[field.key] ? "border-amber-400 bg-amber-50/50" : "border-border hover:bg-muted/30"}`}>
-        <Checkbox checked={!!data[field.key]} onCheckedChange={v => set(field.key, v)} />
-        <span className="text-sm">{field.label}</span>
-      </label>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
+        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${data[field.key] ? "border-amber-400 bg-amber-50/50" : "border-border hover:bg-muted/30"}`}>
+          <Checkbox checked={!!data[field.key]} onCheckedChange={v => set(field.key, v)} />
+          <span className="text-sm">{field.label}</span>
+        </label>
+      </FlagField>
     );
     if (field.type === "select") return (
-      <div key={field.key}>
-        <Label>{field.label}</Label>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
         <Select value={data[field.key] || ""} onValueChange={v => set(field.key, v)}>
-          <SelectTrigger className="mt-1"><SelectValue placeholder="Select..." /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
           <SelectContent>{field.options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
         </Select>
-      </div>
+      </FlagField>
     );
     if (field.type === "textarea") return (
-      <div key={field.key}>
-        <Label>{field.label}</Label>
-        <Textarea className="mt-1" rows={3} value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
-      </div>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
+        <Textarea rows={3} value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
+      </FlagField>
     );
     if (field.type === "number" && field.key === "sf") return (
-      <div key={field.key} className="space-y-2">
-        <Label>{field.label}</Label>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
         <div className="grid grid-cols-3 gap-2 items-end">
           <div><Label className="text-xs text-muted-foreground">Length (ft)</Label><Input type="number" className="mt-1" placeholder="0" value={data.sf_length || ""} onChange={e => setDimension("sf_length", e.target.value)} /></div>
           <div><Label className="text-xs text-muted-foreground">Width (ft)</Label><Input type="number" className="mt-1" placeholder="0" value={data.sf_width || ""} onChange={e => setDimension("sf_width", e.target.value)} /></div>
           <div><Label className="text-xs text-muted-foreground">SF (auto)</Label><Input type="number" className="mt-1 bg-muted/50" placeholder="0" value={data.sf || ""} onChange={e => set("sf", e.target.value)} /></div>
         </div>
-      </div>
+      </FlagField>
     );
     if (field.type === "number") return (
-      <div key={field.key}><Label>{field.label}</Label><Input type="number" className="mt-1" value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} /></div>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
+        <Input type="number" value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
+      </FlagField>
     );
     return (
-      <div key={field.key}><Label>{field.label}</Label><Input className="mt-1" value={data[field.key] || (field.defaultValue || "")} onChange={e => set(field.key, e.target.value)} /></div>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
+        <Input value={data[field.key] || (field.defaultValue || "")} onChange={e => set(field.key, e.target.value)} />
+      </FlagField>
     );
   }
 

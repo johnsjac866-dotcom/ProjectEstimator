@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import FlagField from "@/components/FlagField";
 import { parseOps } from "@/lib/opsUtils";
 
 const WALL_TYPES = [
@@ -84,6 +85,18 @@ export default function RetainingWallWizard() {
     setOp((prev) => ({ ...prev, [field]: value }));
   }
 
+  function toggleFlag(key, label) {
+    setOp(prev => {
+      const flags = prev._flags || [];
+      const flagLabels = prev._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...prev, _flags: flags.filter(x => x !== key), _flag_labels: updated };
+      }
+      return { ...prev, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
+
   // Calculations
   const excCY = op.exc_lf && op.exc_trench_depth && op.exc_trench_width ?
   (parseFloat(op.exc_lf) * parseFloat(op.exc_trench_depth) * parseFloat(op.exc_trench_width) / 27).toFixed(2) :
@@ -131,22 +144,18 @@ export default function RetainingWallWizard() {
           
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label>LF</Label>
+            <FlagField fieldKey="exc_lf" label="LF" flags={op._flags || []} onToggle={toggleFlag}>
               <Input type="number" value={op.exc_lf} onChange={(e) => set("exc_lf", e.target.value)} placeholder="Linear feet" />
-            </div>
-            <div className="space-y-1">
-              <Label>Wall Height (ft)</Label>
+            </FlagField>
+            <FlagField fieldKey="exc_wall_height" label="Wall Height (ft)" flags={op._flags || []} onToggle={toggleFlag}>
               <Input type="number" value={op.exc_wall_height} onChange={(e) => set("exc_wall_height", e.target.value)} placeholder="0" />
-            </div>
-            <div className="space-y-1">
-              <Label>Trench Depth (ft)</Label>
+            </FlagField>
+            <FlagField fieldKey="exc_trench_depth" label="Trench Depth (ft)" flags={op._flags || []} onToggle={toggleFlag}>
               <Input type="number" value={op.exc_trench_depth} onChange={(e) => set("exc_trench_depth", e.target.value)} placeholder="0" />
-            </div>
-            <div className="space-y-1">
-              <Label>Trench Width (ft)</Label>
+            </FlagField>
+            <FlagField fieldKey="exc_trench_width" label="Trench Width (ft)" flags={op._flags || []} onToggle={toggleFlag}>
               <Input type="number" value={op.exc_trench_width} onChange={(e) => set("exc_trench_width", e.target.value)} placeholder="0" />
-            </div>
+            </FlagField>
           </div>
 
           {excCY && <CalcBox label="Cubic Yards" value={`${excCY} CY`} />}
@@ -334,10 +343,9 @@ export default function RetainingWallWizard() {
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <Label>Notes</Label>
+              <FlagField fieldKey="notes" label="Notes" flags={op._flags || []} onToggle={toggleFlag}>
                 <Input value={op.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Additional notes..." />
-              </div>
+              </FlagField>
             </div>
         }
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { parseOps } from "@/lib/opsUtils";
+import FlagField from "@/components/FlagField";
 
 const DRAIN_TYPES = [
   "Buried Downspout",
@@ -89,6 +90,18 @@ export default function DrainageWizard() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  function toggleFlag(key, label) {
+    setForm(f => {
+      const flags = f._flags || [];
+      const flagLabels = f._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...f, _flags: flags.filter(x => x !== key), _flag_labels: updated };
+      }
+      return { ...f, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
+
   // Derived calcs
   const lf = parseFloat(form.lf) || 0;
   const pipeIn = parseFloat(form.pipe_size) || 0;
@@ -158,16 +171,14 @@ export default function DrainageWizard() {
           </div>
 
           {/* Time Estimate */}
-          <div>
-            <Label>Time Estimate (hrs)</Label>
-            <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
-          </div>
+          <FlagField fieldKey="time_estimate" label="Time Estimate (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+            <Input type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+          </FlagField>
 
           {/* LF — all types */}
-          <div>
-            <Label>Linear Feet (LF)</Label>
-            <Input className="mt-1" type="number" value={form.lf || ""} onChange={e => set("lf", e.target.value)} placeholder="0" />
-          </div>
+          <FlagField fieldKey="lf" label="Linear Feet (LF)" flags={form._flags || []} onToggle={toggleFlag}>
+            <Input type="number" value={form.lf || ""} onChange={e => set("lf", e.target.value)} placeholder="0" />
+          </FlagField>
 
           {/* Dry Stream Bed: width + stream depth */}
           {isStream && (
@@ -316,10 +327,9 @@ export default function DrainageWizard() {
           )}
 
           {/* Notes */}
-          <div>
-            <Label>Additional Notes</Label>
-            <Textarea className="mt-1" value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
-          </div>
+          <FlagField fieldKey="notes" label="Additional Notes" flags={form._flags || []} onToggle={toggleFlag}>
+            <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
+          </FlagField>
 
           <Button className="w-full" onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save"}

@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2, Wrench, Flag } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2, Wrench, Flag, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -94,12 +94,7 @@ export default function AreaDetail() {
     setArea(a => ({ ...a, [op.dataKey]: JSON.stringify(updated) }));
   }
 
-  async function handleToggleFlag(op, entryId) {
-    const entries = parseOps(area[op.dataKey]);
-    const updated = entries.map(e => e.id === entryId ? { ...e, flagged: !e.flagged } : e);
-    await base44.entities.Area.update(areaId, { [op.dataKey]: JSON.stringify(updated) });
-    setArea(a => ({ ...a, [op.dataKey]: JSON.stringify(updated) }));
-  }
+
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
   if (!area) return <div className="text-center py-20 text-muted-foreground">Area not found</div>;
@@ -171,9 +166,9 @@ export default function AreaDetail() {
                    <p className="font-semibold text-sm">{op.type}</p>
                    <p className="text-xs text-muted-foreground">{entries.length} entr{entries.length !== 1 ? "ies" : "y"}</p>
                  </div>
-                 {entries.some(e => e.flagged) && (
+                 {entries.some(e => e._flags && e._flags.length > 0) && (
                    <span className="flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
-                     <Flag className="h-3 w-3" /> Flagged
+                     <Flag className="h-3 w-3" fill="currentColor" /> Flagged
                    </span>
                  )}
                  {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
@@ -182,27 +177,29 @@ export default function AreaDetail() {
                 {isOpen && (
                   <div className="px-4 pb-4 border-t border-inherit pt-3 space-y-2">
                     {entries.map((entry, idx) => (
-                      <div key={entry.id} className={`flex items-center gap-2 bg-background/70 rounded-lg px-3 py-2 border transition-colors ${entry.flagged ? "border-orange-300 bg-orange-50/50" : "border-inherit"}`}>
-                        <div className="flex-1 min-w-0 flex items-center gap-2">
-                          <span className="text-xs font-medium capitalize">{getEntryLabel(entry, idx)}</span>
-                          {entry.flagged && <span className="text-xs text-orange-600 font-medium">⚑ Flagged</span>}
+                      <div key={entry.id} className={`bg-background/70 rounded-lg px-3 py-2 border transition-colors ${entry._flags?.length > 0 ? "border-orange-300 bg-orange-50/30" : "border-inherit"}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium capitalize flex-1">{getEntryLabel(entry, idx)}</span>
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => navigate(`${op.wizardPath(areaId)}?opId=${entry.id}`)}>
+                            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => navigate(op.summaryPath(areaId, entry.id))}>
+                            <FileText className="h-3.5 w-3.5 mr-1" /> View
+                          </Button>
+                          <button className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleDeleteEntry(op, entry.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
-                        <button
-                          className={`p-1 rounded transition-colors ${entry.flagged ? "text-orange-500 hover:text-orange-700" : "text-muted-foreground hover:text-orange-500"}`}
-                          title={entry.flagged ? "Remove flag" : "Flag this entry"}
-                          onClick={() => handleToggleFlag(op, entry.id)}
-                        >
-                          <Flag className="h-3.5 w-3.5" />
-                        </button>
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => navigate(`${op.wizardPath(areaId)}?opId=${entry.id}`)}>
-                          <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => navigate(op.summaryPath(areaId, entry.id))}>
-                          <FileText className="h-3.5 w-3.5 mr-1" /> View
-                        </Button>
-                        <button className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleDeleteEntry(op, entry.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {entry._flags?.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {entry._flags.map(fk => (
+                              <span key={fk} className="inline-flex items-center gap-1 text-xs text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
+                                <Flag className="h-2.5 w-2.5" fill="currentColor" />
+                                {(entry._flag_labels && entry._flag_labels[fk]) || fk}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                     <Button variant="outline" className="w-full mt-1" onClick={() => navigate(op.wizardPath(areaId))}>

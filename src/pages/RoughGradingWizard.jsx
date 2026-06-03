@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, ArrowRight, Check, AlertTriangle, Leaf } from "lucide-react";
+import FlagField from "@/components/FlagField";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { RG_SUB_TYPES, RG_FIELDS, calcCY, calcCYFluff } from "@/lib/roughGradingStages";
 import { parseOps } from "@/lib/opsUtils";
@@ -44,6 +45,19 @@ export default function RoughGradingWizard() {
   }, [areaId]);
 
   function set(key, value) { setData(d => ({ ...d, [key]: value })); }
+
+  function toggleFlag(key, label) {
+    setData(d => {
+      const flags = d._flags || [];
+      const flagLabels = d._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...d, _flags: flags.filter(f => f !== key), _flag_labels: updated };
+      }
+      return { ...d, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
+  const flags = data._flags || [];
 
   function setDim(key, value) {
     setData(d => {
@@ -88,8 +102,7 @@ export default function RoughGradingWizard() {
     const show = !field.condition || data[field.condition.key] === field.condition.value;
     if (!show) return null;
     if (field.type === "radio") return (
-      <div key={field.key} className="space-y-2">
-        <Label>{field.label}</Label>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
         <RadioGroup value={data[field.key] || ""} onValueChange={v => set(field.key, v)}>
           <div className="flex flex-wrap gap-2">
             {field.options.map(o => (
@@ -99,22 +112,25 @@ export default function RoughGradingWizard() {
             ))}
           </div>
         </RadioGroup>
-      </div>
+      </FlagField>
     );
     if (field.type === "select") return (
-      <div key={field.key}>
-        <Label>{field.label}</Label>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
         <Select value={data[field.key] || ""} onValueChange={v => set(field.key, v)}>
-          <SelectTrigger className="mt-1"><SelectValue placeholder="Select..." /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
           <SelectContent>{field.options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
         </Select>
-      </div>
+      </FlagField>
     );
     if (field.type === "number") return (
-      <div key={field.key}><Label>{field.label}</Label><Input type="number" className="mt-1" value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} /></div>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
+        <Input type="number" value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
+      </FlagField>
     );
     return (
-      <div key={field.key}><Label>{field.label}</Label><Input className="mt-1" value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} /></div>
+      <FlagField key={field.key} fieldKey={field.key} label={field.label} flags={flags} onToggle={toggleFlag}>
+        <Input value={data[field.key] || ""} onChange={e => set(field.key, e.target.value)} />
+      </FlagField>
     );
   }
 
@@ -192,7 +208,9 @@ export default function RoughGradingWizard() {
           <>
             <div><h2 className="text-lg font-bold">Details &amp; Constraints</h2></div>
             {fields.step3.length > 0 ? <div className="space-y-5">{fields.step3.map(renderField)}</div> : <p className="text-sm text-muted-foreground italic">No additional details required.</p>}
-            <div><Label>Additional Notes</Label><Textarea className="mt-1" rows={3} placeholder="Any other notes..." value={data.notes || ""} onChange={e => set("notes", e.target.value)} /></div>
+            <FlagField fieldKey="notes" label="Additional Notes" flags={flags} onToggle={toggleFlag}>
+              <Textarea rows={3} placeholder="Any other notes..." value={data.notes || ""} onChange={e => set("notes", e.target.value)} />
+            </FlagField>
           </>
         )}
       </div>

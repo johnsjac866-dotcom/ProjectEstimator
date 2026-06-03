@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
+import FlagField from "@/components/FlagField";
 
 const LAWN_TYPES = ["Sod Installation", "Seed Install", "Top Dress Lawn"];
 
@@ -61,6 +62,18 @@ export default function LawnWizard() {
   }, [areaId]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function toggleFlag(key, label) {
+    setForm(f => {
+      const flags = f._flags || [];
+      const flagLabels = f._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...f, _flags: flags.filter(x => x !== key), _flag_labels: updated };
+      }
+      return { ...f, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
 
   // Derived calcs
   const length = parseFloat(form.length) || 0;
@@ -133,10 +146,9 @@ export default function LawnWizard() {
           {/* Dimensions — all types */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dimensions</p>
-            <div>
-              <Label>Time Estimate (hrs)</Label>
-              <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
-            </div>
+            <FlagField fieldKey="time_estimate" label="Time Estimate (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+              <Input type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+            </FlagField>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Length (ft)</Label><Input className="mt-1" type="number" value={form.length || ""} onChange={e => set("length", e.target.value)} placeholder="0" /></div>
               <div><Label>Width (ft)</Label><Input className="mt-1" type="number" value={form.width || ""} onChange={e => set("width", e.target.value)} placeholder="0" /></div>
@@ -150,10 +162,9 @@ export default function LawnWizard() {
               {rolls && <CalcBox label="Rolls Needed (10 SF/roll)" value={rolls} unit="rolls" />}
               {pallets && <CalcBox label="Pallets Needed (1 per 15 rolls)" value={pallets} unit="pallets" />}
 
-              <div>
-                <Label>On a Slope?</Label>
+              <FlagField fieldKey="on_slope" label="On a Slope?" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.on_slope} onChange={v => set("on_slope", v)} options={["Yes", "No"]} />
-              </div>
+              </FlagField>
 
               {pins && <CalcBox label="Pins Needed (3/roll)" value={pins} unit="pins" />}
 
@@ -162,8 +173,7 @@ export default function LawnWizard() {
                 <Input className="mt-1" type="number" value={form.sf_waste || ""} onChange={e => set("sf_waste", e.target.value)} placeholder="0" />
               </div>
 
-              <div>
-                <Label>Fertilizer?</Label>
+              <FlagField fieldKey="fertilizer" label="Fertilizer?" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.fertilizer} onChange={v => set("fertilizer", v)} options={["Yes", "No"]} />
                 {form.fertilizer === "Yes" && (
                   <div className="mt-2">
@@ -171,27 +181,23 @@ export default function LawnWizard() {
                     <Input className="mt-1" type="number" value={form.fertilizer_sf_override || sfDisplay || ""} onChange={e => set("fertilizer_sf_override", e.target.value)} placeholder={sfDisplay || "0"} />
                   </div>
                 )}
-              </div>
+              </FlagField>
 
-              <div>
-                <Label>Distance to Truck (ft)</Label>
-                <Input className="mt-1" type="number" value={form.distance_to_truck || ""} onChange={e => set("distance_to_truck", e.target.value)} placeholder="0" />
-              </div>
+              <FlagField fieldKey="distance_to_truck" label="Distance to Truck (ft)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.distance_to_truck || ""} onChange={e => set("distance_to_truck", e.target.value)} placeholder="0" />
+              </FlagField>
 
-              <div>
-                <Label>Machine Access</Label>
+              <FlagField fieldKey="machine_access" label="Machine Access" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.machine_access} onChange={v => set("machine_access", v)} options={["Dingo", "Vermeer", "None"]} />
-              </div>
+              </FlagField>
 
-              <div>
-                <Label>Sod Type</Label>
+              <FlagField fieldKey="sod_type" label="Sod Type" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.sod_type} onChange={v => set("sod_type", v)} options={["Bluegrass", "Tall Fescue Blend"]} />
-              </div>
+              </FlagField>
 
-              <div>
-                <Label>Water Access?</Label>
+              <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.water_access} onChange={v => set("water_access", v)} options={["Yes", "No"]} />
-              </div>
+              </FlagField>
             </>
           )}
 
@@ -256,11 +262,9 @@ export default function LawnWizard() {
             </>
           )}
 
-          {/* Notes */}
-          <div>
-            <Label>Additional Notes</Label>
-            <Textarea className="mt-1" value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
-          </div>
+          <FlagField fieldKey="notes" label="Additional Notes" flags={form._flags || []} onToggle={toggleFlag}>
+            <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
+          </FlagField>
 
           <Button className="w-full" onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save"}

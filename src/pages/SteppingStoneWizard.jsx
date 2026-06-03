@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
+import FlagField from "@/components/FlagField";
 import { parseOps } from "@/lib/opsUtils";
 
 function generateId() { return Math.random().toString(36).substr(2, 9); }
@@ -58,6 +59,18 @@ export default function SteppingStoneWizard() {
   }, [areaId]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function toggleFlag(key, label) {
+    setForm(f => {
+      const flags = f._flags || [];
+      const flagLabels = f._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...f, _flags: flags.filter(x => x !== key), _flag_labels: updated };
+      }
+      return { ...f, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
 
   const lf = parseFloat(form.lf) || 0;
   const stoneCount = lf > 0 ? Math.ceil(lf / 2) : null;
@@ -236,15 +249,13 @@ export default function SteppingStoneWizard() {
         )}
 
         {/* Common fields */}
-        <div>
-          <Label>Time Estimate (hrs)</Label>
-          <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
-        </div>
+        <FlagField fieldKey="time_estimate" label="Time Estimate (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+          <Input type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+        </FlagField>
 
-        <div>
-          <Label>Additional Notes</Label>
-          <Textarea className="mt-1" value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
-        </div>
+        <FlagField fieldKey="notes" label="Additional Notes" flags={form._flags || []} onToggle={toggleFlag}>
+          <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
+        </FlagField>
 
         <Button className="w-full" onClick={handleSave} disabled={saving}>
           {saving ? "Saving…" : "Save"}

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { parseOps } from "@/lib/opsUtils";
+import FlagField from "@/components/FlagField";
 
 const MULCH_TYPES = ["Organic", "Stone"];
 const TON_PER_CY = { Organic: 0.25, Stone: 1.3 };
@@ -66,6 +67,18 @@ export default function MulchWizard() {
   }, [areaId]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function toggleFlag(key, label) {
+    setForm(f => {
+      const flags = f._flags || [];
+      const flagLabels = f._flag_labels || {};
+      if (flags.includes(key)) {
+        const updated = { ...flagLabels }; delete updated[key];
+        return { ...f, _flags: flags.filter(x => x !== key), _flag_labels: updated };
+      }
+      return { ...f, _flags: [...flags, key], _flag_labels: { ...flagLabels, [key]: label } };
+    });
+  }
 
   // Derived calculations
   const length = parseFloat(form.length) || 0;
@@ -129,10 +142,9 @@ export default function MulchWizard() {
           {/* Dimensions */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dimensions</p>
-            <div>
-              <Label>Time Estimate (hrs)</Label>
-              <Input className="mt-1" type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
-            </div>
+            <FlagField fieldKey="time_estimate" label="Time Estimate (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+              <Input type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
+            </FlagField>
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Length (ft)</Label>
@@ -176,11 +188,9 @@ export default function MulchWizard() {
             <SelectButtons value={form.machine_access} onChange={v => set("machine_access", v)} options={["Vermeer", "Dingo", "None"]} />
           </div>
 
-          {/* Notes */}
-          <div>
-            <Label>Additional Notes</Label>
-            <Textarea className="mt-1" value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
-          </div>
+          <FlagField fieldKey="notes" label="Additional Notes" flags={form._flags || []} onToggle={toggleFlag}>
+            <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />
+          </FlagField>
 
           <Button className="w-full" onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save"}
