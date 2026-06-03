@@ -17,12 +17,12 @@ function generateId() {
 
 function getDefaultData(edgeType) {
   switch (edgeType) {
-    case "Brick":     return { edge_type: "Brick",     sub_type: "Brick",     brick_width: "4 inch", brick_lf_straight: "", brick_lf_curved: "", brick_color: "", brick_ends_cut: "" };
-    case "Metal":     return { edge_type: "Metal",     sub_type: "Metal",     metal_type: "Aluminum", metal_lf: "", metal_corners: "", metal_splicers: "" };
-    case "Bullet":    return { edge_type: "Bullet",    sub_type: "Bullet",    bullet_lf: "", bullet_color: "" };
-    case "Natural Edge": return { edge_type: "Natural Edge", sub_type: "Natural Edge", natural_method: "Hand cut", natural_lf: "" };
-    case "Poly":      return { edge_type: "Poly",      sub_type: "Poly",      poly_lf: "", poly_corners_90: "", poly_corners_45: "", poly_splicers: "" };
-    case "Snapped Limestone": return { edge_type: "Snapped Limestone", sub_type: "Snapped Limestone", snapped_lf: "", snapped_ends_cut: "", snapped_corners: "", snapped_splicers: "" };
+    case "Brick":     return { edge_type: "Brick",     sub_type: "Brick",     brick_width: "4 inch", brick_lf_straight: "", brick_lf_curved: "", brick_color: "", brick_ends_cut: "", bed_edger_needed: "" };
+    case "Metal":     return { edge_type: "Metal",     sub_type: "Metal",     metal_type: "Aluminum", metal_lf: "", metal_corners: "", metal_splicers: "", bed_edger_needed: "" };
+    case "Bullet":    return { edge_type: "Bullet",    sub_type: "Bullet",    bullet_lf: "", bullet_color: "", bed_edger_needed: "" };
+    case "Natural Edge": return { edge_type: "Natural Edge", sub_type: "Natural Edge", natural_method: "Hand cut", natural_lf: "", bed_edger_needed: "" };
+    case "Poly":      return { edge_type: "Poly",      sub_type: "Poly",      poly_lf: "", poly_corners_90: "", poly_corners_45: "", poly_splicers: "", bed_edger_needed: "" };
+    case "Snapped Limestone": return { edge_type: "Snapped Limestone", sub_type: "Snapped Limestone", snapped_lf: "", snapped_ends_cut: "", snapped_corners: "", snapped_splicers: "", bed_edger_needed: "" };
     default: return {};
   }
 }
@@ -223,6 +223,16 @@ export default function BedEdgingWizard() {
               <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">⚠️ {OBSTRUCTION_NOTE}</div>
             </>
           )}
+
+          <div>
+            <Label>Bed Edger needed?</Label>
+            <div className="flex gap-3 mt-1">
+              {["Yes", "No"].map(v => (
+                <button key={v} type="button" onClick={() => set("bed_edger_needed", v)}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${form.bed_edger_needed === v ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>{v}</button>
+              ))}
+            </div>
+          </div>
 
           <div>
             <Label>Additional Notes</Label>
