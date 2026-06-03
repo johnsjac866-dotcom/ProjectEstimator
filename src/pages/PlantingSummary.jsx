@@ -10,11 +10,14 @@ function getCategory(data) {
   if (data.planting_type === "Annuals") return "Planting - Annuals";
   if (data.planting_type === "Bulbs") return "Planting - Bulbs";
   if (data.planting_type === "Perennials") {
-    const hasLarge = data.large_count && Number(data.large_count) > 0;
-    const hasSmall = data.small_count && Number(data.small_count) > 0;
-    if (hasLarge && hasSmall) return "Planting - Large Perennials / Planting - Small Perennials";
-    if (hasLarge) return "Planting - Large Perennials";
-    if (hasSmall) return "Planting - Small Perennials";
+    const hasLarge = (data.large_plants || []).some(p => p.count && Number(p.count) > 0);
+    const hasSmall = (data.small_plants || []).some(p => p.count && Number(p.count) > 0);
+    // legacy support
+    const hasLargeLegacy = data.large_count && Number(data.large_count) > 0;
+    const hasSmallLegacy = data.small_count && Number(data.small_count) > 0;
+    if ((hasLarge || hasLargeLegacy) && (hasSmall || hasSmallLegacy)) return "Planting - Large Perennials / Planting - Small Perennials";
+    if (hasLarge || hasLargeLegacy) return "Planting - Large Perennials";
+    if (hasSmall || hasSmallLegacy) return "Planting - Small Perennials";
     return "Planting - Perennials";
   }
   return null;
@@ -120,15 +123,44 @@ export default function PlantingSummary() {
 
         {/* Perennials */}
         {data.planting_type === "Perennials" && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
-            <div className="space-y-2">
-              {data.large_count && <Row label="Large Perennials — Count" value={data.large_count} />}
-              {data.large_spacing && <Row label="Large Perennials — Spacing" value={data.large_spacing} />}
-              {data.small_count && <Row label="Small Perennials — Count" value={data.small_count} />}
-              {data.small_spacing && <Row label="Small Perennials — Spacing" value={data.small_spacing} />}
-              {data.bed_condition && <Row label="Bed Condition" value={data.bed_condition} />}
-            </div>
+          <div className="border rounded-lg p-4 space-y-4">
+            {/* Large */}
+            {(data.large_plants || []).length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Large Perennials</h3>
+                <div className="space-y-1">
+                  {data.large_plants.map((plant, idx) => (
+                    <div key={plant.id || idx} className="flex items-start gap-2 text-sm">
+                      <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
+                      <span className="font-medium">{plant.name || "Plant"}</span>
+                      {plant.count && <span className="text-muted-foreground">× {plant.count}</span>}
+                    </div>
+                  ))}
+                </div>
+                {data.large_spacing && <p className="text-sm text-muted-foreground mt-2">Spacing: {data.large_spacing}</p>}
+              </div>
+            )}
+            {/* Legacy support */}
+            {!data.large_plants && data.large_count && <Row label="Large Perennials — Count" value={data.large_count} />}
+            {/* Small */}
+            {(data.small_plants || []).length > 0 && (
+              <div className={(data.large_plants || []).length > 0 ? "pt-3 border-t" : ""}>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Small Perennials</h3>
+                <div className="space-y-1">
+                  {data.small_plants.map((plant, idx) => (
+                    <div key={plant.id || idx} className="flex items-start gap-2 text-sm">
+                      <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
+                      <span className="font-medium">{plant.name || "Plant"}</span>
+                      {plant.count && <span className="text-muted-foreground">× {plant.count}</span>}
+                    </div>
+                  ))}
+                </div>
+                {data.small_spacing && <p className="text-sm text-muted-foreground mt-2">Spacing: {data.small_spacing}</p>}
+              </div>
+            )}
+            {/* Legacy support */}
+            {!data.small_plants && data.small_count && <Row label="Small Perennials — Count" value={data.small_count} />}
+            {data.bed_condition && <div className="pt-3 border-t"><Row label="Bed Condition" value={data.bed_condition} /></div>}
           </div>
         )}
 

@@ -25,7 +25,7 @@ function getDefaultForm(type) {
     notes: "",
   };
   if (type === "Trees & Shrubs") return { ...base, plants: [{ id: generateId(), type: "", count: "", size: "" }], hand_vs_machine: "" };
-  if (type === "Perennials")     return { ...base, large_count: "", large_spacing: "", small_count: "", small_spacing: "", bed_condition: "" };
+  if (type === "Perennials")     return { ...base, large_plants: [{ id: generateId(), name: "", count: "" }], large_spacing: "", small_plants: [{ id: generateId(), name: "", count: "" }], small_spacing: "", bed_condition: "" };
   if (type === "Bulbs")          return { ...base, count: "" };
   if (type === "Annuals")        return { ...base, count: "" };
   return base;
@@ -95,6 +95,16 @@ export default function PlantingWizard() {
   }
   function updatePlant(id, key, val) {
     setForm(f => ({ ...f, plants: f.plants.map(p => p.id === id ? { ...p, [key]: val } : p) }));
+  }
+
+  function addPerennial(sizeKey) {
+    setForm(f => ({ ...f, [sizeKey]: [...(f[sizeKey] || []), { id: generateId(), name: "", count: "" }] }));
+  }
+  function removePerennial(sizeKey, id) {
+    setForm(f => ({ ...f, [sizeKey]: f[sizeKey].filter(p => p.id !== id) }));
+  }
+  function updatePerennial(sizeKey, id, key, val) {
+    setForm(f => ({ ...f, [sizeKey]: f[sizeKey].map(p => p.id === id ? { ...p, [key]: val } : p) }));
   }
 
   async function handleSave() {
@@ -195,20 +205,82 @@ export default function PlantingWizard() {
           {/* Perennials */}
           {plantingType === "Perennials" && (
             <>
+              {/* Large Perennials */}
               <div className="rounded-lg border p-4 space-y-3">
-                <p className="text-sm font-medium">Large Perennials</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label className="text-xs">Count</Label><Input className="mt-1" type="number" value={form.large_count} onChange={e => set("large_count", e.target.value)} placeholder="0" /></div>
-                  <div><Label className="text-xs">Spacing</Label><Input className="mt-1" value={form.large_spacing} onChange={e => set("large_spacing", e.target.value)} placeholder='e.g. 18"' /></div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Large Perennials</p>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addPerennial("large_plants")}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {(form.large_plants || []).map((plant, idx) => (
+                    <div key={plant.id} className="rounded-lg border p-3 space-y-2 bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">Plant {idx + 1}</span>
+                        {form.large_plants.length > 1 && (
+                          <button type="button" onClick={() => removePerennial("large_plants", plant.id)} className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Plant Name</Label>
+                          <Input className="mt-1 h-8 text-sm" value={plant.name} onChange={e => updatePerennial("large_plants", plant.id, "name", e.target.value)} placeholder="e.g. Hosta" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Count</Label>
+                          <Input className="mt-1 h-8 text-sm" type="number" value={plant.count} onChange={e => updatePerennial("large_plants", plant.id, "count", e.target.value)} placeholder="0" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <Label className="text-xs">Spacing</Label>
+                  <Input className="mt-1" value={form.large_spacing} onChange={e => set("large_spacing", e.target.value)} placeholder='e.g. 18"' />
                 </div>
               </div>
+
+              {/* Small Perennials */}
               <div className="rounded-lg border p-4 space-y-3">
-                <p className="text-sm font-medium">Small Perennials</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label className="text-xs">Count</Label><Input className="mt-1" type="number" value={form.small_count} onChange={e => set("small_count", e.target.value)} placeholder="0" /></div>
-                  <div><Label className="text-xs">Spacing</Label><Input className="mt-1" value={form.small_spacing} onChange={e => set("small_spacing", e.target.value)} placeholder='e.g. 12"' /></div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Small Perennials</p>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addPerennial("small_plants")}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {(form.small_plants || []).map((plant, idx) => (
+                    <div key={plant.id} className="rounded-lg border p-3 space-y-2 bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">Plant {idx + 1}</span>
+                        {form.small_plants.length > 1 && (
+                          <button type="button" onClick={() => removePerennial("small_plants", plant.id)} className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Plant Name</Label>
+                          <Input className="mt-1 h-8 text-sm" value={plant.name} onChange={e => updatePerennial("small_plants", plant.id, "name", e.target.value)} placeholder="e.g. Sedum" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Count</Label>
+                          <Input className="mt-1 h-8 text-sm" type="number" value={plant.count} onChange={e => updatePerennial("small_plants", plant.id, "count", e.target.value)} placeholder="0" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <Label className="text-xs">Spacing</Label>
+                  <Input className="mt-1" value={form.small_spacing} onChange={e => set("small_spacing", e.target.value)} placeholder='e.g. 12"' />
                 </div>
               </div>
+
               <div>
                 <Label>Bed Condition</Label>
                 <SelectButtons value={form.bed_condition} onChange={v => set("bed_condition", v)} options={["Unprepared bed", "Prepared bed"]} />
