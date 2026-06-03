@@ -200,12 +200,14 @@ export const DEMO_FIELDS = {
     hasSFCalc: true, hasCYCalc: true,
     measurements: [
       { key: "time_estimate",               label: "Time Estimate (hrs)",                     type: "number" },
-      { key: "distance_from_truck",         label: "Distance from truck (ft)",                type: "number" },
       { key: "extra_time_over_100ft",       label: "Added time for distance over 100ft (hrs)", type: "text" },
       { key: "extra_labor_edges",           label: "Extra labor for edges/slopes/bumpy lawn (hrs)", type: "text" },
     ],
     details: [
-      { key: "disposal_method",             label: "Disposal method",                         type: "text" },
+      { key: "tilling",                     label: "Tilling?",                                type: "radio", options: ["Yes", "No"] },
+      { key: "disposal_needed",             label: "Disposal needed?",                        type: "radio", options: ["Yes", "No"] },
+      { key: "distance_from_truck",         label: "Distance from truck (ft)",                type: "number", condition: { key: "disposal_needed", value: "Yes" } },
+      { key: "disposal_method",             label: "Disposal method",                         type: "text", condition: { key: "disposal_needed", value: "Yes" } },
     ],
   },
   landscape_edging: {
