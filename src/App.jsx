@@ -40,6 +40,8 @@ import MaintenanceSummary from './pages/MaintenanceSummary';
 
 import SteppingStoneWizard from './pages/SteppingStoneWizard';
 import SteppingStoneSummary from './pages/SteppingStoneSummary';
+import RetainingWallWizard from './pages/RetainingWallWizard';
+import RetainingWallSummary from './pages/RetainingWallSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -101,6 +103,8 @@ const AuthenticatedApp = () => {
         <Route path="/maintenance-summary/:areaId" element={<MaintenanceSummary />} />
         <Route path="/stepping-stone-wizard/:areaId" element={<SteppingStoneWizard />} />
         <Route path="/stepping-stone-summary/:areaId" element={<SteppingStoneSummary />} />
+        <Route path="/retaining-wall-wizard/:areaId" element={<RetainingWallWizard />} />
+        <Route path="/retaining-wall-summary/:areaId" element={<RetainingWallSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

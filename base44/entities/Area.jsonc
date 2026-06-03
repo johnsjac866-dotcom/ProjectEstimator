@@ -26,7 +26,8 @@
         "Boulders/Accents & Structures",
         "Hardscape - Repair Existing",
         "Maintenance",
-        "Pathway - Stepping Stones"
+        "Pathway - Stepping Stones",
+        "Retaining Wall"
       ],
       "title": "Operation Type"
     },
@@ -85,6 +86,10 @@
     "stepping_stone_data": {
       "type": "string",
       "title": "Pathway - Stepping Stones Configuration Data"
+    },
+    "retaining_wall_data": {
+      "type": "string",
+      "title": "Retaining Wall Configuration Data"
     },
     "status": {
       "type": "string",

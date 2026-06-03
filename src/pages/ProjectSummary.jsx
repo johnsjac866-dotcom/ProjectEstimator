@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors, Sprout, Wind, Droplets, Wrench } from "lucide-react";
+import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors, Sprout, Wind, Droplets, Wrench, Layers } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
 const OP_CONFIG = {
@@ -17,6 +17,7 @@ const OP_CONFIG = {
   "Drainage":                         { dataKey: "drainage_data",       summaryPath: (aId, opId) => `/drainage-summary/${aId}?opId=${opId}`,             wizardPath: (aId, opId) => opId ? `/drainage-wizard/${aId}?opId=${opId}` : `/drainage-wizard/${aId}`,                  newPath: (aId) => `/drainage-wizard/${aId}`,           icon: Droplets,      color: "sky" },
   "Lawn Repair & Install":            { dataKey: "lawn_data",           summaryPath: (aId, opId) => `/lawn-summary/${aId}?opId=${opId}`,                  wizardPath: (aId, opId) => opId ? `/lawn-wizard/${aId}?opId=${opId}` : `/lawn-wizard/${aId}`,                          newPath: (aId) => `/lawn-wizard/${aId}`,               icon: Leaf,          color: "lime" },
   "Maintenance":                      { dataKey: "maintenance_data",    summaryPath: (aId, opId) => `/maintenance-summary/${aId}?opId=${opId}`,          wizardPath: (aId, opId) => opId ? `/maintenance-wizard/${aId}?opId=${opId}` : `/maintenance-wizard/${aId}`,           newPath: (aId) => `/maintenance-wizard/${aId}`,        icon: Wrench,        color: "slate" },
+  "Retaining Wall":                   { dataKey: "retaining_wall_data", summaryPath: (aId, opId) => `/retaining-wall-summary/${aId}?opId=${opId}`,      wizardPath: (aId, opId) => opId ? `/retaining-wall-wizard/${aId}?opId=${opId}` : `/retaining-wall-wizard/${aId}`,    newPath: (aId) => `/retaining-wall-wizard/${aId}`,     icon: Layers,        color: "zinc" },
 };
 
 const colorMap = {
@@ -31,11 +32,12 @@ const colorMap = {
   sky:    { icon: "text-sky-700",    iconBg: "bg-sky-100",    badge: "bg-sky-50 text-sky-700 border-sky-200" },
   lime:   { icon: "text-lime-700",   iconBg: "bg-lime-100",   badge: "bg-lime-50 text-lime-700 border-lime-200" },
   slate:  { icon: "text-slate-700",  iconBg: "bg-slate-100",  badge: "bg-slate-50 text-slate-700 border-slate-200" },
+  zinc:   { icon: "text-zinc-700",   iconBg: "bg-zinc-100",   badge: "bg-zinc-50 text-zinc-700 border-zinc-200" },
 };
 
 function getOpsForArea(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") return ["Site Management & Daily Cleanup"];
-  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install", "Maintenance"];
+  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install", "Maintenance", "Retaining Wall"];
 }
 
 function getEntryLabel(entry, idx) {
