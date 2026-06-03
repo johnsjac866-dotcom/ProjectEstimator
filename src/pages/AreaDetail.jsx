@@ -22,7 +22,7 @@ const ALL_OPERATIONS = [
   { type: "Hardscape - Repair Existing", dataKey: "hardscape_repair_data", wizardPath: (id) => `/hardscape-repair-wizard/${id}`, summaryPath: (id, opId) => `/hardscape-repair-summary/${id}?opId=${opId}`, icon: Hammer, color: "cyan", description: "Repair existing patio or walkway — surface, base, leveling & edge" },
   { type: "Maintenance", dataKey: "maintenance_data", wizardPath: (id) => `/maintenance-wizard/${id}`, summaryPath: (id, opId) => `/maintenance-summary/${id}?opId=${opId}`, icon: Wrench, color: "rose", description: "Weeding and general maintenance tasks" },
   { type: "Retaining Wall", dataKey: "retaining_wall_data", wizardPath: (id) => `/retaining-wall-wizard/${id}`, summaryPath: (id, opId) => `/retaining-wall-summary/${id}?opId=${opId}`, icon: Layers, color: "zinc", description: "Excavation, base install, and wall type (outcrop, boulder, CMU, etc.)" },
-  { type: "Pathway - Stepping Stones", dataKey: "stepping_stone_data", wizardPath: (id) => `/stepping-stone-wizard/${id}`, summaryPath: (id, opId) => `/stepping-stone-summary/${id}?opId=${opId}`, icon: Layers, color: "indigo", description: "Stepping stone pathway on compacted soil" },
+  { type: "Pathway / Steps", dataKey: "stepping_stone_data", wizardPath: (id) => `/stepping-stone-wizard/${id}`, summaryPath: (id, opId) => `/stepping-stone-summary/${id}?opId=${opId}`, icon: Layers, color: "indigo", description: "Stepping stone pathway or hardscape steps with landing" },
 ];
 
 function getAvailableOps(area) {

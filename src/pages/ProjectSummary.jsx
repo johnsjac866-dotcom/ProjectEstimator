@@ -18,6 +18,7 @@ const OP_CONFIG = {
   "Lawn Repair & Install":            { dataKey: "lawn_data",           summaryPath: (aId, opId) => `/lawn-summary/${aId}?opId=${opId}`,                  wizardPath: (aId, opId) => opId ? `/lawn-wizard/${aId}?opId=${opId}` : `/lawn-wizard/${aId}`,                          newPath: (aId) => `/lawn-wizard/${aId}`,               icon: Leaf,          color: "lime" },
   "Maintenance":                      { dataKey: "maintenance_data",    summaryPath: (aId, opId) => `/maintenance-summary/${aId}?opId=${opId}`,          wizardPath: (aId, opId) => opId ? `/maintenance-wizard/${aId}?opId=${opId}` : `/maintenance-wizard/${aId}`,           newPath: (aId) => `/maintenance-wizard/${aId}`,        icon: Wrench,        color: "slate" },
   "Retaining Wall":                   { dataKey: "retaining_wall_data", summaryPath: (aId, opId) => `/retaining-wall-summary/${aId}?opId=${opId}`,      wizardPath: (aId, opId) => opId ? `/retaining-wall-wizard/${aId}?opId=${opId}` : `/retaining-wall-wizard/${aId}`,    newPath: (aId) => `/retaining-wall-wizard/${aId}`,     icon: Layers,        color: "zinc" },
+  "Pathway / Steps":                  { dataKey: "stepping_stone_data", summaryPath: (aId, opId) => `/stepping-stone-summary/${aId}?opId=${opId}`,        wizardPath: (aId, opId) => opId ? `/stepping-stone-wizard/${aId}?opId=${opId}` : `/stepping-stone-wizard/${aId}`,    newPath: (aId) => `/stepping-stone-wizard/${aId}`,     icon: Layers,        color: "indigo" },
 };
 
 const colorMap = {
@@ -33,11 +34,12 @@ const colorMap = {
   lime:   { icon: "text-lime-700",   iconBg: "bg-lime-100",   badge: "bg-lime-50 text-lime-700 border-lime-200" },
   slate:  { icon: "text-slate-700",  iconBg: "bg-slate-100",  badge: "bg-slate-50 text-slate-700 border-slate-200" },
   zinc:   { icon: "text-zinc-700",   iconBg: "bg-zinc-100",   badge: "bg-zinc-50 text-zinc-700 border-zinc-200" },
+  indigo: { icon: "text-indigo-700", iconBg: "bg-indigo-100", badge: "bg-indigo-50 text-indigo-700 border-indigo-200" },
 };
 
 function getOpsForArea(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") return ["Site Management & Daily Cleanup"];
-  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install", "Maintenance", "Retaining Wall"];
+  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install", "Maintenance", "Retaining Wall", "Pathway / Steps"];
 }
 
 function getEntryLabel(entry, idx) {

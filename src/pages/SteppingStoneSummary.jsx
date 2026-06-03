@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
 function Row({ label, value }) {
-  if (!value) return null;
+  if (!value && value !== 0) return null;
   return (
     <div className="flex gap-2 text-sm">
       <span className="text-muted-foreground min-w-[200px]">{label}:</span>
@@ -39,7 +39,12 @@ export default function SteppingStoneSummary() {
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
   if (!entry) return <div className="text-center py-20 text-muted-foreground">No entry found</div>;
 
-  const stoneCountCalc = entry.lf ? Math.ceil(parseFloat(entry.lf) / 2) : null;
+  const isSteps = entry.sub_type === "Hardscape - Steps";
+  const stoneCountCalc = !isSteps && entry.lf ? Math.ceil(parseFloat(entry.lf) / 2) : null;
+  const stepSF = isSteps ? ((parseFloat(entry.step_length) || 0) * (parseFloat(entry.step_width) || 0)) || null : null;
+  const landingSF = isSteps && entry.landing_needed === "Yes"
+    ? ((parseFloat(entry.landing_length) || 0) * (parseFloat(entry.landing_width) || 0)) || null
+    : null;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -48,38 +53,67 @@ export default function SteppingStoneSummary() {
       </Link>
 
       <div className="mb-6 pb-4 border-b">
-        <h1 className="text-2xl font-bold">Pathway — Stepping Stones</h1>
+        <h1 className="text-2xl font-bold">Pathway / Steps — {entry.sub_type || "Stepping Stones"}</h1>
         {project && <p className="text-sm text-muted-foreground mt-1">{project.name} — {area?.name}</p>}
       </div>
 
       <div className="bg-card border rounded-xl p-6 space-y-3">
-        <h2 className="font-semibold text-base mb-3">Pathway Details</h2>
-        <Row label="Type" value={entry.pathway_type} />
-        <Row label="Linear Feet (LF)" value={entry.lf} />
 
-        <div className="pt-2 border-t" />
-        <h2 className="font-semibold text-base">Stone</h2>
-        <Row label="Stone Count (calculated)" value={stoneCountCalc} />
-        <Row label="Stone Count (override)" value={entry.stone_count} />
-        <Row label="Stone Type" value={entry.stone_type} />
-        <Row label="Stone Size" value={entry.stone_size} />
-
-        <div className="pt-2 border-t" />
-        <h2 className="font-semibold text-base">Existing Stones</h2>
-        <Row label="Existing stones on site" value={entry.existing_stones} />
-        {entry.existing_stones === "Yes" && (
+        {/* STEPPING STONES */}
+        {!isSteps && (
           <>
-            <Row label="Releveling needed" value={entry.releveling} />
-            <Row label="Additional stones needed" value={entry.additional_stones} />
+            <h2 className="font-semibold text-base mb-3">Pathway Details</h2>
+            <Row label="Linear Feet (LF)" value={entry.lf} />
+            <div className="pt-2 border-t" />
+            <h2 className="font-semibold text-base">Stone</h2>
+            <Row label="Stone Count (calculated)" value={stoneCountCalc} />
+            <Row label="Stone Count (override)" value={entry.stone_count} />
+            <Row label="Stone Type" value={entry.stone_type} />
+            <Row label="Stone Size" value={entry.stone_size} />
+            <div className="pt-2 border-t" />
+            <h2 className="font-semibold text-base">Existing Stones</h2>
+            <Row label="Existing stones on site" value={entry.existing_stones} />
+            {entry.existing_stones === "Yes" && (
+              <>
+                <Row label="Releveling needed" value={entry.releveling} />
+                <Row label="Additional stones needed" value={entry.additional_stones} />
+              </>
+            )}
+            <div className="pt-2 border-t" />
+            <h2 className="font-semibold text-base">Installation</h2>
+            <Row label="Existing base" value={entry.existing_base} />
+            <Row label="Machine needed" value={entry.machine} />
           </>
         )}
 
-        <div className="pt-2 border-t" />
-        <h2 className="font-semibold text-base">Installation</h2>
-        <Row label="Existing base" value={entry.existing_base} />
-        <Row label="Machine needed" value={entry.machine} />
-        <Row label="Time Estimate (hrs)" value={entry.time_estimate} />
+        {/* HARDSCAPE - STEPS */}
+        {isSteps && (
+          <>
+            <h2 className="font-semibold text-base mb-3">Step Details</h2>
+            <Row label="Count (# of steps)" value={entry.step_count} />
+            <Row label="Material" value={entry.step_material} />
+            <Row label="Length (ft)" value={entry.step_length} />
+            <Row label="Width (ft)" value={entry.step_width} />
+            {stepSF && <Row label="Steps SF (calculated)" value={`${stepSF.toFixed(1)} SF`} />}
 
+            <div className="pt-2 border-t" />
+            <h2 className="font-semibold text-base">Landing</h2>
+            <Row label="Landing Needed" value={entry.landing_needed} />
+            {entry.landing_needed === "Yes" && (
+              <>
+                <Row label="Landing Length (ft)" value={entry.landing_length} />
+                <Row label="Landing Width (ft)" value={entry.landing_width} />
+                {landingSF && <Row label="Landing SF (calculated)" value={`${landingSF.toFixed(1)} SF`} />}
+              </>
+            )}
+
+            <div className="pt-2 border-t" />
+            <h2 className="font-semibold text-base">Machine Access</h2>
+            <Row label="Machine" value={entry.machine} />
+          </>
+        )}
+
+        <Row label="Time Estimate (hrs)" value={entry.time_estimate} />
         {entry.notes && (
           <>
             <div className="pt-2 border-t" />
