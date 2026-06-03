@@ -197,7 +197,7 @@ export const DEMO_FIELDS = {
     ],
   },
   strip_sod: {
-    hasSFCalc: true, hasCYCalc: false,
+    hasSFCalc: true, hasCYCalc: true,
     measurements: [
       { key: "time_estimate",               label: "Time Estimate (hrs)",                     type: "number" },
       { key: "distance_from_truck",         label: "Distance from truck (ft)",                type: "number" },
