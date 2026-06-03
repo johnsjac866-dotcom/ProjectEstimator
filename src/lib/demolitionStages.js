@@ -200,8 +200,6 @@ export const DEMO_FIELDS = {
     hasSFCalc: true, hasCYCalc: true,
     measurements: [
       { key: "time_estimate",               label: "Time Estimate (hrs)",                     type: "number" },
-      { key: "extra_time_over_100ft",       label: "Added time for distance over 100ft (hrs)", type: "text" },
-      { key: "extra_labor_edges",           label: "Extra labor for edges/slopes/bumpy lawn (hrs)", type: "text" },
     ],
     details: [
       { key: "tilling",                     label: "Tilling?",                                type: "radio", options: ["Yes", "No"] },
