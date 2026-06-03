@@ -128,7 +128,7 @@ export default function RetainingWallWizard() {
       {step === 1 &&
       <div className="space-y-4">
           <h2 className="font-semibold text-base">1) Excavation — Digging Trench Only</h2>
-          <p className="text-xs text-muted-foreground italic hidden">NOT add'l grading to accommodate wall or backfill</p>
+          
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
