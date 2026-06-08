@@ -15,12 +15,16 @@ Deno.serve(async (req) => {
       try {
         const res = await base44.integrations.Core.TranscribeAudio({ audio_url: url });
         transcripts.push(res.transcript || res);
-      } catch {
+      } catch (err) {
+        console.error('Transcription error:', err.message);
         // Skip on error, continue with other notes
       }
     }
 
-    if (transcripts.length === 0) return Response.json({ error: 'No transcripts generated' }, { status: 400 });
+    if (transcripts.length === 0) {
+      console.error('No transcripts generated from URLs:', dataUrls);
+      return Response.json({ error: 'No transcripts generated' }, { status: 400 });
+    }
 
     // Analyze all transcripts together
     const analysis = await base44.integrations.Core.InvokeLLM({
