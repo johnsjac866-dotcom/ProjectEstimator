@@ -237,7 +237,17 @@ export default function AreaDetail() {
               estimated_quantity: operation.estimated_quantity,
               materials: operation.materials?.join(', ') || '',
               notes: operation.notes || '',
-              priority: operation.priority || 'medium'
+              priority: operation.priority || 'medium',
+              // For Rough Grading: include structured form fields
+              ...(operation.operation_type === 'Rough Grading & Hauling' && {
+                sub_type: operation.sub_type || '',
+                sf_length: operation.sf_length != null ? String(operation.sf_length) : '',
+                sf_width: operation.sf_width != null ? String(operation.sf_width) : '',
+                depth_inches: operation.depth_inches != null ? String(operation.depth_inches) : '',
+                machine_type: operation.machine_type || '',
+                sod_vegetation_removed: operation.sod_vegetation_removed || '',
+                disposal_needed: operation.disposal_needed || '',
+              })
             };
             
             const updated = [...entries, newEntry];
