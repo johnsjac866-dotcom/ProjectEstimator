@@ -127,10 +127,12 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('areaId', areaId);
-        formData.append('duration', duration);
+        formData.append('duration', duration.toString());
         
-        const res = await base44.functions.invoke('uploadVoiceNote', {}, { data: formData, isFormData: true });
-        setNotes(prev => [res.data.note, ...prev]);
+        const res = await base44.functions.invoke('uploadVoiceNote', { formData });
+        if (res.data?.note) {
+          setNotes(prev => [res.data.note, ...prev]);
+        }
       } catch (err) {
         console.error('Failed to save voice note:', err);
       } finally {
