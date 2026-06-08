@@ -94,7 +94,31 @@ function createStore(entityName, sdk) {
     },
 
     async getByProjectId(projectId) {
-      return this.filter({ project_id: projectId });
+      const allCached = readCache(entityName);
+      const local = (allCached || []).filter(r => r.project_id === projectId);
+
+      if (allCached !== null && local.length > 0) {
+        // Cache has areas for this project — return immediately, refresh in background
+        withTimeout(sdk.filter({ project_id: projectId }))
+          .then(records => {
+            const all = readCache(entityName) || [];
+            const ids = new Set(records.map(r => r.id));
+            writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
+          })
+          .catch(() => {});
+        return local;
+      }
+
+      // No cached areas for this project — wait for network
+      try {
+        const records = await withTimeout(sdk.filter({ project_id: projectId }));
+        const all = readCache(entityName) || [];
+        const ids = new Set(records.map(r => r.id));
+        writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
+        return records;
+      } catch {
+        return local; // fall back to whatever we have
+      }
     },
 
     async get(id) {
