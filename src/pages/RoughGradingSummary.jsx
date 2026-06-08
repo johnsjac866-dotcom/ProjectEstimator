@@ -138,6 +138,38 @@ export default function RoughGradingSummary() {
           </div>
         )}
 
+        {(data.size || data.materials || data.description || data.priority) && (
+          <div className="border rounded-lg p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">AI-Generated Details</h3>
+            <div className="space-y-2">
+              {data.description && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Description:</span>
+                  <p className="font-medium">{data.description}</p>
+                </div>
+              )}
+              {data.size && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Measurements:</span>
+                  <p className="font-medium">{data.size}</p>
+                </div>
+              )}
+              {data.materials && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Materials:</span>
+                  <p className="font-medium">{data.materials}</p>
+                </div>
+              )}
+              {data.priority && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Priority:</span>
+                  <p className="font-medium capitalize">{data.priority}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {data.notes && (
           <div className="border rounded-lg p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Notes</h3>
