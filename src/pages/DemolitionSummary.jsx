@@ -12,6 +12,7 @@ function parseOps(jsonStr) {
 export default function DemolitionSummary() {
   const { areaId } = useParams();
   const opId = new URLSearchParams(window.location.search).get('opId');
+  const from = new URLSearchParams(window.location.search).get('from');
   const [area, setArea] = useState(null);
   const [project, setProject] = useState(null);
   const [data, setData] = useState({});
@@ -39,8 +40,8 @@ export default function DemolitionSummary() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <Link to={`/project-summary/${area?.project_id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back to Area
+        <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
         <Button variant="outline" onClick={() => window.print()}>
           <Printer className="h-4 w-4 mr-2" /> Print

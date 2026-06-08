@@ -136,7 +136,7 @@ export default function ProjectSummary() {
                                 <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => navigate(cfg.wizardPath(area.id, entry.id))}>
                                   <Pencil className="h-3 w-3 mr-1" /> Edit
                                 </Button>
-                                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => navigate(cfg.summaryPath(area.id, entry.id))}>
+                                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => navigate(cfg.summaryPath(area.id, entry.id) + "&from=project-summary")}>
                                   <FileText className="h-3 w-3 mr-1" /> View
                                 </Button>
                               </div>

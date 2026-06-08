@@ -19,6 +19,7 @@ export default function BouldersSummary() {
   const { areaId } = useParams();
   const navigate = useNavigate();
   const opId = new URLSearchParams(window.location.search).get("opId");
+  const from = new URLSearchParams(window.location.search).get("from");
   const [area, setArea] = useState(null);
   const [project, setProject] = useState(null);
   const [entry, setEntry] = useState(null);
@@ -41,8 +42,8 @@ export default function BouldersSummary() {
 
   return (
     <div className="max-w-lg">
-      <Link to={`/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-        <ArrowLeft className="h-4 w-4" /> Back to Area
+      <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
       </Link>
 
       <div className="flex items-start justify-between mb-6">

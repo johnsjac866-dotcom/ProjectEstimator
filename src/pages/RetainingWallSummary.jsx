@@ -31,6 +31,7 @@ export default function RetainingWallSummary() {
 
   const urlParams = new URLSearchParams(window.location.search);
   const opId = urlParams.get("opId");
+  const from = urlParams.get("from");
 
   useEffect(() => {
     base44.entities.Area.get(areaId).then(async a => {
@@ -59,8 +60,8 @@ export default function RetainingWallSummary() {
 
   return (
     <div className="max-w-lg mx-auto space-y-5">
-      <Link to={`/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back to Area
+      <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
       </Link>
 
       <div>

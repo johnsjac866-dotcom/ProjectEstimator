@@ -17,6 +17,7 @@ function Row({ label, value }) {
 export default function HardscapeRepairSummary() {
   const { areaId } = useParams();
   const opId = new URLSearchParams(window.location.search).get("opId");
+  const from = new URLSearchParams(window.location.search).get("from");
   const [area, setArea] = useState(null);
   const [project, setProject] = useState(null);
   const [entry, setEntry] = useState(null);
@@ -42,8 +43,8 @@ export default function HardscapeRepairSummary() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Link to={`/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-        <ArrowLeft className="h-4 w-4" /> Back to Area
+      <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
       </Link>
 
       <div className="mb-6 pb-4 border-b">
