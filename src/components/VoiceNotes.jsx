@@ -34,8 +34,6 @@ function NotePlayer({ note, onDelete }) {
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState(null);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -56,26 +54,8 @@ function NotePlayer({ note, onDelete }) {
 
   const progress = note.duration > 0 ? (currentTime / note.duration) * 100 : 0;
 
-  async function handleAnalyze() {
-    setAnalyzing(true);
-    try {
-      const res = await fetch('/.netlify/functions/analyzeVoiceNote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataUrl: note.dataUrl })
-      });
-      const data = await res.json();
-      setAnalysis(data.analysis);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setAnalyzing(false);
-    }
-  }
-
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-3 bg-background rounded-lg border px-3 py-2.5">
+    <div className="flex items-center gap-3 bg-background rounded-lg border px-3 py-2.5">
       <audio ref={audioRef} src={note.dataUrl} preload="metadata" />
       <button
         onClick={togglePlay}
@@ -98,47 +78,6 @@ function NotePlayer({ note, onDelete }) {
       >
         <Trash2 className="h-4 w-4" />
       </button>
-      </div>
-
-      {analysis && (
-        <div className="bg-primary/5 rounded-lg border border-primary/20 px-3 py-2.5 space-y-2">
-          <div>
-            <p className="text-xs font-semibold text-primary mb-1">Summary</p>
-            <p className="text-sm text-foreground">{analysis.summary}</p>
-          </div>
-          {analysis.key_items?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-primary mb-1">Key Items</p>
-              <ul className="text-sm text-foreground space-y-1">
-                {analysis.key_items.map((item, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-primary">•</span> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {analysis.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {analysis.tags.map((tag, i) => (
-                <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {!analysis && (
-        <button
-          onClick={handleAnalyze}
-          disabled={analyzing}
-          className="w-full text-sm text-primary hover:text-primary/80 disabled:opacity-50 py-2 transition-colors"
-        >
-          {analyzing ? 'Analyzing...' : 'Analyze with AI'}
-        </button>
-      )}
     </div>
   );
 }
@@ -148,6 +87,8 @@ export default function VoiceNotes({ areaId }) {
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [permitted, setPermitted] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -208,6 +149,24 @@ export default function VoiceNotes({ areaId }) {
     });
   }
 
+  async function handleAnalyzeAll() {
+    if (notes.length === 0) return;
+    setAnalyzing(true);
+    try {
+      const res = await fetch('/.netlify/functions/analyzeVoiceNote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrls: notes.map(n => n.dataUrl) })
+      });
+      const data = await res.json();
+      setAnalysis(data.analysis);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
   return (
     <div className="rounded-xl border bg-muted/20 p-4">
       <div className="flex items-center justify-between mb-4">
@@ -240,10 +199,52 @@ export default function VoiceNotes({ areaId }) {
       {notes.length === 0 && !recording ? (
         <p className="text-sm text-muted-foreground text-center py-4">No voice notes yet. Tap Record to add one.</p>
       ) : (
-        <div className="space-y-2">
-          {notes.map(note => (
-            <NotePlayer key={note.id} note={note} onDelete={() => deleteNote(note.id)} />
-          ))}
+        <div className="space-y-3">
+          <div className="space-y-2">
+            {notes.map(note => (
+              <NotePlayer key={note.id} note={note} onDelete={() => deleteNote(note.id)} />
+            ))}
+          </div>
+
+          {notes.length > 0 && (
+            <button
+              onClick={handleAnalyzeAll}
+              disabled={analyzing}
+              className="w-full text-sm bg-primary text-primary-foreground px-3 py-2.5 rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors font-medium"
+            >
+              {analyzing ? 'Analyzing all notes...' : `Analyze All (${notes.length})`}
+            </button>
+          )}
+
+          {analysis && (
+            <div className="bg-primary/5 rounded-lg border border-primary/20 px-3 py-2.5 space-y-2">
+              <div>
+                <p className="text-xs font-semibold text-primary mb-1">Summary</p>
+                <p className="text-sm text-foreground">{analysis.summary}</p>
+              </div>
+              {analysis.key_items?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-primary mb-1">Key Items</p>
+                  <ul className="text-sm text-foreground space-y-1">
+                    {analysis.key_items.map((item, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="text-primary">•</span> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {analysis.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {analysis.tags.map((tag, i) => (
+                    <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
