@@ -228,16 +228,20 @@ export default function AreaDetail() {
             const opDef = ALL_OPERATIONS.find(op => op.type === operation.operation_type);
             if (!opDef) return;
 
-            // Navigate to the wizard with AI-suggested data stored in sessionStorage
-            sessionStorage.setItem(`aiSuggestion_${areaId}`, JSON.stringify({
+            // Create operation entry with AI-suggested data
+            const entries = parseOps(area[opDef.dataKey]);
+            const newEntry = {
+              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               description: operation.description,
               estimated_quantity: operation.estimated_quantity,
-              materials: operation.materials,
-              notes: operation.notes,
-              priority: operation.priority
-            }));
-
-            navigate(opDef.wizardPath(areaId));
+              materials: operation.materials?.join(', ') || '',
+              notes: operation.notes || '',
+              priority: operation.priority || 'medium'
+            };
+            
+            const updated = [...entries, newEntry];
+            await OfflineAreas.update(areaId, { [opDef.dataKey]: JSON.stringify(updated) });
+            setArea(a => ({ ...a, [opDef.dataKey]: JSON.stringify(updated) }));
           }}
         />
       </div>

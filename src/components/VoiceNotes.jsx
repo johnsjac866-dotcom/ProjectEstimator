@@ -74,6 +74,7 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
   const [permitted, setPermitted] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [savedAnalysis, setSavedAnalysis] = useState(null);
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -155,22 +156,28 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
   async function handleAnalyzeAll() {
     if (notes.length === 0) return;
     setAnalyzing(true);
-    setAnalysis(null);
     try {
       const res = await base44.functions.invoke('analyzeVoiceNote', {
         dataUrls: notes.map(n => n.audio_url)
       });
       if (res.data?.analysis) {
-        setAnalysis(res.data.analysis);
+        setSavedAnalysis(res.data.analysis);
+        setAnalysis(null);
       } else if (res.data?.error) {
-        setAnalysis({ error: res.data.error });
+        setSavedAnalysis({ error: res.data.error });
+        setAnalysis(null);
       }
     } catch (err) {
       console.error('Analysis error:', err);
-      setAnalysis({ error: err.message || 'Failed to analyze notes' });
+      setSavedAnalysis({ error: err.message || 'Failed to analyze notes' });
+      setAnalysis(null);
     } finally {
       setAnalyzing(false);
     }
+  }
+
+  function handleClearAnalysis() {
+    setSavedAnalysis(null);
   }
 
   return (
@@ -224,21 +231,29 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
             </button>
           )}
 
-          {analysis && (
-            <div className={`rounded-lg border px-3 py-2.5 space-y-3 ${analysis.error ? 'bg-destructive/5 border-destructive/20' : 'bg-primary/5 border-primary/20'}`}>
-              {analysis.error ? (
-                <p className="text-sm text-destructive">{analysis.error}</p>
+          {savedAnalysis && (
+            <div className={`rounded-lg border px-3 py-2.5 space-y-3 ${savedAnalysis.error ? 'bg-destructive/5 border-destructive/20' : 'bg-primary/5 border-primary/20'}`}>
+              {savedAnalysis.error ? (
+                <p className="text-sm text-destructive">{savedAnalysis.error}</p>
               ) : (
                 <>
-                  <div>
-                    <p className="text-xs font-semibold text-primary mb-1">Summary</p>
-                    <p className="text-sm text-foreground">{analysis.summary}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-primary mb-1">Summary</p>
+                      <p className="text-sm text-foreground">{savedAnalysis.summary}</p>
+                    </div>
+                    <button
+                      onClick={handleClearAnalysis}
+                      className="flex-shrink-0 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      ✕
+                    </button>
                   </div>
-                  {analysis.key_items?.length > 0 && (
+                  {savedAnalysis.key_items?.length > 0 && (
                     <div>
                       <p className="text-xs font-semibold text-primary mb-1">Key Items</p>
                       <ul className="text-sm text-foreground space-y-1">
-                        {analysis.key_items.map((item, i) => (
+                        {savedAnalysis.key_items.map((item, i) => (
                           <li key={i} className="flex gap-2">
                             <span className="text-primary">•</span> {item}
                           </li>
@@ -246,11 +261,11 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
                       </ul>
                     </div>
                   )}
-                  {analysis.recommended_operations?.length > 0 && (
+                  {savedAnalysis.recommended_operations?.length > 0 && (
                     <div>
                       <p className="text-xs font-semibold text-primary mb-2">Recommended Operations</p>
                       <div className="space-y-2">
-                        {analysis.recommended_operations.map((op, i) => (
+                        {savedAnalysis.recommended_operations.map((op, i) => (
                           <div key={i} className="bg-white rounded border border-primary/20 p-2">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -273,9 +288,9 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
                       </div>
                     </div>
                   )}
-                  {analysis.tags?.length > 0 && (
+                  {savedAnalysis.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {analysis.tags.map((tag, i) => (
+                      {savedAnalysis.tags.map((tag, i) => (
                         <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           {tag}
                         </span>
