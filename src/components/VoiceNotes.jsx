@@ -40,7 +40,7 @@ function NotePlayer({ note, onDelete }) {
 
   return (
     <div className="flex items-center gap-3 bg-background rounded-lg border px-3 py-2.5">
-      <audio ref={audioRef} src={note.audio_url} preload="auto" crossOrigin="anonymous" />
+      <audio ref={audioRef} src={note.audio_url} preload="auto" />
       <button
         onClick={togglePlay}
         className="h-9 w-9 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center flex-shrink-0 transition-colors"
