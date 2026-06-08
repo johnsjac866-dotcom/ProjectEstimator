@@ -230,13 +230,21 @@ export default function AreaDetail() {
 
             // Create operation entry with AI-suggested data
             const entries = parseOps(area[opDef.dataKey]);
+            
+            // Ensure materials is properly formatted as array or string
+            let materialsValue = '';
+            if (Array.isArray(operation.materials)) {
+              materialsValue = operation.materials.join(', ');
+            } else if (operation.materials) {
+              materialsValue = operation.materials;
+            }
+            
             const newEntry = {
               id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               description: operation.description || '',
               notes: operation.notes || '',
               priority: operation.priority || 'medium',
-              materials: operation.materials?.join(', ') || '',
-              // Store measurements in size field (e.g., "10 x 10 feet, 3 inches deep")
+              materials: materialsValue,
               size: operation.estimated_quantity || ''
             };
             
