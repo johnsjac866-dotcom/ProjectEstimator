@@ -3,23 +3,6 @@ import { Mic, Square, Play, Pause, Trash2, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 
-const STORAGE_KEY = (areaId) => `voice_notes_${areaId}`;
-
-function loadNotes(areaId) {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY(areaId));
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveNotes(areaId, notes) {
-  try {
-    localStorage.setItem(STORAGE_KEY(areaId), JSON.stringify(notes));
-  } catch {}
-}
-
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
@@ -57,7 +40,7 @@ function NotePlayer({ note, onDelete }) {
 
   return (
     <div className="flex items-center gap-3 bg-background rounded-lg border px-3 py-2.5">
-      <audio ref={audioRef} src={note.dataUrl} preload="auto" crossOrigin="anonymous" />
+      <audio ref={audioRef} src={note.audio_url} preload="auto" crossOrigin="anonymous" />
       <button
         onClick={togglePlay}
         className="h-9 w-9 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center flex-shrink-0 transition-colors"
@@ -66,7 +49,7 @@ function NotePlayer({ note, onDelete }) {
       </button>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-sm text-muted-foreground">{formatTime(note.created_at)}</span>
+          <span className="text-sm text-muted-foreground">{formatTime(note.created_date)}</span>
           <span className="text-sm text-muted-foreground">{formatDuration(note.duration)}</span>
         </div>
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -84,7 +67,8 @@ function NotePlayer({ note, onDelete }) {
 }
 
 export default function VoiceNotes({ areaId }) {
-  const [notes, setNotes] = useState(() => loadNotes(areaId));
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [permitted, setPermitted] = useState(true);
@@ -95,6 +79,20 @@ export default function VoiceNotes({ areaId }) {
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
+
+  useEffect(() => {
+    async function loadNotes() {
+      try {
+        const allNotes = await base44.entities.VoiceNote.filter({ area_id: areaId });
+        setNotes(allNotes.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+      } catch {
+        setNotes([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadNotes();
+  }, [areaId]);
 
   useEffect(() => () => clearInterval(timerRef.current), []);
 
@@ -112,20 +110,23 @@ export default function VoiceNotes({ areaId }) {
     mediaRecorderRef.current = mr;
 
     mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-    mr.onstop = () => {
+    mr.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
       const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
       const duration = (Date.now() - startTimeRef.current) / 1000;
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const note = { id: Date.now().toString(), dataUrl: reader.result, duration, created_at: new Date().toISOString() };
-        setNotes(prev => {
-          const updated = [note, ...prev];
-          saveNotes(areaId, updated);
-          return updated;
+      const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
+      
+      try {
+        const uploadRes = await base44.integrations.Core.UploadFile({ file });
+        const note = await base44.entities.VoiceNote.create({
+          area_id: areaId,
+          audio_url: uploadRes.file_url,
+          duration
         });
-      };
-      reader.readAsDataURL(blob);
+        setNotes(prev => [note, ...prev]);
+      } catch (err) {
+        console.error('Failed to save voice note:', err);
+      }
     };
 
     mr.start();
@@ -142,12 +143,13 @@ export default function VoiceNotes({ areaId }) {
     setElapsed(0);
   }
 
-  function deleteNote(id) {
-    setNotes(prev => {
-      const updated = prev.filter(n => n.id !== id);
-      saveNotes(areaId, updated);
-      return updated;
-    });
+  async function deleteNote(id) {
+    try {
+      await base44.entities.VoiceNote.delete(id);
+      setNotes(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error('Failed to delete voice note:', err);
+    }
   }
 
   async function handleAnalyzeAll() {
@@ -156,7 +158,7 @@ export default function VoiceNotes({ areaId }) {
     setAnalysis(null);
     try {
       const res = await base44.functions.invoke('analyzeVoiceNote', {
-        dataUrls: notes.map(n => n.dataUrl)
+        dataUrls: notes.map(n => n.audio_url)
       });
       if (res.data?.analysis) {
         setAnalysis(res.data.analysis);
@@ -200,7 +202,9 @@ export default function VoiceNotes({ areaId }) {
         )}
       </div>
 
-      {notes.length === 0 && !recording ? (
+      {loading ? (
+        <p className="text-sm text-muted-foreground text-center py-4">Loading notes...</p>
+      ) : notes.length === 0 && !recording ? (
         <p className="text-sm text-muted-foreground text-center py-4">No voice notes yet. Tap Record to add one.</p>
       ) : (
         <div className="space-y-3">
