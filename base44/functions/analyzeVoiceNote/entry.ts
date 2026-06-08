@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     const transcripts = [];
     for (const url of dataUrls) {
       try {
-        const res = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url: url });
+        const res = await base44.integrations.Core.TranscribeAudio({ audio_url: url });
         transcripts.push(res.transcript || res);
       } catch {
         // Skip on error, continue with other notes
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     if (transcripts.length === 0) return Response.json({ error: 'No transcripts generated' }, { status: 400 });
 
     // Analyze all transcripts together
-    const analysis = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const analysis = await base44.integrations.Core.InvokeLLM({
       prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract a consolidated summary, key insights, recommended operations, and structured data for each operation.\n\nValid operation types: Walkway/Patio, Site Management & Daily Cleanup, Bed Preparation, Rough Grading & Hauling, Demolition & Removals, Bed Edging, Planting, Mulch, Drainage, Lawn Repair & Install, Boulders/Accents & Structures, Hardscape - Repair Existing, Maintenance, Pathway / Steps, Retaining Wall\n\nVoice Notes:\n${transcripts.map((t, i) => `Note ${i + 1}:\n${t}`).join('\n\n')}`,
       response_json_schema: {
         type: 'object',
