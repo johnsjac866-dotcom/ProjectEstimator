@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Mic, Square, Play, Pause, Trash2, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { base44 } from "@/api/base44Client";
 
 const STORAGE_KEY = (areaId) => `voice_notes_${areaId}`;
 
@@ -153,13 +154,10 @@ export default function VoiceNotes({ areaId }) {
     if (notes.length === 0) return;
     setAnalyzing(true);
     try {
-      const res = await fetch('/.netlify/functions/analyzeVoiceNote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataUrls: notes.map(n => n.dataUrl) })
+      const res = await base44.functions.invoke('analyzeVoiceNote', {
+        dataUrls: notes.map(n => n.dataUrl)
       });
-      const data = await res.json();
-      setAnalysis(data.analysis);
+      setAnalysis(res.data.analysis);
     } catch (err) {
       console.error(err);
     } finally {
