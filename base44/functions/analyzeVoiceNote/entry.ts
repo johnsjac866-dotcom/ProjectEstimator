@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     const transcripts = [];
     for (const url of dataUrls) {
       try {
-        const res = await base44.asServiceRole.integrations.Core.TranscribeAudio({ file_url: url });
+        const res = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url: url });
         transcripts.push(res.transcript || '');
       } catch (err) {
         console.error('Transcribe error for', url, ':', err.message);
