@@ -3,6 +3,54 @@ import { Mic, Square, Play, Pause, Trash2, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 
+async function convertWebMToWAV(blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  
+  const numberOfChannels = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const format = 1;
+  const bitDepth = 16;
+  const dataLength = audioBuffer.length * numberOfChannels * (bitDepth / 8);
+  
+  const arrayBuffer2 = new ArrayBuffer(44 + dataLength);
+  const view = new DataView(arrayBuffer2);
+  
+  const writeString = (offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+  
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + dataLength, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, format, true);
+  view.setUint16(22, numberOfChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numberOfChannels * (bitDepth / 8), true);
+  view.setUint16(32, numberOfChannels * (bitDepth / 8), true);
+  view.setUint16(34, bitDepth, true);
+  writeString(36, 'data');
+  view.setUint32(40, dataLength, true);
+  
+  const volume = 0.8;
+  let index = 44;
+  let volume_sample;
+  for (let i = 0; i < audioBuffer.length; i++) {
+    for (let channel = 0; channel < numberOfChannels; channel++) {
+      volume_sample = audioBuffer.getChannelData(channel)[i] * volume;
+      view.setInt16(index, volume_sample < 0 ? volume_sample * 0x8000 : volume_sample * 0x7FFF, true);
+      index += 2;
+    }
+  }
+  
+  return new Blob([arrayBuffer2], { type: 'audio/wav' });
+}
+
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
@@ -121,9 +169,11 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
       setSavingNote(true);
       const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
       const duration = (Date.now() - startTimeRef.current) / 1000;
-      const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
       
       try {
+        const wavBlob = await convertWebMToWAV(blob);
+        const file = new File([wavBlob], 'voice-note.wav', { type: 'audio/wav' });
+        
         const formData = new FormData();
         formData.append('file', file);
         formData.append('areaId', areaId);
