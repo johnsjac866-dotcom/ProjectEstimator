@@ -84,7 +84,7 @@ export default function PlantingWizard() {
         }
       }
     })();
-  }, [areaId]);
+  }, [areaId, opId]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 

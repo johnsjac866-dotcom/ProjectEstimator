@@ -30,7 +30,7 @@ export default function PatioWizard() {
       }
       setLoading(false);
     })();
-  }, [areaId]);
+  }, [areaId, opId]);
 
   const stages = getApplicableStages(data);
   const stage = stages[currentStep];

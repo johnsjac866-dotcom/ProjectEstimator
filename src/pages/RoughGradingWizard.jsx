@@ -42,7 +42,7 @@ export default function RoughGradingWizard() {
       }
       setLoading(false);
     })();
-  }, [areaId]);
+  }, [areaId, opId]);
 
   function set(key, value) { setData(d => ({ ...d, [key]: value })); }
 

@@ -38,7 +38,7 @@ export default function BedPrepWizard() {
       }
       setLoading(false);
     })();
-  }, [areaId]);
+  }, [areaId, opId]);
 
   function set(key, value) { setData(d => ({ ...d, [key]: value })); }
 
