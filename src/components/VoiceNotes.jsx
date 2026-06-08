@@ -124,13 +124,13 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
       const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
       
       try {
-        const uploadRes = await base44.integrations.Core.UploadFile({ file });
-        const note = await base44.entities.VoiceNote.create({
-          area_id: areaId,
-          audio_url: uploadRes.file_url,
-          duration
-        });
-        setNotes(prev => [note, ...prev]);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('areaId', areaId);
+        formData.append('duration', duration);
+        
+        const res = await base44.functions.invoke('uploadVoiceNote', {}, { data: formData, isFormData: true });
+        setNotes(prev => [res.data.note, ...prev]);
       } catch (err) {
         console.error('Failed to save voice note:', err);
       } finally {
