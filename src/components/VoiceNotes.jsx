@@ -3,54 +3,6 @@ import { Mic, Square, Play, Pause, Trash2, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 
-async function convertWebMToWAV(blob) {
-  const arrayBuffer = await blob.arrayBuffer();
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  
-  const numberOfChannels = audioBuffer.numberOfChannels;
-  const sampleRate = audioBuffer.sampleRate;
-  const format = 1;
-  const bitDepth = 16;
-  const dataLength = audioBuffer.length * numberOfChannels * (bitDepth / 8);
-  
-  const arrayBuffer2 = new ArrayBuffer(44 + dataLength);
-  const view = new DataView(arrayBuffer2);
-  
-  const writeString = (offset, string) => {
-    for (let i = 0; i < string.length; i++) {
-      view.setUint8(offset + i, string.charCodeAt(i));
-    }
-  };
-  
-  writeString(0, 'RIFF');
-  view.setUint32(4, 36 + dataLength, true);
-  writeString(8, 'WAVE');
-  writeString(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, format, true);
-  view.setUint16(22, numberOfChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * numberOfChannels * (bitDepth / 8), true);
-  view.setUint16(32, numberOfChannels * (bitDepth / 8), true);
-  view.setUint16(34, bitDepth, true);
-  writeString(36, 'data');
-  view.setUint32(40, dataLength, true);
-  
-  const volume = 0.8;
-  let index = 44;
-  let volume_sample;
-  for (let i = 0; i < audioBuffer.length; i++) {
-    for (let channel = 0; channel < numberOfChannels; channel++) {
-      volume_sample = audioBuffer.getChannelData(channel)[i] * volume;
-      view.setInt16(index, volume_sample < 0 ? volume_sample * 0x8000 : volume_sample * 0x7FFF, true);
-      index += 2;
-    }
-  }
-  
-  return new Blob([arrayBuffer2], { type: 'audio/wav' });
-}
-
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
@@ -121,8 +73,8 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
   const [elapsed, setElapsed] = useState(0);
   const [permitted, setPermitted] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
   const [savedAnalysis, setSavedAnalysis] = useState(null);
-  const [savingNote, setSavingNote] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -134,11 +86,6 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
       try {
         const allNotes = await base44.entities.VoiceNote.filter({ area_id: areaId });
         setNotes(allNotes.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
-        
-        const analysisResults = await base44.entities.AnalysisResult.filter({ area_id: areaId });
-        if (analysisResults.length > 0) {
-          setSavedAnalysis(analysisResults[0]);
-        }
       } catch {
         setNotes([]);
       } finally {
@@ -166,27 +113,20 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
     mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
     mr.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
-      setSavingNote(true);
       const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
       const duration = (Date.now() - startTimeRef.current) / 1000;
+      const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
       
       try {
-        const wavBlob = await convertWebMToWAV(blob);
-        const file = new File([wavBlob], 'voice-note.wav', { type: 'audio/wav' });
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('areaId', areaId);
-        formData.append('duration', duration.toString());
-        
-        const res = await base44.functions.invoke('uploadVoiceNote', { formData });
-        if (res.data?.note) {
-          setNotes(prev => [res.data.note, ...prev]);
-        }
+        const uploadRes = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+        const note = await base44.entities.VoiceNote.create({
+          area_id: areaId,
+          audio_url: uploadRes.file_url,
+          duration
+        });
+        setNotes(prev => [note, ...prev]);
       } catch (err) {
         console.error('Failed to save voice note:', err);
-      } finally {
-        setSavingNote(false);
       }
     };
 
@@ -217,43 +157,26 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
     if (notes.length === 0) return;
     setAnalyzing(true);
     try {
-      const res = await base44.functions.invoke('analyzeVoiceNote', { dataUrls: notes.map(n => n.audio_url) });
+      const res = await base44.functions.invoke('analyzeVoiceNote', {
+        dataUrls: notes.map(n => n.audio_url)
+      });
       if (res.data?.analysis) {
-        const existing = await base44.entities.AnalysisResult.filter({ area_id: areaId });
-        const analysisData = {
-          area_id: areaId,
-          summary: res.data.analysis.summary,
-          key_items: res.data.analysis.key_items,
-          recommended_operations: res.data.analysis.recommended_operations,
-          tags: res.data.analysis.tags
-        };
-        
-        if (existing.length > 0) {
-          await base44.entities.AnalysisResult.update(existing[0].id, analysisData);
-        } else {
-          await base44.entities.AnalysisResult.create(analysisData);
-        }
         setSavedAnalysis(res.data.analysis);
+        setAnalysis(null);
       } else if (res.data?.error) {
         setSavedAnalysis({ error: res.data.error });
+        setAnalysis(null);
       }
     } catch (err) {
       console.error('Analysis error:', err);
       setSavedAnalysis({ error: err.message || 'Failed to analyze notes' });
+      setAnalysis(null);
     } finally {
       setAnalyzing(false);
     }
   }
 
-  async function handleClearAnalysis() {
-    try {
-      const existing = await base44.entities.AnalysisResult.filter({ area_id: areaId });
-      if (existing.length > 0) {
-        await base44.entities.AnalysisResult.delete(existing[0].id);
-      }
-    } catch (err) {
-      console.error('Failed to clear analysis:', err);
-    }
+  function handleClearAnalysis() {
     setSavedAnalysis(null);
   }
 
@@ -287,11 +210,9 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
       </div>
 
       {loading ? (
-       <p className="text-sm text-muted-foreground text-center py-4">Loading notes...</p>
-      ) : savingNote ? (
-       <p className="text-sm text-muted-foreground text-center py-4">Saving voice note...</p>
+        <p className="text-sm text-muted-foreground text-center py-4">Loading notes...</p>
       ) : notes.length === 0 && !recording ? (
-       <p className="text-sm text-muted-foreground text-center py-4">No voice notes yet. Tap Record to add one.</p>
+        <p className="text-sm text-muted-foreground text-center py-4">No voice notes yet. Tap Record to add one.</p>
       ) : (
         <div className="space-y-3">
           <div className="space-y-2">

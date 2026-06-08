@@ -10,24 +10,6 @@ import VoiceNotes from "@/components/VoiceNotes";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
-const DEFAULT_SUB_TYPES = {
-  "Rough Grading & Hauling": "excavation_machine",
-  "Demolition & Removals": "demolition_hardscape",
-  "Bed Preparation": "tillage",
-  "Bed Edging": "brick",
-  "Planting": "trees_shrubs",
-  "Mulch": "mulch_organic",
-  "Drainage": "buried_downspout",
-  "Lawn Repair & Install": "sod_installation",
-  "Boulders/Accents & Structures": "boulders",
-  "Hardscape - Repair Existing": "repair_surface",
-  "Maintenance": "weeding",
-  "Retaining Wall": "outcrop",
-  "Pathway / Steps": "stepping_stone",
-  "Walkway/Patio": "patio",
-  "Site Management & Daily Cleanup": "parking_access",
-};
-
 const ALL_OPERATIONS = [
   { type: "Site Management & Daily Cleanup", dataKey: "site_mgmt_data", wizardPath: (id) => `/site-management-wizard/${id}`, summaryPath: (id, opId) => `/site-management-summary/${id}?opId=${opId}`, icon: Settings, color: "blue", description: "Parking, access, stormwater, moving items & removal" },
   { type: "Walkway/Patio", dataKey: "patio_data", wizardPath: (id) => `/patio-wizard/${id}`, summaryPath: (id, opId) => `/patio-summary/${id}?opId=${opId}`, icon: ClipboardList, color: "amber", description: "Patio & walkway stages, materials and measurements" },
@@ -246,28 +228,15 @@ export default function AreaDetail() {
             const opDef = ALL_OPERATIONS.find(op => op.type === operation.operation_type);
             if (!opDef) return;
 
-            // Extract dimensions from estimated_quantity
-            let sfLength = '', sfWidth = '', depthInches = '';
-            if (operation.estimated_quantity) {
-              const qty = operation.estimated_quantity.toLowerCase();
-              const lengthMatch = qty.match(/(\d+\.?\d*)\s*(?:ft|feet)\s*(?:length|long|x)/);
-              const widthMatch = qty.match(/(\d+\.?\d*)\s*(?:ft|feet)\s*(?:width|wide)/);
-              const depthMatch = qty.match(/(\d+\.?\d*)\s*(?:inch|in|")/);
-              
-              if (lengthMatch) sfLength = lengthMatch[1];
-              if (widthMatch) sfWidth = widthMatch[1];
-              if (depthMatch) depthInches = depthMatch[1];
-            }
-
-            // Create operation entry with only extracted AI data
+            // Create operation entry with AI-suggested data
             const entries = parseOps(area[opDef.dataKey]);
             const newEntry = {
               id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              sub_type: DEFAULT_SUB_TYPES[operation.operation_type] || '',
-              sf_length: sfLength,
-              sf_width: sfWidth,
-              depth_inches: depthInches,
-              notes: operation.description || ''
+              description: operation.description,
+              estimated_quantity: operation.estimated_quantity,
+              materials: operation.materials?.join(', ') || '',
+              notes: operation.notes || '',
+              priority: operation.priority || 'medium'
             };
             
             const updated = [...entries, newEntry];
