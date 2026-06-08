@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,7 @@ export default function DemolitionWizard() {
 
   useEffect(() => {
     (async () => {
-      const a = await base44.entities.Area.get(areaId);
+      const a = await OfflineAreas.get(areaId);
       setArea(a);
       const ops = parseOps(a.demolition_data);
       setOperations(ops);
@@ -76,7 +76,7 @@ export default function DemolitionWizard() {
     const updatedOps = [...operations];
     const idx = updatedOps.findIndex(o => o.id === entryId);
     if (idx >= 0) updatedOps[idx] = saveData; else updatedOps.push(saveData);
-    await base44.entities.Area.update(areaId, { demolition_data: JSON.stringify(updatedOps) });
+    await OfflineAreas.update(areaId, { demolition_data: JSON.stringify(updatedOps) });
     setSaving(false);
     navigate(`/area/${areaId}`);
   }

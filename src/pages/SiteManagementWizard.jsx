@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Check, SkipForward } from "lucide-react";
 import { SM_STAGES } from "@/lib/siteManagementStages";
@@ -20,7 +20,7 @@ export default function SiteManagementWizard() {
 
   useEffect(() => {
     (async () => {
-      const a = await base44.entities.Area.get(areaId);
+      const a = await OfflineAreas.get(areaId);
       setArea(a);
       const ops = parseOps(a.site_mgmt_data);
       setOperations(ops);
@@ -42,7 +42,7 @@ export default function SiteManagementWizard() {
     const updatedOps = [...operations];
     const idx = updatedOps.findIndex(o => o.id === entryId);
     if (idx >= 0) updatedOps[idx] = newEntry; else updatedOps.push(newEntry);
-    await base44.entities.Area.update(areaId, { site_mgmt_data: JSON.stringify(updatedOps) });
+    await OfflineAreas.update(areaId, { site_mgmt_data: JSON.stringify(updatedOps) });
     setSaving(false);
     navigate(`/area/${areaId}`);
   }

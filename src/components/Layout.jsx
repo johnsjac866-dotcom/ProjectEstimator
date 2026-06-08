@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { HardHat, FolderOpen, Settings } from "lucide-react";
+import SyncStatusIndicator from "@/components/SyncStatusIndicator.jsx";
 
 export default function Layout() {
   const location = useLocation();
@@ -50,6 +51,7 @@ export default function Layout() {
         </div>
       </header>
 
+      <SyncStatusIndicator />
       {/* Main scrollable content area */}
       <main
         className="flex-1 scroll-container overflow-y-auto"

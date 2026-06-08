@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Projects as OfflineProjects, Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -29,20 +29,20 @@ export default function ProjectDetail() {
 
   async function load() {
     const [p, a] = await Promise.all([
-      base44.entities.Project.get(projectId),
-      base44.entities.Area.filter({ project_id: projectId }),
+      OfflineProjects.get(projectId),
+      OfflineAreas.getByProjectId(projectId),
     ]);
     setProject(p);
     // Auto-create Site Management area if it doesn't exist
     const hasSM = a.some(x => x.name === "Site Management & Daily Cleanup");
     if (!hasSM) {
-      await base44.entities.Area.create({
+      await OfflineAreas.create({
         project_id: projectId,
         name: "Site Management & Daily Cleanup",
         operation_type: "Site Management & Daily Cleanup",
         status: "Not Started",
       });
-      const updated = await base44.entities.Area.filter({ project_id: projectId });
+      const updated = await OfflineAreas.getByProjectId(projectId);
       setAreas(updated);
     } else {
       setAreas(a);
@@ -51,7 +51,7 @@ export default function ProjectDetail() {
   }
 
   async function handleCreateArea() {
-    await base44.entities.Area.create({ project_id: projectId, name: areaName, status: "Not Started" });
+    await OfflineAreas.create({ project_id: projectId, name: areaName, status: "Not Started" });
     setAreaName("");
     setOpen(false);
     load();
@@ -63,7 +63,7 @@ export default function ProjectDetail() {
   }
 
   async function saveEdit() {
-    await base44.entities.Project.update(projectId, { [editingField]: editValue });
+    await OfflineProjects.update(projectId, { [editingField]: editValue });
     setProject(p => ({ ...p, [editingField]: editValue }));
     setEditingField(null);
   }
@@ -79,7 +79,7 @@ export default function ProjectDetail() {
     e.preventDefault();
     e.stopPropagation();
     if (!editingAreaName.trim()) return;
-    await base44.entities.Area.update(id, { name: editingAreaName });
+    await OfflineAreas.update(id, { name: editingAreaName });
     setAreas(prev => prev.map(a => a.id === id ? { ...a, name: editingAreaName } : a));
     setEditingAreaId(null);
   }
@@ -87,7 +87,7 @@ export default function ProjectDetail() {
   async function handleDeleteArea(e, id) {
     e.preventDefault();
     e.stopPropagation();
-    await base44.entities.Area.delete(id);
+    await OfflineAreas.delete(id);
     load();
   }
 

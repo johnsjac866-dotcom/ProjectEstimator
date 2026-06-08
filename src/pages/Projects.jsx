@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,14 +34,13 @@ export default function Projects() {
   const { pulling, refreshing } = usePullToRefresh(loadProjects);
 
   async function loadProjects() {
-    const data = await base44.entities.Project.list("-created_date");
-    // Exclude archived from main list
+    const data = await OfflineProjects.list();
     setProjects(data.filter(p => p.status !== "Archived"));
     setLoading(false);
   }
 
   async function handleCreate() {
-    await base44.entities.Project.create({ ...form, status: "Active" });
+    await OfflineProjects.create({ ...form, status: "Active" });
     setForm({ name: "", client_name: "", address: "", notes: "" });
     setOpen(false);
     loadProjects();
@@ -51,14 +50,14 @@ export default function Projects() {
     e.preventDefault();
     e.stopPropagation();
     if (!confirm("Delete this project and all its data? This cannot be undone.")) return;
-    await base44.entities.Project.delete(projectId);
+    await OfflineProjects.delete(projectId);
     loadProjects();
   }
 
   async function handleSetStatus(e, projectId, status) {
     e.preventDefault();
     e.stopPropagation();
-    await base44.entities.Project.update(projectId, { status });
+    await OfflineProjects.update(projectId, { status });
     loadProjects();
   }
 

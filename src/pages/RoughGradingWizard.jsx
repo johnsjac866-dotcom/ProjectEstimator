@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +32,7 @@ export default function RoughGradingWizard() {
 
   useEffect(() => {
     (async () => {
-      const a = await base44.entities.Area.get(areaId);
+      const a = await OfflineAreas.get(areaId);
       setArea(a);
       const ops = parseOps(a.rough_grading_data);
       setOperations(ops);
@@ -80,16 +80,16 @@ export default function RoughGradingWizard() {
     const updatedOps = [...operations];
     const idx = updatedOps.findIndex(o => o.id === entryId);
     if (idx >= 0) updatedOps[idx] = saveData; else updatedOps.push(saveData);
-    await base44.entities.Area.update(areaId, { rough_grading_data: JSON.stringify(updatedOps) });
+    await OfflineAreas.update(areaId, { rough_grading_data: JSON.stringify(updatedOps) });
 
     // Auto-add Strip Sod demolition entry to same area if excavation + sod/vegetation removed
     if (EXCAVATION_SUB_TYPES.includes(data.sub_type) && data.sod_vegetation_removed === "Yes") {
-      const currentArea = await base44.entities.Area.get(areaId);
+      const currentArea = await OfflineAreas.get(areaId);
       const demoOps = parseOps(currentArea.demolition_data);
       const stripSodEntry = { id: "strip_sod_auto", group: "vegetation", sub_type: "strip_sod", sf: saveData.sf || "", sf_auto_from_rg: true };
       const demoIdx = demoOps.findIndex(o => o.id === "strip_sod_auto");
       if (demoIdx >= 0) demoOps[demoIdx] = stripSodEntry; else demoOps.push(stripSodEntry);
-      await base44.entities.Area.update(areaId, { demolition_data: JSON.stringify(demoOps) });
+      await OfflineAreas.update(areaId, { demolition_data: JSON.stringify(demoOps) });
       setSodAdded(true);
     }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Check, SkipForward } from "lucide-react";
 import { getApplicableStages } from "@/lib/patioStages";
@@ -20,7 +20,7 @@ export default function PatioWizard() {
 
   useEffect(() => {
     (async () => {
-      const a = await base44.entities.Area.get(areaId);
+      const a = await OfflineAreas.get(areaId);
       setArea(a);
       const ops = parseOps(a.patio_data);
       setOperations(ops);
@@ -43,7 +43,7 @@ export default function PatioWizard() {
     const updatedOps = [...operations];
     const idx = updatedOps.findIndex(o => o.id === entryId);
     if (idx >= 0) updatedOps[idx] = newEntry; else updatedOps.push(newEntry);
-    await base44.entities.Area.update(areaId, { patio_data: JSON.stringify(updatedOps) });
+    await OfflineAreas.update(areaId, { patio_data: JSON.stringify(updatedOps) });
     setSaving(false);
     navigate(`/area/${areaId}`);
   }

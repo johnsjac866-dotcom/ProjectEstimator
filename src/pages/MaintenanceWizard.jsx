@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,7 +57,7 @@ export default function MaintenanceWizard() {
 
   useEffect(() => {
     (async () => {
-      const a = await base44.entities.Area.get(areaId);
+      const a = await OfflineAreas.get(areaId);
       setArea(a);
       if (opId) {
         const ops = parseOps(a.maintenance_data);
@@ -123,7 +123,7 @@ export default function MaintenanceWizard() {
     } else {
       updated = [...ops, { ...entry, id: generateId() }];
     }
-    await base44.entities.Area.update(areaId, { maintenance_data: JSON.stringify(updated) });
+    await OfflineAreas.update(areaId, { maintenance_data: JSON.stringify(updated) });
     navigate(`/area/${areaId}`);
   }
 

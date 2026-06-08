@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,7 +72,7 @@ export default function RetainingWallWizard() {
   const opId = urlParams.get("opId");
 
   useEffect(() => {
-    base44.entities.Area.get(areaId).then((a) => {
+    OfflineAreas.get(areaId).then((a) => {
       setArea(a);
       if (opId) {
         const existing = parseOps(a.retaining_wall_data).find((e) => e.id === opId);
@@ -115,7 +115,7 @@ export default function RetainingWallWizard() {
     const updated = opId ?
     existing.map((e) => e.id === opId ? op : e) :
     [...existing, op];
-    await base44.entities.Area.update(areaId, { retaining_wall_data: JSON.stringify(updated) });
+    await OfflineAreas.update(areaId, { retaining_wall_data: JSON.stringify(updated) });
     navigate(`/retaining-wall-summary/${areaId}?opId=${op.id}`);
   }
 

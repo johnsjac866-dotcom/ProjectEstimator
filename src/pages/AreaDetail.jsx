@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2, Wrench, Flag, AlertTriangle } from "lucide-react";
@@ -68,7 +68,7 @@ export default function AreaDetail() {
   const { pulling, refreshing } = usePullToRefresh(loadArea);
 
   async function loadArea() {
-    const a = await base44.entities.Area.get(areaId);
+    const a = await OfflineAreas.get(areaId);
     setArea(a);
     setLoading(false);
     // Auto-set In Progress if operations exist but status is Not Started
@@ -76,25 +76,25 @@ export default function AreaDetail() {
     const allOps = [...ops, ALL_OPERATIONS.find(o => o.type === "Site Management & Daily Cleanup")].filter(Boolean);
     const hasOps = allOps.some(op => parseOps(a[op.dataKey]).length > 0);
     if (hasOps && (!a.status || a.status === "Not Started")) {
-      await base44.entities.Area.update(areaId, { status: "In Progress" });
+      await OfflineAreas.update(areaId, { status: "In Progress" });
       setArea({ ...a, status: "In Progress" });
     }
   }
 
   async function markComplete() {
-    await base44.entities.Area.update(areaId, { status: "Complete" });
+    await OfflineAreas.update(areaId, { status: "Complete" });
     setArea(a => ({ ...a, status: "Complete" }));
   }
 
   async function markInProgress() {
-    await base44.entities.Area.update(areaId, { status: "In Progress" });
+    await OfflineAreas.update(areaId, { status: "In Progress" });
     setArea(a => ({ ...a, status: "In Progress" }));
   }
 
   async function handleDeleteEntry(op, entryId) {
     const entries = parseOps(area[op.dataKey]);
     const updated = entries.filter(e => e.id !== entryId);
-    await base44.entities.Area.update(areaId, { [op.dataKey]: JSON.stringify(updated) });
+    await OfflineAreas.update(areaId, { [op.dataKey]: JSON.stringify(updated) });
     setArea(a => ({ ...a, [op.dataKey]: JSON.stringify(updated) }));
   }
 

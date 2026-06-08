@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +53,7 @@ export default function BouldersWizard() {
 
   useEffect(() => {
     (async () => {
-      const a = await base44.entities.Area.get(areaId);
+      const a = await OfflineAreas.get(areaId);
       setArea(a);
       if (opId) {
         const ops = parseOps(a.boulders_data);
@@ -97,7 +97,7 @@ export default function BouldersWizard() {
     } else {
       updated = [...ops, { ...entry, id: newOpId }];
     }
-    await base44.entities.Area.update(areaId, { boulders_data: JSON.stringify(updated) });
+    await OfflineAreas.update(areaId, { boulders_data: JSON.stringify(updated) });
     setSaving(false);
     navigate(`/area/${areaId}`);
   }
