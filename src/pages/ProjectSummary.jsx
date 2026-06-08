@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors, Sprout, Wind, Droplets, Wrench, Layers } from "lucide-react";
+import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors, Sprout, Wind, Droplets, Wrench, Layers, Flag } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
 const OP_CONFIG = {
@@ -124,6 +124,11 @@ export default function ProjectSummary() {
                             <Icon className={`h-3.5 w-3.5 ${entries.length > 0 ? c.icon : "text-muted-foreground"}`} />
                           </div>
                           <p className="text-sm font-medium flex-1">{op}</p>
+                          {entries.some(e => e._flags?.length > 0) && (
+                            <span className="flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                              <Flag className="h-3 w-3" fill="currentColor" /> Flagged
+                            </span>
+                          )}
                           <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => navigate(cfg.newPath(area.id))}>
                             <Plus className="h-3 w-3 mr-1" /> Add
                           </Button>
@@ -131,15 +136,27 @@ export default function ProjectSummary() {
                         {entries.length > 0 ? (
                           <div className="ml-10 space-y-1">
                             {entries.map((entry, idx) => (
-                              <div key={entry.id} className="flex items-center gap-2 text-xs bg-muted/40 rounded-lg px-3 py-1.5">
-                                <span className="flex-1 capitalize font-medium">{getEntryLabel(entry, idx)}</span>
-                                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => navigate(cfg.wizardPath(area.id, entry.id))}>
-                                  <Pencil className="h-3 w-3 mr-1" /> Edit
-                                </Button>
-                                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => navigate(cfg.summaryPath(area.id, entry.id) + "&from=project-summary")}>
-                                  <FileText className="h-3 w-3 mr-1" /> View
-                                </Button>
-                              </div>
+                              <div key={entry.id} className={`text-xs rounded-lg px-3 py-1.5 ${entry._flags?.length > 0 ? "bg-orange-50 border border-orange-200" : "bg-muted/40"}`}>
+                                 <div className="flex items-center gap-2">
+                                   <span className="flex-1 capitalize font-medium">{getEntryLabel(entry, idx)}</span>
+                                   <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => navigate(cfg.wizardPath(area.id, entry.id))}>
+                                     <Pencil className="h-3 w-3 mr-1" /> Edit
+                                   </Button>
+                                   <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => navigate(cfg.summaryPath(area.id, entry.id) + "&from=project-summary")}>
+                                     <FileText className="h-3 w-3 mr-1" /> View
+                                   </Button>
+                                 </div>
+                                 {entry._flags?.length > 0 && (
+                                   <div className="mt-1 flex flex-wrap gap-1">
+                                     {entry._flags.map(fk => (
+                                       <span key={fk} className="inline-flex items-center gap-1 text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
+                                         <Flag className="h-2.5 w-2.5" fill="currentColor" />
+                                         {(entry._flag_labels && entry._flag_labels[fk]) || fk}
+                                       </span>
+                                     ))}
+                                   </div>
+                                 )}
+                               </div>
                             ))}
                           </div>
                         ) : (

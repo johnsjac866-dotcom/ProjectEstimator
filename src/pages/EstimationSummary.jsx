@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, MapPin, ChevronDown, ChevronRight, Flag } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
 // ─── Ordered estimation categories ────────────────────────────────────────────
@@ -293,16 +293,21 @@ export default function EstimationSummary() {
                   onClick={() => toggleCat(cat.label)}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm">{cat.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {cat.rows.length} entr{cat.rows.length !== 1 ? "ies" : "y"}
-                      {(() => {
-                        const subKeys = [...new Set(cat.rows.map(r => getSubTypeKey(cat.dataKey, r.entry)))];
-                        return subKeys.length > 1 ? <span className="ml-2">· {subKeys.length} sub-types</span> : null;
-                      })()}
-                      {totals ? <span className="ml-2 font-medium text-foreground">{totals}</span> : null}
-                    </p>
+                   <p className="font-semibold text-sm">{cat.label}</p>
+                   <p className="text-xs text-muted-foreground mt-0.5">
+                     {cat.rows.length} entr{cat.rows.length !== 1 ? "ies" : "y"}
+                     {(() => {
+                       const subKeys = [...new Set(cat.rows.map(r => getSubTypeKey(cat.dataKey, r.entry)))];
+                       return subKeys.length > 1 ? <span className="ml-2">· {subKeys.length} sub-types</span> : null;
+                     })()}
+                     {totals ? <span className="ml-2 font-medium text-foreground">{totals}</span> : null}
+                   </p>
                   </div>
+                  {cat.rows.some(r => r.entry._flags?.length > 0) && (
+                   <span className="flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                     <Flag className="h-3 w-3" fill="currentColor" /> Flagged
+                   </span>
+                  )}
                   {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
                 </button>
 
@@ -348,8 +353,18 @@ export default function EstimationSummary() {
                                     </p>
                                     <div className="space-y-1 ml-2">
                                       {entries.map((entry, idx) => (
-                                        <div key={entry.id || idx} className="text-xs bg-background rounded-lg px-3 py-1.5 border text-muted-foreground">
-                                          {entryDescription(cat.dataKey, entry) || `Entry #${idx + 1}`}
+                                        <div key={entry.id || idx} className={`text-xs rounded-lg px-3 py-1.5 border ${entry._flags?.length > 0 ? "bg-orange-50 border-orange-200" : "bg-background"}`}>
+                                          <span className="text-muted-foreground">{entryDescription(cat.dataKey, entry) || `Entry #${idx + 1}`}</span>
+                                          {entry._flags?.length > 0 && (
+                                            <div className="mt-1 flex flex-wrap gap-1">
+                                              {entry._flags.map(fk => (
+                                                <span key={fk} className="inline-flex items-center gap-1 text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
+                                                  <Flag className="h-2.5 w-2.5" fill="currentColor" />
+                                                  {(entry._flag_labels && entry._flag_labels[fk]) || fk}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          )}
                                         </div>
                                       ))}
                                     </div>
