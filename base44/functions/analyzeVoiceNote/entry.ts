@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     const transcripts = [];
     for (const url of dataUrls) {
       try {
-        const res = await base44.integrations.Core.TranscribeAudio({ audio_url: url });
+        const res = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url: url });
         transcripts.push(res.transcript || res);
       } catch {
         // Skip on error, continue with other notes
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     if (transcripts.length === 0) return Response.json({ error: 'No transcripts generated' }, { status: 400 });
 
     // Analyze all transcripts together
-    const analysis = await base44.integrations.Core.InvokeLLM({
+    const analysis = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract a consolidated summary with key insights, action items, and observations. Identify patterns and priorities across all notes.\n\nVoice Notes:\n${transcripts.map((t, i) => `Note ${i + 1}:\n${t}`).join('\n\n')}`,
       response_json_schema: {
         type: 'object',
