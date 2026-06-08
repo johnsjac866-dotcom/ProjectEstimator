@@ -46,6 +46,7 @@ const SteppingStoneSummary = lazy(() => import('./pages/SteppingStoneSummary'));
 const RetainingWallWizard = lazy(() => import('./pages/RetainingWallWizard'));
 const RetainingWallSummary = lazy(() => import('./pages/RetainingWallSummary'));
 const Settings = lazy(() => import('./pages/Settings'));
+const ArchivedProjects = lazy(() => import('./pages/ArchivedProjects'));
 
 const pageVariants = {
   initial: { opacity: 0, x: 16 },
@@ -112,6 +113,7 @@ function AnimatedRoutes() {
               <Route path="/retaining-wall-wizard/:areaId" element={<RetainingWallWizard />} />
               <Route path="/retaining-wall-summary/:areaId" element={<RetainingWallSummary />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/archived-projects" element={<ArchivedProjects />} />
               <Route path="*" element={<PageNotFound />} />
             </Route>
           </Routes>
