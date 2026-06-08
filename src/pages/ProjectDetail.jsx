@@ -7,6 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus, ArrowLeft, ChevronRight, Layers, MapPin, Trash2, Pencil, Check, X } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 export default function ProjectDetail() {
   const { projectId } = useParams();
@@ -22,6 +24,8 @@ export default function ProjectDetail() {
   const [editingAreaName, setEditingAreaName] = useState("");
 
   useEffect(() => { load(); }, [projectId]);
+
+  const { pulling, refreshing } = usePullToRefresh(load);
 
   async function load() {
     const [p, a] = await Promise.all([
@@ -91,11 +95,12 @@ export default function ProjectDetail() {
   if (!project) return <div className="text-center py-20 text-muted-foreground">Project not found</div>;
 
   return (
-    <div>
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+    <div className="overscroll-none">
+      <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} />
+      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 py-2 pr-2">
         <ArrowLeft className="h-4 w-4" /> Back to Projects
       </Link>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
         <div className="space-y-1">
           {/* Editable Name */}
           {editingField === "name" ? (
@@ -126,11 +131,11 @@ export default function ProjectDetail() {
             </div>
           )}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/estimation-summary/${projectId}`)}>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/estimation-summary/${projectId}`)}>
             Estimation Summary
           </Button>
-          <Button variant="outline" onClick={() => navigate(`/project-summary/${projectId}`)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/project-summary/${projectId}`)}>
             View Summary
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
@@ -180,11 +185,11 @@ export default function ProjectDetail() {
                     )}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {editingAreaId !== a.id && (
-                        <button onClick={e => startEditArea(e, a)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground">
+                        <button onClick={e => startEditArea(e, a)} className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                       )}
-                      <button onClick={(e) => handleDeleteArea(e, a.id)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+                      <button onClick={(e) => handleDeleteArea(e, a.id)} className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />

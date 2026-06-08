@@ -84,5 +84,76 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Prevent rubber-banding on the body itself */
+    overscroll-behavior: none;
+    /* iOS momentum scrolling */
+    -webkit-overflow-scrolling: touch;
   }
+
+  /* Minimum tap target for all interactive elements */
+  button, [role="button"], a, input[type="checkbox"], input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Disable text selection on UI chrome elements */
+  button, [role="button"], nav, header, .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Keep text selectable in content areas */
+  p, span, h1, h2, h3, h4, h5, h6, label, td, li {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+}
+
+/* Safe area CSS custom properties */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Pull-to-refresh indicator */
+.ptr-indicator {
+  position: fixed;
+  top: calc(var(--safe-top) + 56px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  z-index: 40;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0;
+}
+.ptr-indicator.ptr-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(8px);
+}
+
+/* Scrollable content containers */
+.scroll-container {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Page transition animations */
+.page-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.page-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+.page-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 200ms ease, transform 200ms ease;
 }

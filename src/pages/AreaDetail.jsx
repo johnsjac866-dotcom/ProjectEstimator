@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2, Wrench, Flag, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 const ALL_OPERATIONS = [
   { type: "Site Management & Daily Cleanup", dataKey: "site_mgmt_data", wizardPath: (id) => `/site-management-wizard/${id}`, summaryPath: (id, opId) => `/site-management-summary/${id}?opId=${opId}`, icon: Settings, color: "blue", description: "Parking, access, stormwater, moving items & removal" },
@@ -63,6 +65,8 @@ export default function AreaDetail() {
 
   useEffect(() => { loadArea(); }, [areaId]);
 
+  const { pulling, refreshing } = usePullToRefresh(loadArea);
+
   async function loadArea() {
     const a = await base44.entities.Area.get(areaId);
     setArea(a);
@@ -109,12 +113,13 @@ export default function AreaDetail() {
   );
 
   return (
-    <div>
-      <Link to={`/project/${area.project_id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+    <div className="overscroll-none">
+      <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} />
+      <Link to={`/project/${area.project_id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 py-2 pr-2">
         <ArrowLeft className="h-4 w-4" /> Back to Project
       </Link>
 
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight mb-1">{area.name}</h1>
           <div className="flex items-center gap-2 mt-1">
@@ -126,18 +131,18 @@ export default function AreaDetail() {
             </span>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           {area.status !== "Complete" ? (
-            <Button variant="outline" onClick={markComplete}>
-              <CheckCircle2 className="h-4 w-4 mr-2" /> Mark Complete
+            <Button variant="outline" size="sm" onClick={markComplete}>
+              <CheckCircle2 className="h-4 w-4 mr-1.5" /> Complete
             </Button>
           ) : (
-            <Button variant="outline" onClick={markInProgress}>
+            <Button variant="outline" size="sm" onClick={markInProgress}>
               Reopen
             </Button>
           )}
-          <Button onClick={() => { setSearch(""); setShowOpPicker(true); }}>
-            <Plus className="h-4 w-4 mr-2" /> Add Operation
+          <Button size="sm" onClick={() => { setSearch(""); setShowOpPicker(true); }}>
+            <Plus className="h-4 w-4 mr-1.5" /> Add Operation
           </Button>
         </div>
       </div>
@@ -149,7 +154,7 @@ export default function AreaDetail() {
           <p className="text-sm mt-1">Click "Add Operation" to get started</p>
         </div>
       ) : (
-        <div className="max-w-lg space-y-3">
+        <div className="space-y-3">
           {configuredOps.map((op) => {
             const entries = parseOps(area[op.dataKey]);
             const Icon = op.icon;
@@ -178,15 +183,15 @@ export default function AreaDetail() {
                   <div className="px-4 pb-4 border-t border-inherit pt-3 space-y-2">
                     {entries.map((entry, idx) => (
                       <div key={entry.id} className={`bg-background/70 rounded-lg px-3 py-2 border transition-colors ${entry._flags?.length > 0 ? "border-orange-300 bg-orange-50/30" : "border-inherit"}`}>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium capitalize flex-1">{getEntryLabel(entry, idx)}</span>
-                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => navigate(`${op.wizardPath(areaId)}?opId=${entry.id}`)}>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-xs font-medium capitalize flex-1 min-w-0 truncate">{getEntryLabel(entry, idx)}</span>
+                          <Button size="sm" variant="ghost" className="h-9 px-3" onClick={() => navigate(`${op.wizardPath(areaId)}?opId=${entry.id}`)}>
                             <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
                           </Button>
-                          <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => navigate(op.summaryPath(areaId, entry.id))}>
+                          <Button size="sm" variant="outline" className="h-9 px-3" onClick={() => navigate(op.summaryPath(areaId, entry.id))}>
                             <FileText className="h-3.5 w-3.5 mr-1" /> View
                           </Button>
-                          <button className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleDeleteEntry(op, entry.id)}>
+                          <button className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleDeleteEntry(op, entry.id)}>
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
