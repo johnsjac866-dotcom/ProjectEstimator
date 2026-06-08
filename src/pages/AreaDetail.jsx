@@ -10,6 +10,24 @@ import VoiceNotes from "@/components/VoiceNotes";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
+const DEFAULT_SUB_TYPES = {
+  "Rough Grading & Hauling": "excavation_machine",
+  "Demolition & Removals": "demolition_hardscape",
+  "Bed Preparation": "tillage",
+  "Bed Edging": "brick",
+  "Planting": "trees_shrubs",
+  "Mulch": "mulch_organic",
+  "Drainage": "buried_downspout",
+  "Lawn Repair & Install": "sod_installation",
+  "Boulders/Accents & Structures": "boulders",
+  "Hardscape - Repair Existing": "repair_surface",
+  "Maintenance": "weeding",
+  "Retaining Wall": "outcrop",
+  "Pathway / Steps": "stepping_stone",
+  "Walkway/Patio": "patio",
+  "Site Management & Daily Cleanup": "parking_access",
+};
+
 const ALL_OPERATIONS = [
   { type: "Site Management & Daily Cleanup", dataKey: "site_mgmt_data", wizardPath: (id) => `/site-management-wizard/${id}`, summaryPath: (id, opId) => `/site-management-summary/${id}?opId=${opId}`, icon: Settings, color: "blue", description: "Parking, access, stormwater, moving items & removal" },
   { type: "Walkway/Patio", dataKey: "patio_data", wizardPath: (id) => `/patio-wizard/${id}`, summaryPath: (id, opId) => `/patio-summary/${id}?opId=${opId}`, icon: ClipboardList, color: "amber", description: "Patio & walkway stages, materials and measurements" },
@@ -241,6 +259,7 @@ export default function AreaDetail() {
             
             const newEntry = {
               id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              sub_type: DEFAULT_SUB_TYPES[operation.operation_type] || '',
               description: operation.description || '',
               notes: operation.notes || '',
               priority: operation.priority || 'medium',
