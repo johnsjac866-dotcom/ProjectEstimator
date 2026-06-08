@@ -33,26 +33,35 @@ export default function ProjectDetail() {
       OfflineAreas.getByProjectId(projectId),
     ]);
     setProject(p);
-    setAreas(a);
+
+    // Deduplicate SM areas in case duplicates already exist
+    const smAreas = a.filter(x => x.name === "Site Management & Daily Cleanup");
+    let deduped = a;
+    if (smAreas.length > 1) {
+      // Keep first, delete the rest
+      for (const dup of smAreas.slice(1)) {
+        await OfflineAreas.delete(dup.id);
+      }
+      deduped = a.filter(x => x.name !== "Site Management & Daily Cleanup" || x.id === smAreas[0].id);
+    }
+    setAreas(deduped);
     setLoading(false);
 
-    // Auto-create Site Management only once per project, tracked in localStorage
+    // Auto-create Site Management only once per project
     const smKey = `sm_created_${projectId}`;
-    if (!localStorage.getItem(smKey)) {
-      const hasSM = a.some(x => x.name === "Site Management & Daily Cleanup");
-      if (!hasSM) {
-        localStorage.setItem(smKey, "1");
-        await OfflineAreas.create({
-          project_id: projectId,
-          name: "Site Management & Daily Cleanup",
-          operation_type: "Site Management & Daily Cleanup",
-          status: "Not Started",
-        });
-        const updated = await OfflineAreas.getByProjectId(projectId);
-        setAreas(updated);
-      } else {
-        localStorage.setItem(smKey, "1");
-      }
+    const hasSM = deduped.some(x => x.name === "Site Management & Daily Cleanup");
+    if (hasSM) {
+      localStorage.setItem(smKey, "1");
+    } else if (!localStorage.getItem(smKey)) {
+      localStorage.setItem(smKey, "1");
+      await OfflineAreas.create({
+        project_id: projectId,
+        name: "Site Management & Daily Cleanup",
+        operation_type: "Site Management & Daily Cleanup",
+        status: "Not Started",
+      });
+      const updated = await OfflineAreas.getByProjectId(projectId);
+      setAreas(updated);
     }
   }
 
