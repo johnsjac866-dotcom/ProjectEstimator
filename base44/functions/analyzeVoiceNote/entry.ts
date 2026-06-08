@@ -12,15 +12,15 @@ Deno.serve(async (req) => {
     // Transcribe all audio files
     const transcripts = [];
     for (const url of dataUrls) {
-      try {
-        const res = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url: url });
-        transcripts.push(res.transcript || '');
-      } catch (err) {
-        console.error('Transcribe error for', url, ':', err.message);
+      const res = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url: url });
+      const transcript = res.transcript || '';
+      if (!transcript.trim()) {
+        return Response.json({ error: 'Voice note is empty or cannot be transcribed' }, { status: 400 });
       }
+      transcripts.push(transcript);
     }
 
-    if (transcripts.length === 0) return Response.json({ error: 'No transcripts generated' }, { status: 400 });
+    if (transcripts.length === 0) return Response.json({ error: 'No valid transcripts generated' }, { status: 400 });
 
     // Analyze all transcripts together
     const analysis = await base44.asServiceRole.integrations.Core.InvokeLLM({
