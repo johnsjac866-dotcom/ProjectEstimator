@@ -18,18 +18,10 @@ Deno.serve(async (req) => {
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
         const blob = new Blob([bytes], { type: 'audio/webm' });
+        const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
 
-        const formData = new FormData();
-        formData.append('file', blob, 'voice-note.webm');
-        const uploadRes = await fetch('https://api.base44.io/files/upload', {
-          method: 'POST',
-          body: formData,
-          headers: { 'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_TOKEN') || ''}` }
-        });
-        const uploadData = await uploadRes.json();
-        const audioUrl = uploadData.url;
-
-        const transcript = await base44.integrations.Core.TranscribeAudio({ audio_url: audioUrl });
+        const uploadRes = await base44.integrations.Core.UploadFile({ file });
+        const transcript = await base44.integrations.Core.TranscribeAudio({ audio_url: uploadRes.file_url });
         transcripts.push(transcript);
       } catch {
         // Skip on error, continue with other notes
