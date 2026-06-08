@@ -165,14 +165,23 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis 
       if (res.data?.analysis) {
         setSavedAnalysis(res.data.analysis);
         setAnalysis(null);
+        // Save analysis to Area entity
+        const { Areas: OfflineAreasModule } = await import("@/lib/offlineStore");
+        await OfflineAreasModule.update(areaId, { voice_notes_analysis: JSON.stringify(res.data.analysis) });
       } else if (res.data?.error) {
-        setSavedAnalysis({ error: res.data.error });
+        const errorData = { error: res.data.error };
+        setSavedAnalysis(errorData);
         setAnalysis(null);
+        const { Areas: OfflineAreasModule } = await import("@/lib/offlineStore");
+        await OfflineAreasModule.update(areaId, { voice_notes_analysis: JSON.stringify(errorData) });
       }
     } catch (err) {
       console.error('Analysis error:', err);
-      setSavedAnalysis({ error: err.message || 'Failed to analyze notes' });
+      const errorData = { error: err.message || 'Failed to analyze notes' };
+      setSavedAnalysis(errorData);
       setAnalysis(null);
+      const { Areas: OfflineAreasModule } = await import("@/lib/offlineStore");
+      await OfflineAreasModule.update(areaId, { voice_notes_analysis: JSON.stringify(errorData) });
     } finally {
       setAnalyzing(false);
     }
