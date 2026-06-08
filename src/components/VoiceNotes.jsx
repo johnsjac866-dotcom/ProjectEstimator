@@ -167,9 +167,7 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
     if (notes.length === 0) return;
     setAnalyzing(true);
     try {
-      const res = await base44.functions.invoke('analyzeVoiceNote', {
-        dataUrls: notes.map(n => n.audio_url)
-      });
+      const res = await base44.functions.invoke('analyzeVoiceNote', { dataUrls: notes.map(n => n.audio_url) });
       if (res.data?.analysis) {
         const existing = await base44.entities.AnalysisResult.filter({ area_id: areaId });
         const analysisData = {
