@@ -123,7 +123,7 @@ export default function AreaDetail() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight mb-1">{area.name}</h1>
           <div className="flex items-center gap-2 mt-1">
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${area.status === "Complete" ? "bg-emerald-100 text-emerald-700" : area.status === "In Progress" ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"}`}>
+            <span className={`text-sm px-2 py-0.5 rounded-full font-medium ${area.status === "Complete" ? "bg-emerald-100 text-emerald-700" : area.status === "In Progress" ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"}`}>
               {area.status || "Not Started"}
             </span>
             <span className="text-muted-foreground text-sm">
@@ -169,10 +169,10 @@ export default function AreaDetail() {
                  </div>
                  <div className="flex-1 min-w-0">
                    <p className="font-semibold text-sm">{op.type}</p>
-                   <p className="text-xs text-muted-foreground">{entries.length} entr{entries.length !== 1 ? "ies" : "y"}</p>
+                   <p className="text-sm text-muted-foreground">{entries.length} entr{entries.length !== 1 ? "ies" : "y"}</p>
                  </div>
                  {entries.some(e => e._flags && e._flags.length > 0) && (
-                   <span className="flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                   <span className="flex items-center gap-1 text-sm font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
                      <Flag className="h-3 w-3" fill="currentColor" /> Flagged
                    </span>
                  )}
@@ -184,7 +184,7 @@ export default function AreaDetail() {
                     {entries.map((entry, idx) => (
                       <div key={entry.id} className={`bg-background/70 rounded-lg px-3 py-2 border transition-colors ${entry._flags?.length > 0 ? "border-orange-300 bg-orange-50/30" : "border-inherit"}`}>
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-xs font-medium capitalize flex-1 min-w-0 truncate">{getEntryLabel(entry, idx)}</span>
+                          <span className="text-sm font-medium capitalize flex-1 min-w-0 truncate">{getEntryLabel(entry, idx)}</span>
                           <Button size="sm" variant="ghost" className="h-9 px-3" onClick={() => navigate(`${op.wizardPath(areaId)}?opId=${entry.id}`)}>
                             <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
                           </Button>
@@ -198,7 +198,7 @@ export default function AreaDetail() {
                         {entry._flags?.length > 0 && (
                           <div className="mt-1.5 flex flex-wrap gap-1">
                             {entry._flags.map(fk => (
-                              <span key={fk} className="inline-flex items-center gap-1 text-xs text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
+                              <span key={fk} className="inline-flex items-center gap-1 text-sm text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
                                 <Flag className="h-2.5 w-2.5" fill="currentColor" />
                                 {(entry._flag_labels && entry._flag_labels[fk]) || fk}
                               </span>
@@ -251,7 +251,7 @@ export default function AreaDetail() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{op.type}</p>
-                    <p className="text-xs text-muted-foreground">{op.description}</p>
+                    <p className="text-sm text-muted-foreground">{op.description}</p>
                   </div>
                 </button>
               );

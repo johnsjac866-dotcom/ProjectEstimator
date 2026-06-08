@@ -98,7 +98,7 @@ export default function Settings() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium">Delete Account</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 Permanently deletes all your projects, areas, and operations. You will be signed out immediately.
               </p>
             </div>

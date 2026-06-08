@@ -157,18 +157,18 @@ export default function Projects() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     {p.address && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
                         <MapPin className="h-3 w-3 flex-shrink-0" />{p.address}
                       </p>
                     )}
                     <div className="flex items-center justify-between">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[p.status] || STATUS_COLORS.Inactive}`}>
+                      <span className={`text-sm px-2 py-1 rounded-full font-medium ${STATUS_COLORS[p.status] || STATUS_COLORS.Inactive}`}>
                         {p.status}
                       </span>
                       <div className="flex items-center gap-0.5" onClick={e => e.preventDefault()}>
                         <button
                           onClick={(e) => { e.preventDefault(); navigate(`/project-summary/${p.id}`); }}
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-2 rounded-md hover:bg-muted"
+                          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-2 rounded-md hover:bg-muted"
                         >
                           <FileText className="h-3.5 w-3.5" />
                         </button>

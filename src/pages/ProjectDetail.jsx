@@ -134,14 +134,14 @@ export default function ProjectDetail() {
           {/* Editable Address */}
           {editingField === "address" ? (
             <div className="flex items-center gap-2">
-              <Input autoFocus value={editValue} onChange={e => setEditValue(e.target.value)} className="h-7 text-xs w-64" onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingField(null); }} />
+              <Input autoFocus value={editValue} onChange={e => setEditValue(e.target.value)} className="h-8 text-sm w-64" onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingField(null); }} />
               <button onClick={saveEdit} className="text-emerald-600 hover:text-emerald-700"><Check className="h-3.5 w-3.5" /></button>
               <button onClick={() => setEditingField(null)} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 group">
               <MapPin className="h-3 w-3 text-muted-foreground" />
-              <p className="text-muted-foreground text-xs">{project.address || "Add address..."}</p>
+              <p className="text-muted-foreground text-sm">{project.address || "Add address..."}</p>
               <button onClick={() => startEdit("address")} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity"><Pencil className="h-3 w-3" /></button>
             </div>
           )}
@@ -212,8 +212,8 @@ export default function ProjectDetail() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  {a.operation_type && <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">{a.operation_type}</span>}
-                  <span className={`inline-block ml-2 text-xs px-2 py-0.5 rounded-full ${a.status === "Complete" ? "bg-emerald-100 text-emerald-700" : a.status === "In Progress" ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"}`}>{a.status || "Not Started"}</span>
+                  {a.operation_type && <span className="text-sm text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">{a.operation_type}</span>}
+                  <span className={`inline-block ml-2 text-sm px-2 py-0.5 rounded-full ${a.status === "Complete" ? "bg-emerald-100 text-emerald-700" : a.status === "In Progress" ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"}`}>{a.status || "Not Started"}</span>
                 </CardContent>
               </Card>
             </Link>
