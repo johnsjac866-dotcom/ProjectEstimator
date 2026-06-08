@@ -241,35 +241,17 @@ export default function AreaDetail() {
       <div className="mt-6">
         <VoiceNotes 
           areaId={areaId} 
-          onCreateOperation={async (operation) => {
+          onCreateOperation={(operation) => {
             // Find the matching operation definition
             const opDef = ALL_OPERATIONS.find(op => op.type === operation.operation_type);
             if (!opDef) return;
 
-            // Create operation entry with AI-suggested data
-            const entries = parseOps(area[opDef.dataKey]);
-            
-            // Ensure materials is properly formatted as array or string
-            let materialsValue = '';
-            if (Array.isArray(operation.materials)) {
-              materialsValue = operation.materials.join(', ');
-            } else if (operation.materials) {
-              materialsValue = operation.materials;
-            }
-            
-            const newEntry = {
-              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              sub_type: DEFAULT_SUB_TYPES[operation.operation_type] || '',
-              description: operation.description || '',
-              notes: operation.notes || '',
-              priority: operation.priority || 'medium',
-              materials: materialsValue,
-              size: operation.estimated_quantity || ''
-            };
-            
-            const updated = [...entries, newEntry];
-            await OfflineAreas.update(areaId, { [opDef.dataKey]: JSON.stringify(updated) });
-            setArea(a => ({ ...a, [opDef.dataKey]: JSON.stringify(updated) }));
+            // Encode AI data as URL params and navigate to wizard
+            const params = new URLSearchParams({
+              ai_data: JSON.stringify(operation),
+              ai_sub_type: DEFAULT_SUB_TYPES[operation.operation_type] || ''
+            });
+            navigate(`${opDef.wizardPath(areaId)}?${params.toString()}`);
           }}
         />
       </div>

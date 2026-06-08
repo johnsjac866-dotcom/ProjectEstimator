@@ -36,10 +36,40 @@ export default function RoughGradingWizard() {
       setArea(a);
       const ops = parseOps(a.rough_grading_data);
       setOperations(ops);
+      
+      // Check for AI-generated data from URL params
+      const params = new URLSearchParams(window.location.search);
+      const aiDataStr = params.get('ai_data');
+      const aiSubType = params.get('ai_sub_type');
+      
       if (opId) {
         const existing = ops.find(o => o.id === opId);
         if (existing) setData(existing);
+      } else if (aiDataStr && aiSubType) {
+        try {
+          const aiData = JSON.parse(aiDataStr);
+          // Pre-fill form with AI data
+          const initialData = { sub_type: aiSubType };
+          
+          // Parse estimated_quantity (e.g., "10 ft length, 10 ft width, 3 inches depth")
+          if (aiData.estimated_quantity) {
+            const qty = aiData.estimated_quantity.toLowerCase();
+            const lengthMatch = qty.match(/(\d+\.?\d*)\s*(?:ft|feet)\s*(?:length|long|x)/);
+            const widthMatch = qty.match(/(\d+\.?\d*)\s*(?:ft|feet)\s*(?:width|wide)/);
+            const depthMatch = qty.match(/(\d+\.?\d*)\s*(?:inch|in|")/);
+            
+            if (lengthMatch) initialData.sf_length = lengthMatch[1];
+            if (widthMatch) initialData.sf_width = widthMatch[1];
+            if (depthMatch) initialData.depth_inches = depthMatch[1];
+          }
+          
+          if (aiData.description) initialData.notes = aiData.description;
+          setData(initialData);
+        } catch (e) {
+          console.error('Failed to parse AI data:', e);
+        }
       }
+      
       setLoading(false);
     })();
   }, [areaId]);
