@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ analysis });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Analyze voice note error:', error);
+    return Response.json({ error: error.message || 'Analysis failed' }, { status: 500 });
   }
 });
