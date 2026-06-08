@@ -153,13 +153,19 @@ export default function VoiceNotes({ areaId }) {
   async function handleAnalyzeAll() {
     if (notes.length === 0) return;
     setAnalyzing(true);
+    setAnalysis(null);
     try {
       const res = await base44.functions.invoke('analyzeVoiceNote', {
         dataUrls: notes.map(n => n.dataUrl)
       });
-      setAnalysis(res.data.analysis);
+      if (res.data?.analysis) {
+        setAnalysis(res.data.analysis);
+      } else if (res.data?.error) {
+        setAnalysis({ error: res.data.error });
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Analysis error:', err);
+      setAnalysis({ error: err.message || 'Failed to analyze notes' });
     } finally {
       setAnalyzing(false);
     }
@@ -215,31 +221,37 @@ export default function VoiceNotes({ areaId }) {
           )}
 
           {analysis && (
-            <div className="bg-primary/5 rounded-lg border border-primary/20 px-3 py-2.5 space-y-2">
-              <div>
-                <p className="text-xs font-semibold text-primary mb-1">Summary</p>
-                <p className="text-sm text-foreground">{analysis.summary}</p>
-              </div>
-              {analysis.key_items?.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-primary mb-1">Key Items</p>
-                  <ul className="text-sm text-foreground space-y-1">
-                    {analysis.key_items.map((item, i) => (
-                      <li key={i} className="flex gap-2">
-                        <span className="text-primary">•</span> {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {analysis.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {analysis.tags.map((tag, i) => (
-                    <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+            <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${analysis.error ? 'bg-destructive/5 border-destructive/20' : 'bg-primary/5 border-primary/20'}`}>
+              {analysis.error ? (
+                <p className="text-sm text-destructive">{analysis.error}</p>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-xs font-semibold text-primary mb-1">Summary</p>
+                    <p className="text-sm text-foreground">{analysis.summary}</p>
+                  </div>
+                  {analysis.key_items?.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-primary mb-1">Key Items</p>
+                      <ul className="text-sm text-foreground space-y-1">
+                        {analysis.key_items.map((item, i) => (
+                          <li key={i} className="flex gap-2">
+                            <span className="text-primary">•</span> {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {analysis.tags?.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {analysis.tags.map((tag, i) => (
+                        <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
