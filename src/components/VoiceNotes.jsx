@@ -66,7 +66,7 @@ function NotePlayer({ note, onDelete }) {
   );
 }
 
-export default function VoiceNotes({ areaId }) {
+export default function VoiceNotes({ areaId, onCreateOperation }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
@@ -225,7 +225,7 @@ export default function VoiceNotes({ areaId }) {
           )}
 
           {analysis && (
-            <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${analysis.error ? 'bg-destructive/5 border-destructive/20' : 'bg-primary/5 border-primary/20'}`}>
+            <div className={`rounded-lg border px-3 py-2.5 space-y-3 ${analysis.error ? 'bg-destructive/5 border-destructive/20' : 'bg-primary/5 border-primary/20'}`}>
               {analysis.error ? (
                 <p className="text-sm text-destructive">{analysis.error}</p>
               ) : (
@@ -244,6 +244,33 @@ export default function VoiceNotes({ areaId }) {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+                  {analysis.recommended_operations?.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-primary mb-2">Recommended Operations</p>
+                      <div className="space-y-2">
+                        {analysis.recommended_operations.map((op, i) => (
+                          <div key={i} className="bg-white rounded border border-primary/20 p-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground">{op.operation_type}</p>
+                                {op.description && <p className="text-xs text-muted-foreground mt-0.5">{op.description}</p>}
+                                {op.estimated_quantity && <p className="text-xs text-muted-foreground">Size: {op.estimated_quantity}</p>}
+                                {op.materials?.length > 0 && (
+                                  <p className="text-xs text-muted-foreground">Materials: {op.materials.join(', ')}</p>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => onCreateOperation?.(op)}
+                                className="flex-shrink-0 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                              >
+                                Add
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {analysis.tags?.length > 0 && (

@@ -221,7 +221,25 @@ export default function AreaDetail() {
 
       {/* Voice Notes */}
       <div className="mt-6">
-        <VoiceNotes areaId={areaId} />
+        <VoiceNotes 
+          areaId={areaId} 
+          onCreateOperation={async (operation) => {
+            // Find the matching operation definition
+            const opDef = ALL_OPERATIONS.find(op => op.type === operation.operation_type);
+            if (!opDef) return;
+
+            // Navigate to the wizard with AI-suggested data stored in sessionStorage
+            sessionStorage.setItem(`aiSuggestion_${areaId}`, JSON.stringify({
+              description: operation.description,
+              estimated_quantity: operation.estimated_quantity,
+              materials: operation.materials,
+              notes: operation.notes,
+              priority: operation.priority
+            }));
+
+            navigate(opDef.wizardPath(areaId));
+          }}
+        />
       </div>
 
       {/* Operation Picker Dialog */}
