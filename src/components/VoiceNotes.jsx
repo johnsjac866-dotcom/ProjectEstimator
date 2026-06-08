@@ -118,7 +118,7 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
       const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
       
       try {
-        const uploadRes = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+        const uploadRes = await base44.integrations.Core.UploadFile({ file });
         const note = await base44.entities.VoiceNote.create({
           area_id: areaId,
           audio_url: uploadRes.file_url,
