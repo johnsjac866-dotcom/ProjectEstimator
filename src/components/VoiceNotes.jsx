@@ -66,7 +66,7 @@ function NotePlayer({ note, onDelete }) {
   );
 }
 
-export default function VoiceNotes({ areaId, onCreateOperation }) {
+export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
@@ -74,7 +74,7 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
   const [permitted, setPermitted] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
-  const [savedAnalysis, setSavedAnalysis] = useState(null);
+  const [savedAnalysis, setSavedAnalysis] = useState(initialAnalysis ? JSON.parse(initialAnalysis) : null);
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);

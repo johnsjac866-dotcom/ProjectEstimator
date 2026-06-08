@@ -222,7 +222,8 @@ export default function AreaDetail() {
       {/* Voice Notes */}
       <div className="mt-6">
         <VoiceNotes 
-          areaId={areaId} 
+          areaId={areaId}
+          initialAnalysis={area?.voice_notes_analysis}
           onCreateOperation={async (operation) => {
             // Find the matching operation definition
             const opDef = ALL_OPERATIONS.find(op => op.type === operation.operation_type);
