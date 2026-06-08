@@ -232,11 +232,12 @@ export default function AreaDetail() {
             const entries = parseOps(area[opDef.dataKey]);
             const newEntry = {
               id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              description: operation.description,
-              estimated_quantity: operation.estimated_quantity,
-              materials: operation.materials?.join(', ') || '',
+              description: operation.description || '',
               notes: operation.notes || '',
-              priority: operation.priority || 'medium'
+              priority: operation.priority || 'medium',
+              materials: operation.materials?.join(', ') || '',
+              // Store measurements in size field (e.g., "10 x 10 feet, 3 inches deep")
+              size: operation.estimated_quantity || ''
             };
             
             const updated = [...entries, newEntry];

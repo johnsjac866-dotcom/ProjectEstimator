@@ -73,7 +73,6 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
   const [elapsed, setElapsed] = useState(0);
   const [permitted, setPermitted] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState(null);
   const [savedAnalysis, setSavedAnalysis] = useState(null);
 
   const mediaRecorderRef = useRef(null);
@@ -86,6 +85,11 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
       try {
         const allNotes = await base44.entities.VoiceNote.filter({ area_id: areaId });
         setNotes(allNotes.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+        
+        const analysisResults = await base44.entities.AnalysisResult.filter({ area_id: areaId });
+        if (analysisResults.length > 0) {
+          setSavedAnalysis(analysisResults[0]);
+        }
       } catch {
         setNotes([]);
       } finally {
@@ -161,22 +165,41 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
         dataUrls: notes.map(n => n.audio_url)
       });
       if (res.data?.analysis) {
+        const existing = await base44.entities.AnalysisResult.filter({ area_id: areaId });
+        const analysisData = {
+          area_id: areaId,
+          summary: res.data.analysis.summary,
+          key_items: res.data.analysis.key_items,
+          recommended_operations: res.data.analysis.recommended_operations,
+          tags: res.data.analysis.tags
+        };
+        
+        if (existing.length > 0) {
+          await base44.entities.AnalysisResult.update(existing[0].id, analysisData);
+        } else {
+          await base44.entities.AnalysisResult.create(analysisData);
+        }
         setSavedAnalysis(res.data.analysis);
-        setAnalysis(null);
       } else if (res.data?.error) {
         setSavedAnalysis({ error: res.data.error });
-        setAnalysis(null);
       }
     } catch (err) {
       console.error('Analysis error:', err);
       setSavedAnalysis({ error: err.message || 'Failed to analyze notes' });
-      setAnalysis(null);
     } finally {
       setAnalyzing(false);
     }
   }
 
-  function handleClearAnalysis() {
+  async function handleClearAnalysis() {
+    try {
+      const existing = await base44.entities.AnalysisResult.filter({ area_id: areaId });
+      if (existing.length > 0) {
+        await base44.entities.AnalysisResult.delete(existing[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to clear analysis:', err);
+    }
     setSavedAnalysis(null);
   }
 
