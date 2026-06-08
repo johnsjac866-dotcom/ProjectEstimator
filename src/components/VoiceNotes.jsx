@@ -74,6 +74,7 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
   const [permitted, setPermitted] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [savedAnalysis, setSavedAnalysis] = useState(null);
+  const [savingNote, setSavingNote] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -117,12 +118,13 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
     mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
     mr.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
+      setSavingNote(true);
       const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
       const duration = (Date.now() - startTimeRef.current) / 1000;
       const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
       
       try {
-        const uploadRes = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+        const uploadRes = await base44.integrations.Core.UploadFile({ file });
         const note = await base44.entities.VoiceNote.create({
           area_id: areaId,
           audio_url: uploadRes.file_url,
@@ -131,6 +133,8 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
         setNotes(prev => [note, ...prev]);
       } catch (err) {
         console.error('Failed to save voice note:', err);
+      } finally {
+        setSavingNote(false);
       }
     };
 
@@ -233,9 +237,11 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground text-center py-4">Loading notes...</p>
+       <p className="text-sm text-muted-foreground text-center py-4">Loading notes...</p>
+      ) : savingNote ? (
+       <p className="text-sm text-muted-foreground text-center py-4">Saving voice note...</p>
       ) : notes.length === 0 && !recording ? (
-        <p className="text-sm text-muted-foreground text-center py-4">No voice notes yet. Tap Record to add one.</p>
+       <p className="text-sm text-muted-foreground text-center py-4">No voice notes yet. Tap Record to add one.</p>
       ) : (
         <div className="space-y-3">
           <div className="space-y-2">
