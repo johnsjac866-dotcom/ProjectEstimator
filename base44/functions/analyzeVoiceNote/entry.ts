@@ -11,18 +11,10 @@ Deno.serve(async (req) => {
 
     // Transcribe all audio files
     const transcripts = [];
-    for (const dataUrl of dataUrls) {
+    for (const url of dataUrls) {
       try {
-        const [header, data] = dataUrl.split(',');
-        const binaryString = atob(data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-        const blob = new Blob([bytes], { type: 'audio/webm' });
-        const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
-
-        const uploadRes = await base44.integrations.Core.UploadFile({ file });
-        const transcript = await base44.integrations.Core.TranscribeAudio({ audio_url: uploadRes.file_url });
-        transcripts.push(transcript);
+        const res = await base44.integrations.Core.TranscribeAudio({ audio_url: url });
+        transcripts.push(res.transcript || res);
       } catch {
         // Skip on error, continue with other notes
       }
