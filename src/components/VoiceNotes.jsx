@@ -107,15 +107,17 @@ export default function VoiceNotes({ areaId, onCreateOperation }) {
     }
 
     chunksRef.current = [];
-    const mr = new MediaRecorder(stream);
+    const mimeType = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/wav';
+    const mr = new MediaRecorder(stream, { mimeType });
     mediaRecorderRef.current = mr;
 
     mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
     mr.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
-      const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+      const blob = new Blob(chunksRef.current, { type: mimeType });
       const duration = (Date.now() - startTimeRef.current) / 1000;
-      const file = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
+      const ext = mimeType === 'audio/mp4' ? 'mp4' : mimeType === 'audio/webm' ? 'webm' : 'wav';
+      const file = new File([blob], `voice-note.${ext}`, { type: mimeType });
       
       try {
         const uploadRes = await base44.integrations.Core.UploadFile({ file });
