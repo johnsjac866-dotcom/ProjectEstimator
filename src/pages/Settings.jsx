@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Trash2, UserCircle } from "lucide-react";
+import { AlertTriangle, Trash2, UserCircle, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
@@ -62,6 +62,25 @@ export default function Settings() {
           <p className="text-sm text-muted-foreground">
             You are signed in. Your data is stored securely in the cloud.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Legal */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-5 w-5" /> Legal
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <a
+            href="https://smooth-echium-91d.notion.site/Privacy-Policy-for-Project-Estimator-379494364ede803b8f63f6261e899424"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary underline underline-offset-4"
+          >
+            Privacy Policy
+          </a>
         </CardContent>
       </Card>
 
