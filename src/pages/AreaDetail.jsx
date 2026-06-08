@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2, Wrench, Flag, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
+import VoiceNotes from "@/components/VoiceNotes";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
@@ -217,6 +218,11 @@ export default function AreaDetail() {
           })}
         </div>
       )}
+
+      {/* Voice Notes */}
+      <div className="mt-6">
+        <VoiceNotes areaId={areaId} />
+      </div>
 
       {/* Operation Picker Dialog */}
       <Dialog open={showOpPicker} onOpenChange={setShowOpPicker}>
