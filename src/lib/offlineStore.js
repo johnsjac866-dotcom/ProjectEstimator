@@ -1,14 +1,17 @@
 /**
  * offlineStore.js
- * A thin offline-first wrapper around the Base44 SDK entities.
- * - Reads from a local cache (localStorage) when offline.
- * - Writes optimistically to the cache and syncs to the server when online.
+ * Offline-first wrapper around the Base44 SDK entities.
+ * - Always writes to localStorage cache immediately (optimistic).
+ * - Tries to sync with the server in the background (fire-and-forget).
+ * - Reads from cache when offline; reads from server + refreshes cache when online.
  */
 
 import { base44 } from "@/api/base44Client";
 
+const NETWORK_TIMEOUT_MS = 5000;
+
 function generateId() {
-  return "_" + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  return "_local_" + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
 
 function cacheKey(entityName) {
@@ -32,11 +35,28 @@ function writeCache(entityName, records) {
   }
 }
 
+/** Wraps a promise with a timeout so we don't hang waiting for a dead network */
+function withTimeout(promise, ms = NETWORK_TIMEOUT_MS) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Network timeout")), ms)
+    ),
+  ]);
+}
+
+function isOnline() {
+  return navigator.onLine;
+}
+
 function createStore(entityName, sdk) {
   return {
     async list(sort, limit) {
+      if (!isOnline()) {
+        return readCache(entityName) || [];
+      }
       try {
-        const records = await sdk.list(sort, limit);
+        const records = await withTimeout(sdk.list(sort, limit));
         writeCache(entityName, records);
         return records;
       } catch {
@@ -45,8 +65,16 @@ function createStore(entityName, sdk) {
     },
 
     async filter(query, sort, limit) {
+      const filterLocally = (cached) =>
+        (cached || []).filter(r =>
+          Object.entries(query || {}).every(([k, v]) => r[k] === v)
+        );
+
+      if (!isOnline()) {
+        return filterLocally(readCache(entityName));
+      }
       try {
-        const records = await sdk.filter(query, sort, limit);
+        const records = await withTimeout(sdk.filter(query, sort, limit));
         // Merge into cache
         const cached = readCache(entityName) || [];
         const ids = new Set(records.map(r => r.id));
@@ -54,17 +82,17 @@ function createStore(entityName, sdk) {
         writeCache(entityName, merged);
         return records;
       } catch {
-        const cached = readCache(entityName) || [];
-        return cached.filter(r => {
-          return Object.entries(query || {}).every(([k, v]) => r[k] === v);
-        });
+        return filterLocally(readCache(entityName));
       }
     },
 
     async get(id) {
+      if (!isOnline()) {
+        const cached = readCache(entityName) || [];
+        return cached.find(r => r.id === id) || null;
+      }
       try {
-        const record = await sdk.get(id);
-        // Update cache entry
+        const record = await withTimeout(sdk.get(id));
         const cached = readCache(entityName) || [];
         const idx = cached.findIndex(r => r.id === id);
         if (idx >= 0) cached[idx] = record; else cached.push(record);
@@ -76,50 +104,75 @@ function createStore(entityName, sdk) {
       }
     },
 
+    /** Convenience: filter by project_id */
+    async getByProjectId(projectId) {
+      return this.filter({ project_id: projectId });
+    },
+
     async create(data) {
+      // Always write to cache immediately
+      const tempId = generateId();
+      const tempRecord = {
+        ...data,
+        id: tempId,
+        _pending: true,
+        created_date: new Date().toISOString(),
+        updated_date: new Date().toISOString(),
+      };
+      const cached = readCache(entityName) || [];
+      writeCache(entityName, [...cached, tempRecord]);
+
+      if (!isOnline()) {
+        return tempRecord;
+      }
+
+      // Try to sync in the background, replace temp record with real one
       try {
-        const record = await sdk.create(data);
-        const cached = readCache(entityName) || [];
-        writeCache(entityName, [...cached, record]);
+        const record = await withTimeout(sdk.create(data));
+        const latest = readCache(entityName) || [];
+        // Replace the temp record with the real server record
+        writeCache(entityName, latest.map(r => r.id === tempId ? record : r));
         return record;
       } catch {
-        // Offline: create a temp record in cache
-        const tempRecord = { ...data, id: generateId(), _pending: true, created_date: new Date().toISOString() };
-        const cached = readCache(entityName) || [];
-        writeCache(entityName, [...cached, tempRecord]);
+        // Offline or failed — temp record stays in cache
         return tempRecord;
       }
     },
 
     async update(id, data) {
-      // Optimistically update cache first
+      // Optimistically update cache immediately
       const cached = readCache(entityName) || [];
       const idx = cached.findIndex(r => r.id === id);
-      if (idx >= 0) {
-        cached[idx] = { ...cached[idx], ...data };
-        writeCache(entityName, cached);
+      const updated = idx >= 0 ? { ...cached[idx], ...data } : { id, ...data };
+      if (idx >= 0) cached[idx] = updated; else cached.push(updated);
+      writeCache(entityName, cached);
+
+      if (!isOnline() || id.startsWith("_local_")) {
+        return updated;
       }
+
       try {
-        const record = await sdk.update(id, data);
-        // Refresh cache with server response
+        const record = await withTimeout(sdk.update(id, data));
         const latest = readCache(entityName) || [];
         const i = latest.findIndex(r => r.id === id);
         if (i >= 0) { latest[i] = record; writeCache(entityName, latest); }
         return record;
       } catch {
-        // Offline: return the optimistic version
-        return cached[idx] || { id, ...data };
+        return updated;
       }
     },
 
     async delete(id) {
-      // Optimistically remove from cache
+      // Optimistically remove from cache immediately
       const cached = readCache(entityName) || [];
       writeCache(entityName, cached.filter(r => r.id !== id));
+
+      if (!isOnline() || id.startsWith("_local_")) return;
+
       try {
-        await sdk.delete(id);
+        await withTimeout(sdk.delete(id));
       } catch {
-        // Will be out of sync until next online sync — acceptable for now
+        // Fire-and-forget — cache is already updated
       }
     },
   };
