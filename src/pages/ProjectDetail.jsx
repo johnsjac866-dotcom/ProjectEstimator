@@ -33,21 +33,27 @@ export default function ProjectDetail() {
       OfflineAreas.getByProjectId(projectId),
     ]);
     setProject(p);
-    // Auto-create Site Management area if it doesn't exist
-    const hasSM = a.some(x => x.name === "Site Management & Daily Cleanup");
-    if (!hasSM) {
-      await OfflineAreas.create({
-        project_id: projectId,
-        name: "Site Management & Daily Cleanup",
-        operation_type: "Site Management & Daily Cleanup",
-        status: "Not Started",
-      });
-      const updated = await OfflineAreas.getByProjectId(projectId);
-      setAreas(updated);
-    } else {
-      setAreas(a);
-    }
+    setAreas(a);
     setLoading(false);
+
+    // Auto-create Site Management only once per project, tracked in localStorage
+    const smKey = `sm_created_${projectId}`;
+    if (!localStorage.getItem(smKey)) {
+      const hasSM = a.some(x => x.name === "Site Management & Daily Cleanup");
+      if (!hasSM) {
+        localStorage.setItem(smKey, "1");
+        await OfflineAreas.create({
+          project_id: projectId,
+          name: "Site Management & Daily Cleanup",
+          operation_type: "Site Management & Daily Cleanup",
+          status: "Not Started",
+        });
+        const updated = await OfflineAreas.getByProjectId(projectId);
+        setAreas(updated);
+      } else {
+        localStorage.setItem(smKey, "1");
+      }
+    }
   }
 
   async function handleCreateArea() {
