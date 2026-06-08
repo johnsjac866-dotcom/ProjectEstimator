@@ -241,17 +241,38 @@ export default function AreaDetail() {
       <div className="mt-6">
         <VoiceNotes 
           areaId={areaId} 
-          onCreateOperation={(operation) => {
+          onCreateOperation={async (operation) => {
             // Find the matching operation definition
             const opDef = ALL_OPERATIONS.find(op => op.type === operation.operation_type);
             if (!opDef) return;
 
-            // Encode AI data as URL params and navigate to wizard
-            const params = new URLSearchParams({
-              ai_data: JSON.stringify(operation),
-              ai_sub_type: DEFAULT_SUB_TYPES[operation.operation_type] || ''
-            });
-            navigate(`${opDef.wizardPath(areaId)}?${params.toString()}`);
+            // Extract dimensions from estimated_quantity
+            let sfLength = '', sfWidth = '', depthInches = '';
+            if (operation.estimated_quantity) {
+              const qty = operation.estimated_quantity.toLowerCase();
+              const lengthMatch = qty.match(/(\d+\.?\d*)\s*(?:ft|feet)\s*(?:length|long|x)/);
+              const widthMatch = qty.match(/(\d+\.?\d*)\s*(?:ft|feet)\s*(?:width|wide)/);
+              const depthMatch = qty.match(/(\d+\.?\d*)\s*(?:inch|in|")/);
+              
+              if (lengthMatch) sfLength = lengthMatch[1];
+              if (widthMatch) sfWidth = widthMatch[1];
+              if (depthMatch) depthInches = depthMatch[1];
+            }
+
+            // Create operation entry with only extracted AI data
+            const entries = parseOps(area[opDef.dataKey]);
+            const newEntry = {
+              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              sub_type: DEFAULT_SUB_TYPES[operation.operation_type] || '',
+              sf_length: sfLength,
+              sf_width: sfWidth,
+              depth_inches: depthInches,
+              notes: operation.description || ''
+            };
+            
+            const updated = [...entries, newEntry];
+            await OfflineAreas.update(areaId, { [opDef.dataKey]: JSON.stringify(updated) });
+            setArea(a => ({ ...a, [opDef.dataKey]: JSON.stringify(updated) }));
           }}
         />
       </div>
