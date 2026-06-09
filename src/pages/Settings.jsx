@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Trash2, UserCircle, FileText } from "lucide-react";
+import { AlertTriangle, Trash2, UserCircle, FileText, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
@@ -62,6 +62,23 @@ export default function Settings() {
           <p className="text-sm text-muted-foreground">
             You are signed in. Your data is stored securely in the cloud.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Sign Out */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <LogOut className="h-5 w-5" /> Sign Out
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">Sign out of your account on this device.</p>
+            <Button variant="outline" size="sm" className="flex-shrink-0" onClick={() => base44.auth.logout("/")}>
+              Sign Out
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
