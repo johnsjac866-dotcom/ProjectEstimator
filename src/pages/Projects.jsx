@@ -18,7 +18,7 @@ const STATUS_COLORS = {
   Active: "bg-emerald-100 text-emerald-700",
   Completed: "bg-blue-100 text-blue-700",
   Inactive: "bg-amber-100 text-amber-700",
-  Archived: "bg-muted text-muted-foreground",
+  Archived: "bg-muted text-muted-foreground"
 };
 
 export default function Projects() {
@@ -30,12 +30,12 @@ export default function Projects() {
   const [tab, setTab] = useState("All");
   const [search, setSearch] = useState("");
 
-  useEffect(() => { loadProjects(); }, []);
+  useEffect(() => {loadProjects();}, []);
   const { pulling, refreshing } = usePullToRefresh(loadProjects);
 
   async function loadProjects() {
     const data = await OfflineProjects.list();
-    setProjects(data.filter(p => p.status !== "Archived"));
+    setProjects(data.filter((p) => p.status !== "Archived"));
     setLoading(false);
   }
 
@@ -61,13 +61,13 @@ export default function Projects() {
     loadProjects();
   }
 
-  const filtered = projects.filter(p => {
+  const filtered = projects.filter((p) => {
     const matchesTab = tab === "All" || p.status === tab;
     const q = search.toLowerCase();
     const matchesSearch = !q ||
-      p.name.toLowerCase().includes(q) ||
-      (p.client_name || "").toLowerCase().includes(q) ||
-      (p.address || "").toLowerCase().includes(q);
+    p.name.toLowerCase().includes(q) ||
+    (p.client_name || "").toLowerCase().includes(q) ||
+    (p.address || "").toLowerCase().includes(q);
     return matchesTab && matchesSearch;
   });
 
@@ -81,7 +81,7 @@ export default function Projects() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Manage your landscaping site visits</p>
+          <p className="text-muted-foreground text-sm mt-0.5 hidden">Manage your landscaping site visits</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate("/archived-projects")}>
@@ -94,10 +94,10 @@ export default function Projects() {
             <DialogContent>
               <DialogHeader><DialogTitle>Create Project</DialogTitle></DialogHeader>
               <div className="space-y-4 mt-2">
-                <div><Label>Project Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Smith Residence" /></div>
-                <div><Label>Client Name</Label><Input value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} /></div>
-                <div><Label>Site Address</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-                <div><Label>Notes</Label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
+                <div><Label>Project Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Smith Residence" /></div>
+                <div><Label>Client Name</Label><Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} /></div>
+                <div><Label>Site Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+                <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
                 <Button onClick={handleCreate} disabled={!form.name} className="w-full">Create Project</Button>
               </div>
             </DialogContent>
@@ -112,40 +112,40 @@ export default function Projects() {
           className="pl-9"
           placeholder="Search projects..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+          onChange={(e) => setSearch(e.target.value)} />
+        
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-5 overflow-x-auto pb-1">
-        {TABS.map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              tab === t
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
+        {TABS.map((t) =>
+        <button
+          key={t}
+          onClick={() => setTab(t)}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+          tab === t ?
+          "bg-primary text-primary-foreground" :
+          "bg-muted text-muted-foreground hover:bg-muted/80"}`
+          }>
+          
             {t}
             <span className="ml-1.5 text-xs opacity-70">
-              {t === "All" ? projects.length : projects.filter(p => p.status === t).length}
+              {t === "All" ? projects.length : projects.filter((p) => p.status === t).length}
             </span>
           </button>
-        ))}
+        )}
       </div>
 
       {/* Grid */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">
+      {filtered.length === 0 ?
+      <div className="text-center py-20 text-muted-foreground">
           <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-40" />
           <p>{search || tab !== "All" ? "No projects match your filters." : "No projects yet. Create your first project to get started."}</p>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(p => (
-            <div key={p.id} className="relative">
+        </div> :
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((p) =>
+        <div key={p.id} className="relative">
               <Link to={`/project/${p.id}`}>
                 <Card className="hover:shadow-md active:shadow-sm transition-shadow cursor-pointer group">
                   <CardHeader className="pb-2">
@@ -156,20 +156,20 @@ export default function Projects() {
                     {p.client_name && <CardDescription>{p.client_name}</CardDescription>}
                   </CardHeader>
                   <CardContent className="pt-0">
-                    {p.address && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
+                    {p.address &&
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
                         <MapPin className="h-3 w-3 flex-shrink-0" />{p.address}
                       </p>
-                    )}
+                }
                     <div className="flex items-center justify-between">
                       <span className={`text-sm px-2 py-1 rounded-full font-medium ${STATUS_COLORS[p.status] || STATUS_COLORS.Inactive}`}>
                         {p.status}
                       </span>
-                      <div className="flex items-center gap-0.5" onClick={e => e.preventDefault()}>
+                      <div className="flex items-center gap-0.5" onClick={(e) => e.preventDefault()}>
                         <button
-                          onClick={(e) => { e.preventDefault(); navigate(`/project-summary/${p.id}`); }}
-                          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-2 rounded-md hover:bg-muted"
-                        >
+                      onClick={(e) => {e.preventDefault();navigate(`/project-summary/${p.id}`);}}
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-2 rounded-md hover:bg-muted">
+                      
                           <FileText className="h-3.5 w-3.5" />
                         </button>
                         <DropdownMenu>
@@ -179,21 +179,21 @@ export default function Projects() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={e => handleSetStatus(e, p.id, "Active")} disabled={p.status === "Active"}>
+                            <DropdownMenuItem onClick={(e) => handleSetStatus(e, p.id, "Active")} disabled={p.status === "Active"}>
                               <Circle className="h-3.5 w-3.5 mr-2 text-emerald-600" /> Set Active
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={e => handleSetStatus(e, p.id, "Completed")} disabled={p.status === "Completed"}>
+                            <DropdownMenuItem onClick={(e) => handleSetStatus(e, p.id, "Completed")} disabled={p.status === "Completed"}>
                               <CheckCircle className="h-3.5 w-3.5 mr-2 text-blue-600" /> Set Completed
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={e => handleSetStatus(e, p.id, "Inactive")} disabled={p.status === "Inactive"}>
+                            <DropdownMenuItem onClick={(e) => handleSetStatus(e, p.id, "Inactive")} disabled={p.status === "Inactive"}>
                               <MinusCircle className="h-3.5 w-3.5 mr-2 text-amber-600" /> Set Inactive
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={e => handleSetStatus(e, p.id, "Archived")}>
+                            <DropdownMenuItem onClick={(e) => handleSetStatus(e, p.id, "Archived")}>
                               <Archive className="h-3.5 w-3.5 mr-2" /> Archive
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={e => handleDelete(e, p.id)} className="text-destructive focus:text-destructive">
+                            <DropdownMenuItem onClick={(e) => handleDelete(e, p.id)} className="text-destructive focus:text-destructive">
                               <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -204,9 +204,9 @@ export default function Projects() {
                 </Card>
               </Link>
             </div>
-          ))}
+        )}
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
