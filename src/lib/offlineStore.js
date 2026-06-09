@@ -1,9 +1,10 @@
 /**
  * offlineStore.js
- * Smart offline-first store:
- * - If cache exists: return cache immediately, refresh in background
- * - If no cache: wait for network (first load on fresh browser)
- * - If network fails and no cache: return []
+ * Offline-first store with ID remapping for pending sync operations.
+ * - Cache-first: return cache immediately, refresh in background
+ * - No cache: wait for network (first install)
+ * - Network fail + no cache: return []
+ * - ID remapping: when temp IDs sync to real server IDs, old URLs/refs still work
  */
 
 import { base44 } from "@/api/base44Client";
@@ -30,7 +31,19 @@ function readCache(entityName) {
 function writeCache(entityName, records) {
   try {
     localStorage.setItem(cacheKey(entityName), JSON.stringify(records));
-  } catch {}
+  } catch {
+    // Storage quota exceeded — free space by stripping large voice_notes_analysis fields
+    try {
+      const areas = readCache("Area");
+      if (areas) {
+        const trimmed = areas.map(({ voice_notes_analysis: _vna, ...rest }) => rest);
+        localStorage.setItem(cacheKey("Area"), JSON.stringify(trimmed));
+        localStorage.setItem(cacheKey(entityName), JSON.stringify(records));
+      }
+    } catch {
+      // Silently fail if still can't write
+    }
+  }
 }
 
 function withTimeout(promise, ms = NETWORK_TIMEOUT_MS) {
@@ -42,18 +55,36 @@ function withTimeout(promise, ms = NETWORK_TIMEOUT_MS) {
   ]);
 }
 
-function createStore(entityName, sdk) {
-  return {
+// ---- ID Remapping ----
+// Stores temp→real ID mapping so old URLs/references resolve after sync.
+
+function storeIdRemap(tempId, realId) {
+  try {
+    localStorage.setItem(`_id_remap_${tempId}`, realId);
+  } catch {}
+}
+
+export function resolveId(id) {
+  if (!id) return id;
+  try {
+    return localStorage.getItem(`_id_remap_${id}`) || id;
+  } catch {
+    return id;
+  }
+}
+
+// ---- Store Factory ----
+
+function createStore(entityName, sdk, { onAfterSync } = {}) {
+  const store = {
     async list(sort, limit) {
       const cached = readCache(entityName);
       if (cached !== null) {
-        // Return cache immediately, refresh in background
         withTimeout(sdk.list(sort, limit))
           .then(records => writeCache(entityName, records))
           .catch(() => {});
         return cached;
       }
-      // No cache — must wait for network
       try {
         const records = await withTimeout(sdk.list(sort, limit));
         writeCache(entityName, records);
@@ -71,7 +102,6 @@ function createStore(entityName, sdk) {
         );
 
       if (allCached !== null) {
-        // Return from cache immediately, refresh in background
         withTimeout(sdk.filter(query, sort, limit))
           .then(records => {
             const all = readCache(entityName) || [];
@@ -81,7 +111,6 @@ function createStore(entityName, sdk) {
           .catch(() => {});
         return filterLocal(allCached);
       }
-      // No cache — must wait for network
       try {
         const records = await withTimeout(sdk.filter(query, sort, limit));
         const all = readCache(entityName) || [];
@@ -94,12 +123,22 @@ function createStore(entityName, sdk) {
     },
 
     async getByProjectId(projectId) {
+      const resolvedProjectId = resolveId(projectId);
       const allCached = readCache(entityName);
-      const local = (allCached || []).filter(r => r.project_id === projectId);
+
+      // Match areas with either the original temp project_id OR the resolved real project_id
+      const filterFn = (arr) =>
+        (arr || []).filter(
+          (r) =>
+            r.project_id === projectId ||
+            (resolvedProjectId !== projectId && r.project_id === resolvedProjectId)
+        );
+
+      const local = filterFn(allCached);
 
       if (allCached !== null && local.length > 0) {
-        // Cache has areas for this project — return immediately, refresh in background
-        withTimeout(sdk.filter({ project_id: projectId }))
+        // Cache hit — return immediately, refresh in background
+        withTimeout(sdk.filter({ project_id: resolvedProjectId }))
           .then(records => {
             const all = readCache(entityName) || [];
             const ids = new Set(records.map(r => r.id));
@@ -109,24 +148,46 @@ function createStore(entityName, sdk) {
         return local;
       }
 
-      // No cached areas for this project — wait for network
+      if (allCached !== null && local.length === 0) {
+        // Cache exists but no areas for this project yet (e.g. newly created)
+        // Use shorter timeout to avoid long waits when offline
+        try {
+          const records = await withTimeout(sdk.filter({ project_id: resolvedProjectId }), 4000);
+          const all = readCache(entityName) || [];
+          const ids = new Set(records.map(r => r.id));
+          writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
+          return records;
+        } catch {
+          return []; // offline — return empty quickly
+        }
+      }
+
+      // No cache at all — wait for network (first load)
       try {
-        const records = await withTimeout(sdk.filter({ project_id: projectId }));
+        const records = await withTimeout(sdk.filter({ project_id: resolvedProjectId }));
         const all = readCache(entityName) || [];
         const ids = new Set(records.map(r => r.id));
         writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
         return records;
       } catch {
-        return local; // fall back to whatever we have
+        return local;
       }
     },
 
     async get(id) {
+      if (!id) return null;
+
+      // Resolve remapped ID (temp → real after sync)
+      const resolvedId = resolveId(id);
+      if (resolvedId !== id) {
+        return store.get(resolvedId);
+      }
+
       const allCached = readCache(entityName);
       const local = allCached ? allCached.find(r => r.id === id) || null : null;
 
       if (local !== null) {
-        // Return from cache immediately, refresh in background
+        // Return cache immediately, refresh in background
         withTimeout(sdk.get(id))
           .then(record => {
             const all = readCache(entityName) || [];
@@ -137,6 +198,7 @@ function createStore(entityName, sdk) {
           .catch(() => {});
         return local;
       }
+
       // Not in cache — wait for network
       try {
         const record = await withTimeout(sdk.get(id));
@@ -151,7 +213,6 @@ function createStore(entityName, sdk) {
     },
 
     async create(data) {
-      // Write temp record to cache instantly so UI updates immediately
       const tempId = generateId();
       const tempRecord = {
         ...data,
@@ -168,6 +229,10 @@ function createStore(entityName, sdk) {
         .then(record => {
           const all = readCache(entityName) || [];
           writeCache(entityName, all.map(r => r.id === tempId ? record : r));
+          // Store remap so old temp-ID references (URLs, related fields) still work
+          storeIdRemap(tempId, record.id);
+          // Hook for cross-entity side effects (e.g. update area.project_id refs)
+          if (onAfterSync) onAfterSync(tempId, record.id);
         })
         .catch(() => {});
 
@@ -175,18 +240,20 @@ function createStore(entityName, sdk) {
     },
 
     async update(id, data) {
-      // Optimistically update cache instantly
+      // Resolve to real ID if it was previously remapped
+      const resolvedId = resolveId(id);
+
       const cached = readCache(entityName) || [];
-      const idx = cached.findIndex(r => r.id === id);
-      const updated = idx >= 0 ? { ...cached[idx], ...data } : { id, ...data };
+      const idx = cached.findIndex(r => r.id === resolvedId);
+      const updated = idx >= 0 ? { ...cached[idx], ...data } : { id: resolvedId, ...data };
       if (idx >= 0) cached[idx] = updated; else cached.push(updated);
       writeCache(entityName, cached);
 
-      if (!id.startsWith("_local_")) {
-        withTimeout(sdk.update(id, data))
+      if (!resolvedId.startsWith("_local_")) {
+        withTimeout(sdk.update(resolvedId, data))
           .then(record => {
             const all = readCache(entityName) || [];
-            const i = all.findIndex(r => r.id === id);
+            const i = all.findIndex(r => r.id === resolvedId);
             if (i >= 0) { all[i] = record; writeCache(entityName, all); }
           })
           .catch(() => {});
@@ -196,14 +263,29 @@ function createStore(entityName, sdk) {
     },
 
     async delete(id) {
+      const resolvedId = resolveId(id);
       const cached = readCache(entityName) || [];
-      writeCache(entityName, cached.filter(r => r.id !== id));
-      if (!id.startsWith("_local_")) {
-        withTimeout(sdk.delete(id)).catch(() => {});
+      writeCache(entityName, cached.filter(r => r.id !== resolvedId));
+      if (!resolvedId.startsWith("_local_")) {
+        withTimeout(sdk.delete(resolvedId)).catch(() => {});
       }
     },
   };
+
+  return store;
 }
 
-export const Projects = createStore("Project", base44.entities.Project);
+export const Projects = createStore("Project", base44.entities.Project, {
+  onAfterSync: (tempId, realId) => {
+    // When a project syncs, update all areas in cache that referenced the old temp project_id
+    const areaCache = readCache("Area");
+    if (areaCache) {
+      const updated = areaCache.map(a =>
+        a.project_id === tempId ? { ...a, project_id: realId } : a
+      );
+      writeCache("Area", updated);
+    }
+  },
+});
+
 export const Areas = createStore("Area", base44.entities.Area);

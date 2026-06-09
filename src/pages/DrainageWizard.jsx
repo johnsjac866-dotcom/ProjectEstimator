@@ -79,6 +79,7 @@ export default function DrainageWizard() {
   useEffect(() => {
     (async () => {
       const a = await OfflineAreas.get(areaId);
+      if (!a) { setArea(null); return; }
       setArea(a);
       if (opId) {
         const ops = parseOps(a.drainage_data);
@@ -130,7 +131,7 @@ export default function DrainageWizard() {
     navigate(`/area/${areaId}`);
   }
 
-  if (!area) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
+  if (area === null) return <div className="text-center py-20 text-muted-foreground"><p>Area not found. Please go back and try again.</p></div>;
 
   const isPipe = PIPE_GROUP.includes(drainType);
   const isFilter = FILTER_GROUP.includes(drainType);

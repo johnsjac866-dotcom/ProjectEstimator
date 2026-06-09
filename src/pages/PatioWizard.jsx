@@ -21,6 +21,7 @@ export default function PatioWizard() {
   useEffect(() => {
     (async () => {
       const a = await OfflineAreas.get(areaId);
+      if (!a) { setLoading(false); return; }
       setArea(a);
       const ops = parseOps(a.patio_data);
       setOperations(ops);

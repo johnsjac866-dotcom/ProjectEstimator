@@ -24,6 +24,7 @@ export default function HardscapeRepairWizard() {
   useEffect(() => {
     (async () => {
       const a = await OfflineAreas.get(areaId);
+      if (!a) { setLoading(false); return; }
       setArea(a);
       const ops = parseOps(a.hardscape_repair_data);
       setOperations(ops);

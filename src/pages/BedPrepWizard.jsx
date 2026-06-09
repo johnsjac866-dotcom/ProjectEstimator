@@ -29,6 +29,7 @@ export default function BedPrepWizard() {
   useEffect(() => {
     (async () => {
       const a = await OfflineAreas.get(areaId);
+      if (!a) { setLoading(false); return; }
       setArea(a);
       const ops = parseOps(a.bed_prep_data);
       setOperations(ops);

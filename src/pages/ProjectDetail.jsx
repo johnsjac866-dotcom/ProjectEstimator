@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Projects as OfflineProjects, Areas as OfflineAreas } from "@/lib/offlineStore";
+import { Projects as OfflineProjects, Areas as OfflineAreas, resolveId } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -28,9 +28,11 @@ export default function ProjectDetail() {
   const { pulling, refreshing } = usePullToRefresh(load);
 
   async function load() {
+    // Resolve remapped ID — temp IDs in URLs resolve to real IDs after sync
+    const resolvedProjectId = resolveId(projectId);
     const [p, a] = await Promise.all([
-      OfflineProjects.get(projectId),
-      OfflineAreas.getByProjectId(projectId),
+      OfflineProjects.get(resolvedProjectId),
+      OfflineAreas.getByProjectId(resolvedProjectId),
     ]);
     setProject(p);
 

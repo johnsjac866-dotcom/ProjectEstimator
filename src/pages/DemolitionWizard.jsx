@@ -28,6 +28,7 @@ export default function DemolitionWizard() {
   useEffect(() => {
     (async () => {
       const a = await OfflineAreas.get(areaId);
+      if (!a) { setLoading(false); return; }
       setArea(a);
       const ops = parseOps(a.demolition_data);
       setOperations(ops);

@@ -21,6 +21,7 @@ export default function SiteManagementWizard() {
   useEffect(() => {
     (async () => {
       const a = await OfflineAreas.get(areaId);
+      if (!a) { setLoading(false); return; }
       setArea(a);
       const ops = parseOps(a.site_mgmt_data);
       setOperations(ops);

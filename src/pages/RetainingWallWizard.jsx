@@ -73,6 +73,7 @@ export default function RetainingWallWizard() {
 
   useEffect(() => {
     OfflineAreas.get(areaId).then((a) => {
+      if (!a) { setArea(null); return; }
       setArea(a);
       if (opId) {
         const existing = parseOps(a.retaining_wall_data).find((e) => e.id === opId);

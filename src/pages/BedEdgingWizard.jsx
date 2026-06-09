@@ -43,6 +43,7 @@ export default function BedEdgingWizard() {
   useEffect(() => {
     (async () => {
       const a = await OfflineAreas.get(areaId);
+      if (!a) { setArea(null); return; }
       setArea(a);
       if (opId) {
         const ops = parseOps(a.bed_edging_data);
@@ -89,7 +90,7 @@ export default function BedEdgingWizard() {
     setStep(2);
   }
 
-  if (!area) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
+  if (area === null) return <div className="text-center py-20 text-muted-foreground"><p>Area not found. Please go back and try again.</p></div>;
 
   return (
     <div className="max-w-lg">
