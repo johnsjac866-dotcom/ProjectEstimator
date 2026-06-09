@@ -10,7 +10,9 @@ import { resolveId } from "@/lib/offlineStore";
 import { storeBlob, getBlob, deleteBlob } from "@/lib/voiceNoteBlobs";
 
 const CACHE_KEY = 'offlineCache_VoiceNote';
-const TIMEOUT_MS = 8000;
+const TIMEOUT_MS = 15000;
+const MAX_RETRIES = 4;
+const MAX_CONCURRENT_SYNCS = 2;
 
 // Prevent concurrent syncs of the same record
 const _syncingIds = new Set();
@@ -45,8 +47,9 @@ function _setStatus(localId, syncStatus) {
   notify();
 }
 
-async function _syncRecord(record) {
+async function _syncRecord(record, attempt = 0) {
   if (_syncingIds.has(record.id)) return;
+  if (_syncingIds.size >= MAX_CONCURRENT_SYNCS) return; // cap concurrency
 
   // Resolve area_id — wait if parent area is still local
   const resolvedAreaId = resolveId(record.area_id);
@@ -77,8 +80,16 @@ async function _syncRecord(record) {
     await deleteBlob(record.id).catch(() => {});
     notify();
   } catch (err) {
-    console.error('VoiceNote sync failed:', err);
-    _setStatus(record.id, 'failed');
+    _syncingIds.delete(record.id);
+    if (attempt < MAX_RETRIES) {
+      // Exponential backoff: 2s, 4s, 8s, 16s
+      const delay = Math.pow(2, attempt + 1) * 1000;
+      setTimeout(() => _syncRecord(record, attempt + 1), delay);
+    } else {
+      console.error('VoiceNote sync failed after max retries:', err);
+      _setStatus(record.id, 'failed');
+    }
+    return;
   } finally {
     _syncingIds.delete(record.id);
   }
@@ -92,6 +103,11 @@ export const VoiceNotes = {
       Object.entries(query || {}).every(([k, v]) => r[k] === v)
     );
 
+    // Skip background fetch if cache is fresh (5 min window)
+    const FRESH_MS = 5 * 60 * 1000;
+    const ts = parseInt(localStorage.getItem('offlineCacheAt_VoiceNote') || '0', 10);
+    if (Date.now() - ts < FRESH_MS) return filtered;
+
     // Background: refresh from server, then retry pending
     withTimeout(base44.entities.VoiceNote.filter(query))
       .then(records => {
@@ -99,6 +115,7 @@ export const VoiceNotes = {
         const serverIds = new Set(records.map(r => r.id));
         const stillPending = all.filter(r => r._pending && !serverIds.has(r.id));
         writeCache([...records, ...stillPending]);
+        localStorage.setItem('offlineCacheAt_VoiceNote', String(Date.now()));
         stillPending.forEach(r => _syncRecord(r));
         notify();
       })
