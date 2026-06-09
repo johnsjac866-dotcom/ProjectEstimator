@@ -25,6 +25,16 @@ export default function ProjectDetail() {
 
   useEffect(() => { load(); }, [projectId]);
 
+  useEffect(() => {
+    function onResolved(e) {
+      if (e.detail.tempId === projectId) {
+        navigate(`/project/${e.detail.realId}`, { replace: true });
+      }
+    }
+    window.addEventListener("offlinestore:resolved", onResolved);
+    return () => window.removeEventListener("offlinestore:resolved", onResolved);
+  }, [projectId]);
+
   const { pulling, refreshing } = usePullToRefresh(load);
 
   async function load() {

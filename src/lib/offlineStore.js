@@ -151,11 +151,31 @@ function createStore(entityName, sdk) {
     },
 
     async create(data) {
-      // Wait for the real server record so we have the real ID
-      const record = await withTimeout(sdk.create(data));
+      // Write temp record to cache instantly for offline support
+      const tempId = generateId();
+      const tempRecord = {
+        ...data,
+        id: tempId,
+        _pending: true,
+        created_date: new Date().toISOString(),
+        updated_date: new Date().toISOString(),
+      };
       const cached = readCache(entityName) || [];
-      writeCache(entityName, [...cached, record]);
-      return record;
+      writeCache(entityName, [...cached, tempRecord]);
+
+      // Sync to server, replace temp with real record and notify listeners
+      withTimeout(sdk.create(data))
+        .then(record => {
+          const all = readCache(entityName) || [];
+          writeCache(entityName, all.map(r => r.id === tempId ? record : r));
+          // Dispatch event so pages can redirect from temp ID to real ID
+          window.dispatchEvent(new CustomEvent("offlinestore:resolved", {
+            detail: { tempId, realId: record.id, entityName }
+          }));
+        })
+        .catch(() => {});
+
+      return tempRecord;
     },
 
     async update(id, data) {
