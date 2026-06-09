@@ -97,6 +97,13 @@ function createStore(entityName, sdk) {
       const allCached = readCache(entityName);
       const local = (allCached || []).filter(r => r.project_id === projectId);
 
+      // If the project itself is still pending, just return local cache
+      const allProjects = readCache("Project") || [];
+      const parentProject = allProjects.find(r => r.id === projectId);
+      if (parentProject?._pending) {
+        return local;
+      }
+
       if (allCached !== null && local.length > 0) {
         // Cache has areas for this project — return immediately, refresh in background
         withTimeout(sdk.filter({ project_id: projectId }))
@@ -124,6 +131,11 @@ function createStore(entityName, sdk) {
     async get(id) {
       const allCached = readCache(entityName);
       const local = allCached ? allCached.find(r => r.id === id) || null : null;
+
+      // If it's a temp/pending record, return it immediately — no network call
+      if (local?._pending) {
+        return local;
+      }
 
       if (local !== null) {
         // Return from cache immediately, refresh in background
