@@ -151,27 +151,11 @@ function createStore(entityName, sdk) {
     },
 
     async create(data) {
-      // Write temp record to cache instantly so UI updates immediately
-      const tempId = generateId();
-      const tempRecord = {
-        ...data,
-        id: tempId,
-        _pending: true,
-        created_date: new Date().toISOString(),
-        updated_date: new Date().toISOString(),
-      };
+      // Wait for the real server record so we have the real ID
+      const record = await withTimeout(sdk.create(data));
       const cached = readCache(entityName) || [];
-      writeCache(entityName, [...cached, tempRecord]);
-
-      // Sync to server in background, replace temp with real record
-      withTimeout(sdk.create(data))
-        .then(record => {
-          const all = readCache(entityName) || [];
-          writeCache(entityName, all.map(r => r.id === tempId ? record : r));
-        })
-        .catch(() => {});
-
-      return tempRecord;
+      writeCache(entityName, [...cached, record]);
+      return record;
     },
 
     async update(id, data) {

@@ -66,10 +66,10 @@ export default function ProjectDetail() {
   }
 
   async function handleCreateArea() {
-    await OfflineAreas.create({ project_id: projectId, name: areaName, status: "Not Started" });
+    const area = await OfflineAreas.create({ project_id: projectId, name: areaName, status: "Not Started" });
     setAreaName("");
     setOpen(false);
-    load();
+    navigate(`/area/${area.id}`);
   }
 
   function startEdit(field) {

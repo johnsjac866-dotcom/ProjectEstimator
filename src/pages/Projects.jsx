@@ -40,10 +40,10 @@ export default function Projects() {
   }
 
   async function handleCreate() {
-    await OfflineProjects.create({ ...form, status: "Active" });
+    const project = await OfflineProjects.create({ ...form, status: "Active" });
     setForm({ name: "", client_name: "", address: "", notes: "" });
     setOpen(false);
-    loadProjects();
+    navigate(`/project/${project.id}`);
   }
 
   async function handleDelete(e, projectId) {
