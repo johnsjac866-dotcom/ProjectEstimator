@@ -11,8 +11,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 // Lazy-loaded pages
 const Projects = lazy(() => import('./pages/Projects'));
+// Eagerly preloaded — chunks must be available offline without prior navigation
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
 const AreaDetail = lazy(() => import('./pages/AreaDetail'));
+// Prefetch these chunks immediately so they're cached by the SW before going offline
+import('./pages/ProjectDetail');
+import('./pages/AreaDetail');
 const PatioWizard = lazy(() => import('./pages/PatioWizard'));
 const PatioSummary = lazy(() => import('./pages/PatioSummary'));
 const SiteManagementWizard = lazy(() => import('./pages/SiteManagementWizard'));

@@ -73,6 +73,20 @@ export function resolveId(id) {
   }
 }
 
+// ---- Retry pending (offline-created) records once back online ----
+
+function retrySyncRecord(entityName, record, sdk, onAfterSync) {
+  const { id: tempId, _pending, created_date, updated_date, ...data } = record;
+  sdk.create(data)
+    .then(realRecord => {
+      const all = readCache(entityName) || [];
+      writeCache(entityName, all.map(r => r.id === tempId ? realRecord : r));
+      storeIdRemap(tempId, realRecord.id);
+      if (onAfterSync) onAfterSync(tempId, realRecord.id);
+    })
+    .catch(() => {});
+}
+
 // ---- Store Factory ----
 
 function createStore(entityName, sdk, { onAfterSync } = {}) {
@@ -81,7 +95,15 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       const cached = readCache(entityName);
       if (cached !== null) {
         withTimeout(sdk.list(sort, limit))
-          .then(records => writeCache(entityName, records))
+          .then(records => {
+            const current = readCache(entityName) || [];
+            const serverIds = new Set(records.map(r => r.id));
+            // Preserve pending (offline-created) records not yet on server
+            const pendingToKeep = current.filter(r => r._pending && !serverIds.has(r.id));
+            writeCache(entityName, [...records, ...pendingToKeep]);
+            // Now online — retry syncing any still-pending records
+            pendingToKeep.forEach(p => retrySyncRecord(entityName, p, sdk, onAfterSync));
+          })
           .catch(() => {});
         return cached;
       }
