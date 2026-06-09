@@ -81,7 +81,7 @@ export default function Projects() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground text-sm mt-0.5 hidden">Manage your landscaping site visits</p>
+          
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate("/archived-projects")}>
