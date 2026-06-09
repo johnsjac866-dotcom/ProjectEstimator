@@ -182,8 +182,8 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis 
       stream.getTracks().forEach(t => t.stop());
       const blob = new Blob(chunksRef.current, { type: mimeType });
       const duration = (Date.now() - startTimeRef.current) / 1000;
-      const record = await OfflineVoiceNotes.create(areaId, blob, duration);
-      setNotes(prev => [record, ...prev]);
+      // create() calls notify() which triggers onChanged, so no need to setNotes here
+      await OfflineVoiceNotes.create(areaId, blob, duration);
     };
 
     mr.start();

@@ -32,7 +32,8 @@ export default function ProjectDetail() {
     const resolvedProjectId = resolveId(projectId);
     const [p, a] = await Promise.all([
       OfflineProjects.get(resolvedProjectId),
-      OfflineAreas.getByProjectId(resolvedProjectId),
+      // Pass both original and resolved so pending areas (stored with _local_ project_id) are found
+      OfflineAreas.getByProjectId(projectId),
     ]);
     setProject(p);
 

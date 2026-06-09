@@ -35,7 +35,10 @@ export default function Projects() {
 
   async function loadProjects() {
     const data = await OfflineProjects.list();
-    setProjects(data.filter((p) => p.status !== "Archived"));
+    const sorted = data
+      .filter((p) => p.status !== "Archived")
+      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    setProjects(sorted);
     setLoading(false);
   }
 
