@@ -329,7 +329,10 @@ export const Projects = createStore("Project", base44.entities.Project, {
 
 export const Areas = createStore("Area", base44.entities.Area, {
   onAfterSync: () => {
-    // After an area syncs, dependent records (operations are stored on Area itself, nothing to do)
+    // After an area syncs, try syncing any pending voice notes whose area_id is now resolved
+    import("@/lib/offlineVoiceNotes").then(({ syncPendingVoiceNotes }) => {
+      syncPendingVoiceNotes();
+    }).catch(() => {});
   },
 });
 
