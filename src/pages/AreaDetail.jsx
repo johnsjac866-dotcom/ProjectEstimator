@@ -231,6 +231,10 @@ export default function AreaDetail() {
 
             // Create operation entry with AI-suggested data
             const entries = parseOps(area[opDef.dataKey]);
+            const sfLength = operation.sf_length != null ? String(operation.sf_length) : '';
+            const sfWidth = operation.sf_width != null ? String(operation.sf_width) : '';
+            const sf = sfLength && sfWidth ? String(Math.round(parseFloat(sfLength) * parseFloat(sfWidth))) : '';
+
             const newEntry = {
               id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               description: operation.description,
@@ -241,13 +245,30 @@ export default function AreaDetail() {
               // For Rough Grading: include structured form fields
               ...(operation.operation_type === 'Rough Grading & Hauling' && {
                 sub_type: operation.sub_type || '',
-                sf_length: operation.sf_length != null ? String(operation.sf_length) : '',
-                sf_width: operation.sf_width != null ? String(operation.sf_width) : '',
+                sf_length: sfLength,
+                sf_width: sfWidth,
+                sf,
                 depth_inches: operation.depth_inches != null ? String(operation.depth_inches) : '',
                 machine_type: operation.machine_type || '',
                 sod_vegetation_removed: operation.sod_vegetation_removed || '',
                 disposal_needed: operation.disposal_needed || '',
-              })
+              }),
+              // For Bed Preparation: include main_type, sub_type, and dimensions
+              ...(operation.operation_type === 'Bed Preparation' && {
+                main_type: operation.bed_main_type || '',
+                sub_type: operation.bed_sub_type || '',
+                sf_length: sfLength,
+                sf_width: sfWidth,
+                sf,
+              }),
+              // For Mulch: include mulch_type and dimensions
+              ...(operation.operation_type === 'Mulch' && {
+                mulch_type: operation.mulch_type || '',
+                sub_type: operation.mulch_type || '',
+                length: sfLength,
+                width: sfWidth,
+                depth: operation.mulch_depth != null ? String(operation.mulch_depth) : '',
+              }),
             };
             
             const updated = [...entries, newEntry];

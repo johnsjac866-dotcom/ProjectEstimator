@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     // Analyze all transcripts together
     const analysis = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract a consolidated summary, key insights, recommended operations, and structured data for each operation.\n\nValid operation types: Walkway/Patio, Site Management & Daily Cleanup, Bed Preparation, Rough Grading & Hauling, Demolition & Removals, Bed Edging, Planting, Mulch, Drainage, Lawn Repair & Install, Boulders/Accents & Structures, Hardscape - Repair Existing, Maintenance, Pathway / Steps, Retaining Wall\n\nFor Rough Grading & Hauling operations, extract:\n- sub_type: One of "excavation_hand", "excavation_machine", "importation_hand", "importation_machine"\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n- depth_inches: Depth in inches (number)\n- machine_type: "Vermeer" or "Dingo" (if applicable)\n- sod_vegetation_removed: "Yes" or "No"\n- disposal_needed: "Yes" or "No"\n\nLeave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) => `Note ${i + 1}:\n${t}`).join('\n\n')}`,
+      prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract a consolidated summary, key insights, recommended operations, and structured data for each operation.\n\nValid operation types: Walkway/Patio, Site Management & Daily Cleanup, Bed Preparation, Rough Grading & Hauling, Demolition & Removals, Bed Edging, Planting, Mulch, Drainage, Lawn Repair & Install, Boulders/Accents & Structures, Hardscape - Repair Existing, Maintenance, Pathway / Steps, Retaining Wall\n\nFor Rough Grading & Hauling operations, extract:\n- sub_type: One of "excavation_hand", "excavation_machine", "importation_hand", "importation_machine"\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n- depth_inches: Depth in inches (number)\n- machine_type: "Vermeer" or "Dingo" (if applicable)\n- sod_vegetation_removed: "Yes" or "No"\n- disposal_needed: "Yes" or "No"\n\nFor Bed Preparation operations, extract:\n- bed_main_type: One of "till", "no_till", "lawn", "reprofiling"\n- bed_sub_type: One of "till_1in", "till_3in", "notill_hand", "notill_machine", "notill_deadsod", "lawn_none", "lawn_1in", "repro_hardscape", "repro_narrow", "repro_sloped", "repro_soil"\n  Choose based on context: if lawn prep with 1 inch amendments → "lawn_1in", no amendments → "lawn_none", till with 1" amendments → "till_1in", etc.\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n\nFor Mulch operations, extract:\n- mulch_type: "Organic" or "Stone"\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n- mulch_depth: Depth in inches (number, typically 2-4 for organic, 2-3 for stone)\n\nLeave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) => `Note ${i + 1}:\n${t}`).join('\n\n')}`,
       response_json_schema: {
         type: 'object',
         properties: {
@@ -52,7 +52,11 @@ Deno.serve(async (req) => {
                 depth_inches: { type: ['number', 'null'], description: 'For Rough Grading: Depth in inches' },
                 machine_type: { type: 'string', description: 'For Rough Grading: Vermeer or Dingo' },
                 sod_vegetation_removed: { type: 'string', description: 'For Rough Grading: Yes or No' },
-                disposal_needed: { type: 'string', description: 'For Rough Grading: Yes or No' }
+                disposal_needed: { type: 'string', description: 'For Rough Grading: Yes or No' },
+                bed_main_type: { type: 'string', description: 'For Bed Preparation: till, no_till, lawn, or reprofiling' },
+                bed_sub_type: { type: 'string', description: 'For Bed Preparation: till_1in, till_3in, notill_hand, notill_machine, notill_deadsod, lawn_none, lawn_1in, repro_hardscape, repro_narrow, repro_sloped, or repro_soil' },
+                mulch_type: { type: 'string', description: 'For Mulch: Organic or Stone' },
+                mulch_depth: { type: ['number', 'null'], description: 'For Mulch: depth in inches' }
               },
               required: ['operation_type', 'description']
             },
