@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Mic, Square, Play, Pause, Trash2, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
+import { VoiceNotes as OfflineVoiceNotes, syncPendingVoiceNote } from "@/lib/offlineStore";
+import { storeBlob } from "@/lib/voiceBlobStore";
 
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
@@ -39,7 +41,7 @@ function NotePlayer({ note, onDelete }) {
   const progress = note.duration > 0 ? (currentTime / note.duration) * 100 : 0;
 
   return (
-    <div className="flex items-center gap-3 bg-background rounded-lg border px-3 py-2.5">
+    <div className={`flex items-center gap-3 bg-background rounded-lg border px-3 py-2.5 ${note._pending ? 'border-orange-200 bg-orange-50/40' : ''}`}>
       <audio ref={audioRef} src={note.audio_url} preload="auto" />
       <button
         onClick={togglePlay}
@@ -50,7 +52,10 @@ function NotePlayer({ note, onDelete }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
           <span className="text-sm text-muted-foreground">{formatTime(note.created_date)}</span>
-          <span className="text-sm text-muted-foreground">{formatDuration(note.duration)}</span>
+          <div className="flex items-center gap-2">
+            {note._pending && <span className="text-xs text-orange-600">Pending sync</span>}
+            <span className="text-sm text-muted-foreground">{formatDuration(note.duration)}</span>
+          </div>
         </div>
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
@@ -83,17 +88,26 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis 
 
   useEffect(() => {
     async function loadNotes() {
-      try {
-        const allNotes = await base44.entities.VoiceNote.filter({ area_id: areaId });
-        setNotes(allNotes.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
-      } catch {
-        setNotes([]);
-      } finally {
-        setLoading(false);
-      }
+      const allNotes = await OfflineVoiceNotes.filter({ area_id: areaId });
+      setNotes(allNotes.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+      setLoading(false);
     }
     loadNotes();
   }, [areaId]);
+
+  // When we come back online, retry any pending (offline-saved) notes
+  useEffect(() => {
+    function handleOnline() {
+      const pending = notes.filter(n => n._pending);
+      pending.forEach(n => {
+        syncPendingVoiceNote(n).then(() => {
+          setNotes(prev => prev.map(p => p.id === n.id ? { ...p, _pending: false } : p));
+        }).catch(() => {});
+      });
+    }
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [notes]);
 
   useEffect(() => () => clearInterval(timerRef.current), []);
 
@@ -116,19 +130,23 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis 
       stream.getTracks().forEach(t => t.stop());
       const blob = new Blob(chunksRef.current, { type: mimeType });
       const duration = (Date.now() - startTimeRef.current) / 1000;
-      const ext = mimeType === 'audio/mp4' ? 'mp4' : mimeType === 'audio/webm' ? 'webm' : 'wav';
-      const file = new File([blob], `voice-note.${ext}`, { type: mimeType });
-      
-      try {
-        const uploadRes = await base44.integrations.Core.UploadFile({ file });
-        const note = await base44.entities.VoiceNote.create({
-          area_id: areaId,
-          audio_url: uploadRes.file_url,
-          duration
-        });
-        setNotes(prev => [note, ...prev]);
-      } catch (err) {
-        console.error('Failed to save voice note:', err);
+
+      // Save blob locally first — works offline
+      const note = await OfflineVoiceNotes.create({
+        area_id: areaId,
+        audio_url: URL.createObjectURL(blob), // local blob URL for immediate playback
+        duration,
+        _blobType: mimeType,
+      });
+
+      // Persist raw blob in IndexedDB so we can upload it when back online
+      await storeBlob(note.id, blob);
+
+      setNotes(prev => [note, ...prev]);
+
+      // If online, upload + sync immediately in background
+      if (navigator.onLine) {
+        syncPendingVoiceNote({ ...note, _blobType: mimeType }).catch(() => {});
       }
     };
 
@@ -147,12 +165,8 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis 
   }
 
   async function deleteNote(id) {
-    try {
-      await base44.entities.VoiceNote.delete(id);
-      setNotes(prev => prev.filter(n => n.id !== id));
-    } catch (err) {
-      console.error('Failed to delete voice note:', err);
-    }
+    await OfflineVoiceNotes.delete(id);
+    setNotes(prev => prev.filter(n => n.id !== id));
   }
 
   async function handleAnalyzeAll() {
