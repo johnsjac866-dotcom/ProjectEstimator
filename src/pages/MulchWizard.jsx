@@ -58,13 +58,14 @@ export default function MulchWizard() {
         const ops = parseOps(a.mulch_data);
         const existing = ops.find(o => o.id === opId);
         if (existing) {
-          setMulchType(existing.mulch_type);
+          const type = existing.mulch_type || existing.sub_type || null;
+          setMulchType(type);
           setForm(existing);
-          setStep(2);
+          setStep(type ? 2 : 1);
         }
       }
     })();
-  }, [areaId]);
+  }, [areaId, opId]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 

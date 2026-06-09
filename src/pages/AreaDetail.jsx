@@ -262,9 +262,9 @@ export default function AreaDetail() {
                 sf,
               }),
               // For Mulch: include mulch_type and dimensions
-              ...(operation.operation_type === 'Mulch' && {
-                mulch_type: operation.mulch_type || '',
-                sub_type: operation.mulch_type || '',
+              ...(operation.operation_type === 'Mulch' && operation.mulch_type && {
+                mulch_type: operation.mulch_type,
+                sub_type: operation.mulch_type,
                 length: sfLength,
                 width: sfWidth,
                 depth: operation.mulch_depth != null ? String(operation.mulch_depth) : '',
