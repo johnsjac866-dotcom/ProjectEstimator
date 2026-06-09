@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Projects as OfflineProjects, Areas as OfflineAreas, resolveId } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors, Sprout, Wind, Droplets, Wrench, Layers, Flag } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
@@ -56,9 +56,10 @@ export default function ProjectSummary() {
 
   useEffect(() => {
     (async () => {
+      const resolvedId = resolveId(projectId);
       const [p, a] = await Promise.all([
-        base44.entities.Project.get(projectId),
-        base44.entities.Area.filter({ project_id: projectId }),
+        OfflineProjects.get(resolvedId),
+        OfflineAreas.filter({ project_id: resolvedId }),
       ]);
       setProject(p);
       const sorted = [...a].sort((x, y) => {

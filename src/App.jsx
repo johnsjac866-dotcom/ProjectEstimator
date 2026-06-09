@@ -8,15 +8,48 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
 import { lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import ChunkErrorBoundary from './components/ChunkErrorBoundary';
 
 // Lazy-loaded pages
 const Projects = lazy(() => import('./pages/Projects'));
 // Eagerly preloaded — chunks must be available offline without prior navigation
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
 const AreaDetail = lazy(() => import('./pages/AreaDetail'));
-// Prefetch these chunks immediately so they're cached by the SW before going offline
+// Prefetch all page chunks immediately so they're cached by the SW before going offline
 import('./pages/ProjectDetail');
 import('./pages/AreaDetail');
+import('./pages/PatioWizard');
+import('./pages/SiteManagementWizard');
+import('./pages/BedPrepWizard');
+import('./pages/RoughGradingWizard');
+import('./pages/DemolitionWizard');
+import('./pages/BedEdgingWizard');
+import('./pages/PlantingWizard');
+import('./pages/MulchWizard');
+import('./pages/DrainageWizard');
+import('./pages/LawnWizard');
+import('./pages/BouldersWizard');
+import('./pages/HardscapeRepairWizard');
+import('./pages/MaintenanceWizard');
+import('./pages/SteppingStoneWizard');
+import('./pages/RetainingWallWizard');
+import('./pages/PatioSummary');
+import('./pages/SiteManagementSummary');
+import('./pages/BedPrepSummary');
+import('./pages/RoughGradingSummary');
+import('./pages/DemolitionSummary');
+import('./pages/BedEdgingSummary');
+import('./pages/PlantingSummary');
+import('./pages/MulchSummary');
+import('./pages/DrainageSummary');
+import('./pages/LawnSummary');
+import('./pages/BouldersSummary');
+import('./pages/HardscapeRepairSummary');
+import('./pages/MaintenanceSummary');
+import('./pages/SteppingStoneSummary');
+import('./pages/RetainingWallSummary');
+import('./pages/ProjectSummary');
+import('./pages/EstimationSummary');
 const PatioWizard = lazy(() => import('./pages/PatioWizard'));
 const PatioSummary = lazy(() => import('./pages/PatioSummary'));
 const SiteManagementWizard = lazy(() => import('./pages/SiteManagementWizard'));
@@ -78,6 +111,7 @@ function AnimatedRoutes() {
         exit="exit"
         style={{ width: "100%" }}
       >
+        <ChunkErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes location={location}>
             <Route element={<Layout />}>
@@ -122,6 +156,7 @@ function AnimatedRoutes() {
             </Route>
           </Routes>
         </Suspense>
+        </ChunkErrorBoundary>
       </motion.div>
     </AnimatePresence>
   );

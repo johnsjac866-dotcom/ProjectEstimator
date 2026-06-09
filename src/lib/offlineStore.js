@@ -76,7 +76,21 @@ export function resolveId(id) {
 // ---- Retry pending (offline-created) records once back online ----
 
 function retrySyncRecord(entityName, record, sdk, onAfterSync) {
-  const { id: tempId, _pending, created_date, updated_date, ...data } = record;
+  const { id: tempId, _pending, created_date, updated_date, ...rawData } = record;
+
+  // Resolve any _local_ IDs in data fields (e.g. area.project_id after project synced)
+  const data = {};
+  for (const [k, v] of Object.entries(rawData)) {
+    if (typeof v === 'string' && v.startsWith('_local_')) {
+      const resolved = resolveId(v);
+      // Parent not yet synced — skip this record, will retry on next sync cycle
+      if (resolved.startsWith('_local_')) return;
+      data[k] = resolved;
+    } else {
+      data[k] = v;
+    }
+  }
+
   sdk.create(data)
     .then(realRecord => {
       const all = readCache(entityName) || [];
@@ -84,7 +98,7 @@ function retrySyncRecord(entityName, record, sdk, onAfterSync) {
       storeIdRemap(tempId, realRecord.id);
       if (onAfterSync) onAfterSync(tempId, realRecord.id);
     })
-    .catch(() => {});
+    .catch(() => {}); // Keep _pending record on failure — will retry next time
 }
 
 // ---- Store Factory ----
@@ -209,15 +223,17 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       const local = allCached ? allCached.find(r => r.id === id) || null : null;
 
       if (local !== null) {
-        // Return cache immediately, refresh in background
-        withTimeout(sdk.get(id))
-          .then(record => {
-            const all = readCache(entityName) || [];
-            const idx = all.findIndex(r => r.id === id);
-            if (idx >= 0) all[idx] = record; else all.push(record);
-            writeCache(entityName, all);
-          })
-          .catch(() => {});
+        // Don't attempt a server fetch for local/pending records — they don't exist on server yet
+        if (!id.startsWith('_local_')) {
+          withTimeout(sdk.get(id))
+            .then(record => {
+              const all = readCache(entityName) || [];
+              const idx = all.findIndex(r => r.id === id);
+              if (idx >= 0) all[idx] = record; else all.push(record);
+              writeCache(entityName, all);
+            })
+            .catch(() => {});
+        }
         return local;
       }
 
@@ -299,15 +315,34 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
 
 export const Projects = createStore("Project", base44.entities.Project, {
   onAfterSync: (tempId, realId) => {
-    // When a project syncs, update all areas in cache that referenced the old temp project_id
+    // When a project syncs, update all areas that referenced the old temp project_id
     const areaCache = readCache("Area");
     if (areaCache) {
-      const updated = areaCache.map(a =>
+      writeCache("Area", areaCache.map(a =>
         a.project_id === tempId ? { ...a, project_id: realId } : a
-      );
-      writeCache("Area", updated);
+      ));
     }
+    // Trigger retry of any pending areas whose project_id is now resolved
+    scheduleDependentSync();
   },
 });
 
-export const Areas = createStore("Area", base44.entities.Area);
+export const Areas = createStore("Area", base44.entities.Area, {
+  onAfterSync: () => {
+    // After an area syncs, dependent records (operations are stored on Area itself, nothing to do)
+  },
+});
+
+// Ordered sync: Projects → Areas (operations are embedded in Area records, no separate sync needed)
+function scheduleDependentSync() {
+  setTimeout(() => {
+    const areaCache = readCache("Area") || [];
+    const pending = areaCache.filter(r => r._pending);
+    pending.forEach(p => {
+      // Only sync if parent project_id is now a real ID
+      if (!p.project_id || !p.project_id.startsWith('_local_')) {
+        retrySyncRecord("Area", p, base44.entities.Area);
+      }
+    });
+  }, 500);
+}
