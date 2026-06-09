@@ -66,16 +66,6 @@ export default function AreaDetail() {
 
   useEffect(() => { loadArea(); }, [areaId]);
 
-  useEffect(() => {
-    function onResolved(e) {
-      if (e.detail.tempId === areaId) {
-        navigate(`/area/${e.detail.realId}`, { replace: true });
-      }
-    }
-    window.addEventListener("offlinestore:resolved", onResolved);
-    return () => window.removeEventListener("offlinestore:resolved", onResolved);
-  }, [areaId]);
-
   const { pulling, refreshing } = usePullToRefresh(loadArea);
 
   async function loadArea() {

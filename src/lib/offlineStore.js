@@ -97,13 +97,6 @@ function createStore(entityName, sdk) {
       const allCached = readCache(entityName);
       const local = (allCached || []).filter(r => r.project_id === projectId);
 
-      // If the project itself is still pending, just return local cache
-      const allProjects = readCache("Project") || [];
-      const parentProject = allProjects.find(r => r.id === projectId);
-      if (parentProject?._pending) {
-        return local;
-      }
-
       if (allCached !== null && local.length > 0) {
         // Cache has areas for this project — return immediately, refresh in background
         withTimeout(sdk.filter({ project_id: projectId }))
@@ -132,11 +125,6 @@ function createStore(entityName, sdk) {
       const allCached = readCache(entityName);
       const local = allCached ? allCached.find(r => r.id === id) || null : null;
 
-      // If it's a temp/pending record, return it immediately — no network call
-      if (local?._pending) {
-        return local;
-      }
-
       if (local !== null) {
         // Return from cache immediately, refresh in background
         withTimeout(sdk.get(id))
@@ -163,7 +151,7 @@ function createStore(entityName, sdk) {
     },
 
     async create(data) {
-      // Write temp record to cache instantly for offline support
+      // Write temp record to cache instantly so UI updates immediately
       const tempId = generateId();
       const tempRecord = {
         ...data,
@@ -175,15 +163,11 @@ function createStore(entityName, sdk) {
       const cached = readCache(entityName) || [];
       writeCache(entityName, [...cached, tempRecord]);
 
-      // Sync to server, replace temp with real record and notify listeners
+      // Sync to server in background, replace temp with real record
       withTimeout(sdk.create(data))
         .then(record => {
           const all = readCache(entityName) || [];
           writeCache(entityName, all.map(r => r.id === tempId ? record : r));
-          // Dispatch event so pages can redirect from temp ID to real ID
-          window.dispatchEvent(new CustomEvent("offlinestore:resolved", {
-            detail: { tempId, realId: record.id, entityName }
-          }));
         })
         .catch(() => {});
 

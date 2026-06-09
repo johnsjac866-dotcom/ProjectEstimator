@@ -25,16 +25,6 @@ export default function ProjectDetail() {
 
   useEffect(() => { load(); }, [projectId]);
 
-  useEffect(() => {
-    function onResolved(e) {
-      if (e.detail.tempId === projectId) {
-        navigate(`/project/${e.detail.realId}`, { replace: true });
-      }
-    }
-    window.addEventListener("offlinestore:resolved", onResolved);
-    return () => window.removeEventListener("offlinestore:resolved", onResolved);
-  }, [projectId]);
-
   const { pulling, refreshing } = usePullToRefresh(load);
 
   async function load() {
@@ -76,10 +66,10 @@ export default function ProjectDetail() {
   }
 
   async function handleCreateArea() {
-    const area = await OfflineAreas.create({ project_id: projectId, name: areaName, status: "Not Started" });
+    await OfflineAreas.create({ project_id: projectId, name: areaName, status: "Not Started" });
     setAreaName("");
     setOpen(false);
-    navigate(`/area/${area.id}`);
+    load();
   }
 
   function startEdit(field) {
