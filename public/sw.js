@@ -1,15 +1,12 @@
-const CACHE_NAME = 'landscaping-app-v1';
+const CACHE_NAME = 'landscaping-app-v3';
 
-// Cache all fetched assets on the fly (cache-first for same-origin assets)
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -17,23 +14,24 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only cache GET requests for same-origin assets (JS, CSS, HTML, images, fonts)
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
-  // Skip API/backend calls and Vite dev server paths — never cache those
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/functions/')) return;
-  if (url.pathname.startsWith('/src/') || url.pathname.startsWith('/node_modules/') ||
-      url.pathname.startsWith('/@vite') || url.pathname.startsWith('/@react-refresh')) return;
+  // Never cache API calls, Vite dev paths, or JS/CSS chunks
+  // JS/CSS are handled by the browser via Vite content-hash URLs
+  const skip = ['/api/', '/functions/', '/src/', '/node_modules/', '/@vite', '/@react-refresh'];
+  if (skip.some(p => url.pathname.startsWith(p))) return;
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) return;
 
+  // Only cache the app shell: HTML, manifest, images, fonts
   event.respondWith(
     caches.open(CACHE_NAME).then(cache =>
       cache.match(request).then(cached => {
-        if (cached) return cached;
-        return fetch(request).then(response => {
+        const networkFetch = fetch(request).then(response => {
           if (response.ok) cache.put(request, response.clone());
           return response;
         });
+        return cached || networkFetch;
       })
     )
   );
