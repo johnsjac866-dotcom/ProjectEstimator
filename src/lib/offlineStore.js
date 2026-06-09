@@ -8,7 +8,6 @@
  */
 
 import { base44 } from "@/api/base44Client";
-import { getBlob, removeBlob } from "@/lib/voiceBlobStore";
 
 const NETWORK_TIMEOUT_MS = 8000;
 
@@ -333,29 +332,6 @@ export const Areas = createStore("Area", base44.entities.Area, {
     // After an area syncs, dependent records (operations are stored on Area itself, nothing to do)
   },
 });
-
-export const VoiceNotes = createStore("VoiceNote", base44.entities.VoiceNote, {
-  onAfterSync: () => {},
-});
-
-// Sync a pending voice note: upload the blob first, then create the entity record
-export async function syncPendingVoiceNote(record) {
-  const blob = await getBlob(record.id);
-  if (!blob) return; // blob lost, nothing we can do
-
-  const ext = blob.type === 'audio/mp4' ? 'mp4' : blob.type === 'audio/webm' ? 'webm' : 'wav';
-  const file = new File([blob], `voice-note.${ext}`, { type: blob.type });
-
-  const uploadRes = await base44.integrations.Core.UploadFile({ file });
-  const { id: tempId, _pending, created_date, updated_date, ...data } = record;
-  const realRecord = await base44.entities.VoiceNote.create({ ...data, audio_url: uploadRes.file_url });
-
-  // Replace pending record in cache with real record
-  const all = readCache("VoiceNote") || [];
-  writeCache("VoiceNote", all.map(r => r.id === tempId ? realRecord : r));
-  storeIdRemap(tempId, realRecord.id);
-  removeBlob(tempId);
-}
 
 // Ordered sync: Projects → Areas (operations are embedded in Area records, no separate sync needed)
 function scheduleDependentSync() {
