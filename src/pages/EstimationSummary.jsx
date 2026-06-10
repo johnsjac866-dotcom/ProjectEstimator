@@ -24,13 +24,14 @@ const CATEGORY_ORDER = [
   { label: "Demolition & Removals - Vegetation & Softscape Items",   taxable: true,  dataKey: "demolition_data",    match: e => e.group === "vegetation" },
   { label: "Bed Preparation - Planting Bed",                         taxable: true,  dataKey: "bed_prep_data",      match: e => ["till","no_till","reprofiling"].includes(e.main_type) },
   { label: "Bed Preparation - Lawn",                                  taxable: true,  dataKey: "bed_prep_data",      match: e => e.main_type === "lawn" },
-  { label: "Planting - Trees and Shrubs",                            taxable: true,  dataKey: "planting_data",      match: e => e.plant_category === "Trees & Shrubs" },
+  { label: "Planting - Trees and Shrubs",                            taxable: true,  dataKey: "planting_data",      match: e => (e.plant_category || e.planting_type) === "Trees & Shrubs" },
   { label: "Planting - Boulders / Accents",                          taxable: true,  dataKey: "boulders_data",      match: e => e.sub_type === "Boulders / Accents" },
   { label: "Bed Edging",                                              taxable: true,  dataKey: "bed_edging_data",    match: () => true },
   { label: "Raised Vegetable Bed(s)",                                taxable: true,  dataKey: "boulders_data",      match: e => e.sub_type === "Raised Garden Bed" },
   { label: "Mulch",                                                   taxable: true,  dataKey: "mulch_data",         match: () => true },
-  { label: "Planting - Perennials",                                  taxable: true,  dataKey: "planting_data",      match: e => e.plant_category === "Perennials" },
-  { label: "Planting - Bulbs",                                       taxable: true,  dataKey: "planting_data",      match: e => e.plant_category === "Bulbs" },
+  { label: "Planting - Perennials",                                  taxable: true,  dataKey: "planting_data",      match: e => (e.plant_category || e.planting_type) === "Perennials" },
+  { label: "Planting - Bulbs",                                       taxable: true,  dataKey: "planting_data",      match: e => (e.plant_category || e.planting_type) === "Bulbs" },
+  { label: "Planting - Annuals",                                     taxable: true,  dataKey: "planting_data",      match: e => (e.plant_category || e.planting_type) === "Annuals" },
   { label: "Lawn Repair & Install",                                  taxable: true,  dataKey: "lawn_data",          match: () => true },
   { label: "Site Management & Daily Cleanup (Taxable)",              taxable: true,  dataKey: "site_mgmt_data",     match: e => !!e.tax_status_taxable || e.tax_status === "Taxable" },
 ];
@@ -223,7 +224,7 @@ function getSubTypeKey(dataKey, entry) {
     const sub = entry.sub_type ? entry.sub_type.replace(/_/g, " ") : "";
     return [cat, sub].filter(Boolean).join(" — ") || "Other";
   }
-  if (dataKey === "planting_data") return entry.plant_category || entry.sub_type || "Other";
+  if (dataKey === "planting_data") return entry.plant_category || entry.planting_type || entry.sub_type || "Other";
   if (dataKey === "bed_edging_data") return entry.sub_type || entry.edge_type || "Other";
   if (dataKey === "mulch_data") return entry.sub_type || entry.mulch_type || "Other";
   if (dataKey === "lawn_data") return entry.sub_type || entry.lawn_type || "Other";
