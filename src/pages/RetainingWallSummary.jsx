@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { ArrowLeft } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -34,12 +34,12 @@ export default function RetainingWallSummary() {
   const from = urlParams.get("from");
 
   useEffect(() => {
-    base44.entities.Area.get(areaId).then(async a => {
+    OfflineAreas.get(areaId).then(async a => {
       setArea(a);
       const entry = parseOps(a.retaining_wall_data).find(e => e.id === opId);
       setOp(entry || null);
       if (a.project_id) {
-        const p = await base44.entities.Project.get(a.project_id);
+        const p = await OfflineProjects.get(a.project_id);
         setProject(p);
       }
     });

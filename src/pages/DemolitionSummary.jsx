@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
 import { DEMO_FIELDS, getDemoCategory, getDemoSubTypeLabel, getDemoGroupLabel } from "@/lib/demolitionStages";
@@ -20,9 +20,9 @@ export default function DemolitionSummary() {
 
   useEffect(() => {
     (async () => {
-      const a = await base44.entities.Area.get(areaId);
+      const a = await OfflineAreas.get(areaId);
       setArea(a);
-      const p = await base44.entities.Project.get(a.project_id);
+      const p = await OfflineProjects.get(a.project_id);
       setProject(p);
       const ops = parseOps(a.demolition_data);
       const entry = opId ? ops.find(o => o.id === opId) : ops[0];

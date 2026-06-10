@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
@@ -33,9 +33,9 @@ export default function LawnSummary() {
 
   useEffect(() => {
     (async () => {
-      const a = await base44.entities.Area.get(areaId);
+      const a = await OfflineAreas.get(areaId);
       setArea(a);
-      const p = await base44.entities.Project.get(a.project_id);
+      const p = await OfflineProjects.get(a.project_id);
       setProject(p);
       const ops = parseOps(a.lawn_data);
       const entry = opId ? ops.find(o => o.id === opId) : ops[0];

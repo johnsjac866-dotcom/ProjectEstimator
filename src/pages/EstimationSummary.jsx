@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Areas as OfflineAreas, Projects as OfflineProjects, resolveId } from "@/lib/offlineStore";
 import { ArrowLeft, MapPin, ChevronDown, ChevronRight, Flag } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -242,9 +242,10 @@ export default function EstimationSummary() {
 
   useEffect(() => {
     (async () => {
+      const resolvedId = resolveId(projectId);
       const [p, a] = await Promise.all([
-        base44.entities.Project.get(projectId),
-        base44.entities.Area.filter({ project_id: projectId }),
+        OfflineProjects.get(resolvedId),
+        OfflineAreas.getByProjectId(projectId),
       ]);
       setProject(p);
       setAreas(a);
