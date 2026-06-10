@@ -59,7 +59,7 @@ export default function ProjectSummary() {
       const resolvedId = resolveId(projectId);
       const [p, a] = await Promise.all([
         OfflineProjects.get(resolvedId),
-        OfflineAreas.filter({ project_id: resolvedId }),
+        OfflineAreas.getByProjectId(projectId),
       ]);
       setProject(p);
       const sorted = [...a].sort((x, y) => {
