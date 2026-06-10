@@ -32,7 +32,7 @@ function SyncBadge({ status, onRetry }) {
       onClick={cfg.onClick}
       className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${cfg.className}`}
     >
-      <Icon className={`h-3 w-3 ${status === 'uploading' ? 'animate-[spin_1s_linear_infinite]' : ''}`} />
+      <Icon className={`h-3 w-3 ${status === 'uploading' ? 'animate-spin' : ''}`} />
       {cfg.label}
     </button>
   );
@@ -45,61 +45,45 @@ function NotePlayer({ note, onDelete, onRetry }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [blobReady, setBlobReady] = useState(false);
 
-  // Lazy-load audio blob only on first play, not on mount
-  async function ensureAudioLoaded() {
-    if (blobReady) return true;
-    let cancelled = false;
-    if (note._pending) {
-      const { getBlob } = await import("@/lib/voiceNoteBlobs");
-      const blob = await getBlob(note.id).catch(() => null);
-      if (blob && !cancelled) {
-        blobUrlRef.current = URL.createObjectURL(blob);
-        if (audioRef.current) audioRef.current.src = blobUrlRef.current;
-        setBlobReady(true);
-        return true;
-      }
-      return false;
-    } else {
-      if (audioRef.current) audioRef.current.src = note.audio_url;
-      setBlobReady(true);
-      return true;
-    }
-  }
-
   useEffect(() => {
+    let cancelled = false;
+    async function loadAudio() {
+      if (note._pending) {
+        // Load from IndexedDB for pending notes
+        const { getBlob } = await import("@/lib/voiceNoteBlobs");
+        const blob = await getBlob(note.id).catch(() => null);
+        if (blob && !cancelled) {
+          blobUrlRef.current = URL.createObjectURL(blob);
+          if (audioRef.current) audioRef.current.src = blobUrlRef.current;
+          setBlobReady(true);
+        }
+      } else {
+        if (audioRef.current) audioRef.current.src = note.audio_url;
+        setBlobReady(true);
+      }
+    }
+    loadAudio();
     return () => {
+      cancelled = true;
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
     };
-  }, []);
+  }, [note.id, note._pending, note.audio_url]);
 
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
     const onEnd = () => setPlaying(false);
-    // Throttle timeupdate to ~5fps via rAF to reduce CPU usage
-    let rafId = null;
-    const onTime = () => {
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        setCurrentTime(el.currentTime);
-        rafId = null;
-      });
-    };
+    const onTime = () => setCurrentTime(el.currentTime);
     el.addEventListener("ended", onEnd);
     el.addEventListener("timeupdate", onTime);
-    return () => {
-      el.removeEventListener("ended", onEnd);
-      el.removeEventListener("timeupdate", onTime);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
+    return () => { el.removeEventListener("ended", onEnd); el.removeEventListener("timeupdate", onTime); };
   }, []);
 
-  async function togglePlay() {
+  function togglePlay() {
     const el = audioRef.current;
-    if (!el) return;
-    if (playing) { el.pause(); setPlaying(false); return; }
-    const loaded = await ensureAudioLoaded();
-    if (loaded) { el.play(); setPlaying(true); }
+    if (!el || !blobReady) return;
+    if (playing) { el.pause(); setPlaying(false); }
+    else { el.play(); setPlaying(true); }
   }
 
   const progress = note.duration > 0 ? (currentTime / note.duration) * 100 : 0;

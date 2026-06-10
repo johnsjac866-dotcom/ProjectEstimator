@@ -9,9 +9,7 @@
 
 import { base44 } from "@/api/base44Client";
 
-const NETWORK_TIMEOUT_MS = 15000;
-// Cache freshness window — skip background refetch if cache is younger than this
-const CACHE_FRESH_MS = 5 * 60 * 1000; // 5 minutes
+const NETWORK_TIMEOUT_MS = 8000;
 
 function generateId() {
   return "_local_" + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -30,21 +28,9 @@ function readCache(entityName) {
   }
 }
 
-function cacheFreshKey(entityName) {
-  return `offlineCacheAt_${entityName}`;
-}
-
-function isCacheFresh(entityName) {
-  try {
-    const ts = localStorage.getItem(cacheFreshKey(entityName));
-    return ts && (Date.now() - parseInt(ts, 10)) < CACHE_FRESH_MS;
-  } catch { return false; }
-}
-
 function writeCache(entityName, records) {
   try {
     localStorage.setItem(cacheKey(entityName), JSON.stringify(records));
-    localStorage.setItem(cacheFreshKey(entityName), String(Date.now()));
   } catch {
     // Storage quota exceeded — free space by stripping large voice_notes_analysis fields
     try {
@@ -122,18 +108,17 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
     async list(sort, limit) {
       const cached = readCache(entityName);
       if (cached !== null) {
-        // Skip background refetch if cache is fresh
-        if (!isCacheFresh(entityName)) {
-          withTimeout(sdk.list(sort, limit))
-            .then(records => {
-              const current = readCache(entityName) || [];
-              const serverIds = new Set(records.map(r => r.id));
-              const pendingToKeep = current.filter(r => r._pending && !serverIds.has(r.id));
-              writeCache(entityName, [...records, ...pendingToKeep]);
-              pendingToKeep.forEach(p => retrySyncRecord(entityName, p, sdk, onAfterSync));
-            })
-            .catch(() => {});
-        }
+        withTimeout(sdk.list(sort, limit))
+          .then(records => {
+            const current = readCache(entityName) || [];
+            const serverIds = new Set(records.map(r => r.id));
+            // Preserve pending (offline-created) records not yet on server
+            const pendingToKeep = current.filter(r => r._pending && !serverIds.has(r.id));
+            writeCache(entityName, [...records, ...pendingToKeep]);
+            // Now online — retry syncing any still-pending records
+            pendingToKeep.forEach(p => retrySyncRecord(entityName, p, sdk, onAfterSync));
+          })
+          .catch(() => {});
         return cached;
       }
       try {
@@ -153,16 +138,13 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
         );
 
       if (allCached !== null) {
-        // Skip background refetch if cache is fresh
-        if (!isCacheFresh(entityName)) {
-          withTimeout(sdk.filter(query, sort, limit))
-            .then(records => {
-              const all = readCache(entityName) || [];
-              const ids = new Set(records.map(r => r.id));
-              writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
-            })
-            .catch(() => {});
-        }
+        withTimeout(sdk.filter(query, sort, limit))
+          .then(records => {
+            const all = readCache(entityName) || [];
+            const ids = new Set(records.map(r => r.id));
+            writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
+          })
+          .catch(() => {});
         return filterLocal(allCached);
       }
       try {
@@ -191,16 +173,14 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       const local = filterFn(allCached);
 
       if (allCached !== null && local.length > 0) {
-        // Cache hit — return immediately, refresh in background only if stale
-        if (!isCacheFresh(entityName)) {
-          withTimeout(sdk.filter({ project_id: resolvedProjectId }))
-            .then(records => {
-              const all = readCache(entityName) || [];
-              const ids = new Set(records.map(r => r.id));
-              writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
-            })
-            .catch(() => {});
-        }
+        // Cache hit — return immediately, refresh in background
+        withTimeout(sdk.filter({ project_id: resolvedProjectId }))
+          .then(records => {
+            const all = readCache(entityName) || [];
+            const ids = new Set(records.map(r => r.id));
+            writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
+          })
+          .catch(() => {});
         return local;
       }
 
