@@ -9,7 +9,8 @@
 
 import { base44 } from "@/api/base44Client";
 
-const NETWORK_TIMEOUT_MS = 8000;
+const NETWORK_TIMEOUT_MS = 15000;
+const BACKGROUND_TIMEOUT_MS = 20000;
 
 function generateId() {
   return "_local_" + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -108,7 +109,7 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
     async list(sort, limit) {
       const cached = readCache(entityName);
       if (cached !== null) {
-        withTimeout(sdk.list(sort, limit))
+        withTimeout(sdk.list(sort, limit), BACKGROUND_TIMEOUT_MS)
           .then(records => {
             const current = readCache(entityName) || [];
             const serverIds = new Set(records.map(r => r.id));
@@ -138,7 +139,7 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
         );
 
       if (allCached !== null) {
-        withTimeout(sdk.filter(query, sort, limit))
+        withTimeout(sdk.filter(query, sort, limit), BACKGROUND_TIMEOUT_MS)
           .then(records => {
             const all = readCache(entityName) || [];
             const ids = new Set(records.map(r => r.id));
@@ -174,7 +175,7 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
 
       if (allCached !== null && local.length > 0) {
         // Cache hit — return immediately, refresh in background
-        withTimeout(sdk.filter({ project_id: resolvedProjectId }))
+        withTimeout(sdk.filter({ project_id: resolvedProjectId }), BACKGROUND_TIMEOUT_MS)
           .then(records => {
             const all = readCache(entityName) || [];
             const ids = new Set(records.map(r => r.id));
@@ -225,7 +226,7 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       if (local !== null) {
         // Don't attempt a server fetch for local/pending records — they don't exist on server yet
         if (!id.startsWith('_local_')) {
-          withTimeout(sdk.get(id))
+          withTimeout(sdk.get(id), BACKGROUND_TIMEOUT_MS)
             .then(record => {
               const all = readCache(entityName) || [];
               const idx = all.findIndex(r => r.id === id);
@@ -288,7 +289,7 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       writeCache(entityName, cached);
 
       if (!resolvedId.startsWith("_local_")) {
-        withTimeout(sdk.update(resolvedId, data))
+        withTimeout(sdk.update(resolvedId, data), BACKGROUND_TIMEOUT_MS)
           .then(record => {
             const all = readCache(entityName) || [];
             const i = all.findIndex(r => r.id === resolvedId);

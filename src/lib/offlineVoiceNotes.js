@@ -10,7 +10,8 @@ import { resolveId } from "@/lib/offlineStore";
 import { storeBlob, getBlob, deleteBlob } from "@/lib/voiceNoteBlobs";
 
 const CACHE_KEY = 'offlineCache_VoiceNote';
-const TIMEOUT_MS = 8000;
+const TIMEOUT_MS = 15000;
+const BACKGROUND_TIMEOUT_MS = 20000;
 
 // Prevent concurrent syncs of the same record
 const _syncingIds = new Set();
@@ -93,7 +94,7 @@ export const VoiceNotes = {
     );
 
     // Background: refresh from server, then retry pending
-    withTimeout(base44.entities.VoiceNote.filter(query))
+    withTimeout(base44.entities.VoiceNote.filter(query), BACKGROUND_TIMEOUT_MS)
       .then(records => {
         const all = readCache();
         const serverIds = new Set(records.map(r => r.id));
