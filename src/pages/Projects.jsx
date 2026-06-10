@@ -53,8 +53,9 @@ export default function Projects() {
     e.preventDefault();
     e.stopPropagation();
     if (!confirm("Delete this project and all its data? This cannot be undone.")) return;
-    await OfflineProjects.delete(projectId);
-    loadProjects();
+    // Cascade: marks project + all areas + their voice notes as deleted
+    OfflineProjects.cascadeDelete(projectId);
+    setProjects(prev => prev.filter(p => p.id !== projectId));
   }
 
   async function handleSetStatus(e, projectId, status) {

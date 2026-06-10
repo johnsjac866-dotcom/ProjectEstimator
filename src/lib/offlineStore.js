@@ -1,16 +1,22 @@
 /**
- * offlineStore.js
- * Offline-first store with ID remapping for pending sync operations.
- * - Cache-first: return cache immediately, refresh in background
- * - No cache: wait for network (first install)
- * - Network fail + no cache: return []
- * - ID remapping: when temp IDs sync to real server IDs, old URLs/refs still work
+ * offlineStore.js — Offline-first store with robust sync, deletion markers, and cascading deletes.
+ *
+ * Key guarantees:
+ * - Cache-first: return local data immediately, refresh in background.
+ * - Deleted records are marked _deleted:true and hidden from all views immediately.
+ *   Background server lists never reinsert locally-deleted records.
+ * - Pending (offline-created) records are marked _pending:true and synced in parent→child order.
+ * - ID remapping is atomic: when a _local_ record gets a real server ID, all child caches are
+ *   updated before any UI refresh.
+ * - Duplicate prevention: server record replaces the local record on sync, not added alongside it.
  */
 
 import { base44 } from "@/api/base44Client";
 
 const NETWORK_TIMEOUT_MS = 15000;
 const BACKGROUND_TIMEOUT_MS = 20000;
+
+// ─── Utilities ───────────────────────────────────────────────────────────────
 
 function generateId() {
   return "_local_" + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -33,7 +39,7 @@ function writeCache(entityName, records) {
   try {
     localStorage.setItem(cacheKey(entityName), JSON.stringify(records));
   } catch {
-    // Storage quota exceeded — free space by stripping large voice_notes_analysis fields
+    // Storage quota — trim large fields and retry
     try {
       const areas = readCache("Area");
       if (areas) {
@@ -41,68 +47,220 @@ function writeCache(entityName, records) {
         localStorage.setItem(cacheKey("Area"), JSON.stringify(trimmed));
         localStorage.setItem(cacheKey(entityName), JSON.stringify(records));
       }
-    } catch {
-      // Silently fail if still can't write
-    }
+    } catch { /* silently fail */ }
   }
 }
 
 function withTimeout(promise, ms = NETWORK_TIMEOUT_MS) {
   return Promise.race([
     promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("timeout")), ms)
-    ),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
   ]);
 }
 
-// ---- ID Remapping ----
-// Stores temp→real ID mapping so old URLs/references resolve after sync.
+/** Filter out deleted records for all public-facing reads. */
+function visible(records) {
+  return (records || []).filter(r => !r._deleted);
+}
+
+// ─── ID Remapping ────────────────────────────────────────────────────────────
 
 function storeIdRemap(tempId, realId) {
-  try {
-    localStorage.setItem(`_id_remap_${tempId}`, realId);
-  } catch {}
+  try { localStorage.setItem(`_id_remap_${tempId}`, realId); } catch {}
 }
 
 export function resolveId(id) {
   if (!id) return id;
+  try { return localStorage.getItem(`_id_remap_${id}`) || id; } catch { return id; }
+}
+
+/**
+ * Atomically update all child caches that reference a renamed ID.
+ * Called right after a parent record syncs and gets its real server ID.
+ */
+function propagateIdRemap(tempId, realId) {
+  storeIdRemap(tempId, realId);
+
+  // Update Area.project_id references
+  const areaCache = readCache("Area");
+  if (areaCache) {
+    writeCache("Area", areaCache.map(a =>
+      a.project_id === tempId ? { ...a, project_id: realId } : a
+    ));
+  }
+
+  // Update VoiceNote.area_id references (handled in offlineVoiceNotes, but mirror here too)
   try {
-    return localStorage.getItem(`_id_remap_${id}`) || id;
-  } catch {
-    return id;
+    const vnRaw = localStorage.getItem('offlineCache_VoiceNote');
+    if (vnRaw) {
+      const vns = JSON.parse(vnRaw);
+      localStorage.setItem('offlineCache_VoiceNote', JSON.stringify(
+        vns.map(vn => vn.area_id === tempId ? { ...vn, area_id: realId } : vn)
+      ));
+    }
+  } catch {}
+}
+
+// ─── Deletion Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Mark a record as deleted in a given entity cache.
+ * - If it was never synced (_pending, _local_ id), remove it permanently.
+ * - Otherwise, mark with _deleted/_syncPending/_syncAction so it queues a server delete.
+ */
+function markDeleted(entityName, id) {
+  const cached = readCache(entityName) || [];
+  const record = cached.find(r => r.id === id);
+  if (!record) return;
+
+  if (record._pending || id.startsWith('_local_')) {
+    // Never made it to server — purge immediately
+    writeCache(entityName, cached.filter(r => r.id !== id));
+  } else {
+    writeCache(entityName, cached.map(r =>
+      r.id === id
+        ? { ...r, _deleted: true, _syncPending: true, _syncAction: "delete" }
+        : r
+    ));
+    // Fire server delete in background
+    withTimeout(base44.entities[entityName]?.delete(id), BACKGROUND_TIMEOUT_MS).catch(() => {});
   }
 }
 
-// ---- Retry pending (offline-created) records once back online ----
+/**
+ * Cascade-mark all areas (and their descendants) belonging to a project as deleted.
+ */
+function cascadeDeleteProject(projectId) {
+  const areas = readCache("Area") || [];
+  areas.forEach(a => {
+    if (a.project_id === projectId || a.project_id === resolveId(projectId)) {
+      cascadeDeleteArea(a.id, /* skipServerDelete */ false);
+    }
+  });
+}
+
+/**
+ * Cascade-mark all voice notes belonging to an area as deleted.
+ */
+function cascadeDeleteArea(areaId, triggerServerDelete = true) {
+  // Mark voice notes
+  try {
+    const vnRaw = localStorage.getItem('offlineCache_VoiceNote');
+    if (vnRaw) {
+      const vns = JSON.parse(vnRaw);
+      const updated = vns.map(vn => {
+        if (vn.area_id !== areaId) return vn;
+        if (vn._pending || vn.id.startsWith('_local_') || vn.id.startsWith('PENDING_')) return null; // purge
+        return { ...vn, _deleted: true, _syncPending: true, _syncAction: "delete" };
+      }).filter(Boolean);
+      localStorage.setItem('offlineCache_VoiceNote', JSON.stringify(updated));
+      // Queue server deletes for synced voice notes
+      if (triggerServerDelete) {
+        vns.forEach(vn => {
+          if (!vn._deleted && !vn._pending && !vn.id.startsWith('_local_') && !vn.id.startsWith('PENDING_') && vn.area_id === areaId) {
+            withTimeout(base44.entities.VoiceNote?.delete(vn.id), BACKGROUND_TIMEOUT_MS).catch(() => {});
+          }
+        });
+      }
+    }
+  } catch {}
+
+  // Mark the area itself
+  if (triggerServerDelete) {
+    markDeleted("Area", areaId);
+  } else {
+    // Called from project cascade — just mark, server delete handled separately
+    const areas = readCache("Area") || [];
+    const area = areas.find(a => a.id === areaId);
+    if (!area) return;
+    if (area._pending || areaId.startsWith('_local_')) {
+      writeCache("Area", areas.filter(a => a.id !== areaId));
+    } else {
+      writeCache("Area", areas.map(a =>
+        a.id === areaId
+          ? { ...a, _deleted: true, _syncPending: true, _syncAction: "delete" }
+          : a
+      ));
+      withTimeout(base44.entities.Area?.delete(areaId), BACKGROUND_TIMEOUT_MS).catch(() => {});
+    }
+  }
+}
+
+// ─── Pending Record Sync ──────────────────────────────────────────────────────
+
+/** Prevent concurrent syncs of the same record */
+const _syncingIds = new Set();
 
 function retrySyncRecord(entityName, record, sdk, onAfterSync) {
-  const { id: tempId, _pending, created_date, updated_date, ...rawData } = record;
+  if (_syncingIds.has(record.id)) return;
+  const { id: tempId, _pending, _deleted, created_date, updated_date, ...rawData } = record;
 
-  // Resolve any _local_ IDs in data fields (e.g. area.project_id after project synced)
+  // Don't sync deleted records
+  if (_deleted) return;
+
+  // Resolve any _local_ parent IDs — skip if parent not yet synced
   const data = {};
   for (const [k, v] of Object.entries(rawData)) {
     if (typeof v === 'string' && v.startsWith('_local_')) {
       const resolved = resolveId(v);
-      // Parent not yet synced — skip this record, will retry on next sync cycle
-      if (resolved.startsWith('_local_')) return;
+      if (resolved.startsWith('_local_')) return; // parent not yet synced
       data[k] = resolved;
     } else {
       data[k] = v;
     }
   }
 
+  _syncingIds.add(tempId);
   sdk.create(data)
     .then(realRecord => {
+      _syncingIds.delete(tempId);
       const all = readCache(entityName) || [];
+      // Replace local record with real server record (no duplicates)
       writeCache(entityName, all.map(r => r.id === tempId ? realRecord : r));
-      storeIdRemap(tempId, realRecord.id);
+      // Atomically propagate the ID change to all child caches
+      propagateIdRemap(tempId, realRecord.id);
       if (onAfterSync) onAfterSync(tempId, realRecord.id);
     })
-    .catch(() => {}); // Keep _pending record on failure — will retry next time
+    .catch(() => { _syncingIds.delete(tempId); });
 }
 
-// ---- Store Factory ----
+// ─── Merge Strategy ───────────────────────────────────────────────────────────
+
+/**
+ * Merge server records into the local cache without overwriting local pending/deleted state.
+ * - Server records that exist locally as _deleted are skipped (don't reinsert).
+ * - Server records that exist locally as _pending are skipped (local is source of truth).
+ * - Server records that exist locally as normal are updated.
+ * - New server records (not in cache) are appended.
+ */
+function mergeServerRecords(entityName, serverRecords) {
+  const current = readCache(entityName) || [];
+  const localById = new Map(current.map(r => [r.id, r]));
+
+  const merged = [...current];
+
+  for (const serverRec of serverRecords) {
+    const local = localById.get(serverRec.id);
+    if (!local) {
+      // Net-new record from server — add it
+      merged.push(serverRec);
+    } else if (local._deleted) {
+      // Locally deleted — skip server version, let pending delete finish
+      // do nothing
+    } else if (local._pending) {
+      // Locally pending create/edit — local is source of truth
+      // do nothing
+    } else {
+      // Normal record — server wins (fresher data)
+      const idx = merged.findIndex(r => r.id === serverRec.id);
+      if (idx >= 0) merged[idx] = serverRec;
+    }
+  }
+
+  writeCache(entityName, merged);
+}
+
+// ─── Store Factory ────────────────────────────────────────────────────────────
 
 function createStore(entityName, sdk, { onAfterSync } = {}) {
   const store = {
@@ -111,21 +269,20 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       if (cached !== null) {
         withTimeout(sdk.list(sort, limit), BACKGROUND_TIMEOUT_MS)
           .then(records => {
+            mergeServerRecords(entityName, records);
+            // Retry any still-pending records
             const current = readCache(entityName) || [];
-            const serverIds = new Set(records.map(r => r.id));
-            // Preserve pending (offline-created) records not yet on server
-            const pendingToKeep = current.filter(r => r._pending && !serverIds.has(r.id));
-            writeCache(entityName, [...records, ...pendingToKeep]);
-            // Now online — retry syncing any still-pending records
-            pendingToKeep.forEach(p => retrySyncRecord(entityName, p, sdk, onAfterSync));
+            current.filter(r => r._pending && !r._deleted)
+              .forEach(p => retrySyncRecord(entityName, p, sdk, onAfterSync));
           })
           .catch(() => {});
-        return cached;
+        return visible(cached);
       }
+      // No cache — wait for network
       try {
         const records = await withTimeout(sdk.list(sort, limit));
         writeCache(entityName, records);
-        return records;
+        return visible(records);
       } catch {
         return [];
       }
@@ -134,17 +291,13 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
     async filter(query, sort, limit) {
       const allCached = readCache(entityName);
       const filterLocal = (arr) =>
-        (arr || []).filter(r =>
+        visible(arr || []).filter(r =>
           Object.entries(query || {}).every(([k, v]) => r[k] === v)
         );
 
       if (allCached !== null) {
         withTimeout(sdk.filter(query, sort, limit), BACKGROUND_TIMEOUT_MS)
-          .then(records => {
-            const all = readCache(entityName) || [];
-            const ids = new Set(records.map(r => r.id));
-            writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
-          })
+          .then(records => mergeServerRecords(entityName, records))
           .catch(() => {});
         return filterLocal(allCached);
       }
@@ -153,7 +306,7 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
         const all = readCache(entityName) || [];
         const ids = new Set(records.map(r => r.id));
         writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
-        return records;
+        return visible(records);
       } catch {
         return [];
       }
@@ -163,49 +316,37 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       const resolvedProjectId = resolveId(projectId);
       const allCached = readCache(entityName);
 
-      // Match areas with either the original temp project_id OR the resolved real project_id
       const filterFn = (arr) =>
-        (arr || []).filter(
-          (r) =>
-            r.project_id === projectId ||
-            (resolvedProjectId !== projectId && r.project_id === resolvedProjectId)
+        visible(arr || []).filter(r =>
+          r.project_id === projectId ||
+          (resolvedProjectId !== projectId && r.project_id === resolvedProjectId)
         );
 
       const local = filterFn(allCached);
 
       if (allCached !== null && local.length > 0) {
-        // Cache hit — return immediately, refresh in background
         withTimeout(sdk.filter({ project_id: resolvedProjectId }), BACKGROUND_TIMEOUT_MS)
-          .then(records => {
-            const all = readCache(entityName) || [];
-            const ids = new Set(records.map(r => r.id));
-            writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
-          })
+          .then(records => mergeServerRecords(entityName, records))
           .catch(() => {});
         return local;
       }
 
       if (allCached !== null && local.length === 0) {
-        // Cache exists but no areas for this project yet (e.g. newly created)
-        // Use shorter timeout to avoid long waits when offline
         try {
           const records = await withTimeout(sdk.filter({ project_id: resolvedProjectId }), 4000);
-          const all = readCache(entityName) || [];
-          const ids = new Set(records.map(r => r.id));
-          writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
-          return records;
+          mergeServerRecords(entityName, records);
+          return filterFn(readCache(entityName));
         } catch {
-          return []; // offline — return empty quickly
+          return [];
         }
       }
 
-      // No cache at all — wait for network (first load)
       try {
         const records = await withTimeout(sdk.filter({ project_id: resolvedProjectId }));
         const all = readCache(entityName) || [];
         const ids = new Set(records.map(r => r.id));
         writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
-        return records;
+        return visible(records);
       } catch {
         return local;
       }
@@ -213,22 +354,23 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
 
     async get(id) {
       if (!id) return null;
-
-      // Resolve remapped ID (temp → real after sync)
       const resolvedId = resolveId(id);
-      if (resolvedId !== id) {
-        return store.get(resolvedId);
-      }
+      if (resolvedId !== id) return store.get(resolvedId);
 
       const allCached = readCache(entityName);
       const local = allCached ? allCached.find(r => r.id === id) || null : null;
 
+      // If locally deleted, return null (treat as gone)
+      if (local?._deleted) return null;
+
       if (local !== null) {
-        // Don't attempt a server fetch for local/pending records — they don't exist on server yet
         if (!id.startsWith('_local_')) {
           withTimeout(sdk.get(id), BACKGROUND_TIMEOUT_MS)
             .then(record => {
               const all = readCache(entityName) || [];
+              const existing = all.find(r => r.id === id);
+              // Don't overwrite local pending/deleted
+              if (existing?._deleted || existing?._pending) return;
               const idx = all.findIndex(r => r.id === id);
               if (idx >= 0) all[idx] = record; else all.push(record);
               writeCache(entityName, all);
@@ -238,7 +380,6 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
         return local;
       }
 
-      // Not in cache — wait for network
       try {
         const record = await withTimeout(sdk.get(id));
         const all = readCache(entityName) || [];
@@ -263,14 +404,12 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       const cached = readCache(entityName) || [];
       writeCache(entityName, [...cached, tempRecord]);
 
-      // Sync to server in background, replace temp with real record
       withTimeout(sdk.create(data))
         .then(record => {
           const all = readCache(entityName) || [];
+          // Replace local record with server record (no duplicates)
           writeCache(entityName, all.map(r => r.id === tempId ? record : r));
-          // Store remap so old temp-ID references (URLs, related fields) still work
-          storeIdRemap(tempId, record.id);
-          // Hook for cross-entity side effects (e.g. update area.project_id refs)
+          propagateIdRemap(tempId, record.id);
           if (onAfterSync) onAfterSync(tempId, record.id);
         })
         .catch(() => {});
@@ -279,12 +418,16 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
     },
 
     async update(id, data) {
-      // Resolve to real ID if it was previously remapped
       const resolvedId = resolveId(id);
-
       const cached = readCache(entityName) || [];
       const idx = cached.findIndex(r => r.id === resolvedId);
-      const updated = idx >= 0 ? { ...cached[idx], ...data } : { id: resolvedId, ...data };
+
+      // Don't update a deleted record
+      if (cached[idx]?._deleted) return cached[idx];
+
+      const updated = idx >= 0
+        ? { ...cached[idx], ...data }
+        : { id: resolvedId, ...data };
       if (idx >= 0) cached[idx] = updated; else cached.push(updated);
       writeCache(entityName, cached);
 
@@ -293,6 +436,8 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
           .then(record => {
             const all = readCache(entityName) || [];
             const i = all.findIndex(r => r.id === resolvedId);
+            // Don't overwrite if now locally deleted or pending
+            if (all[i]?._deleted || all[i]?._pending) return;
             if (i >= 0) { all[i] = record; writeCache(entityName, all); }
           })
           .catch(() => {});
@@ -303,50 +448,50 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
 
     async delete(id) {
       const resolvedId = resolveId(id);
-      const cached = readCache(entityName) || [];
-      writeCache(entityName, cached.filter(r => r.id !== resolvedId));
-      if (!resolvedId.startsWith("_local_")) {
-        withTimeout(sdk.delete(resolvedId)).catch(() => {});
-      }
+      markDeleted(entityName, resolvedId);
     },
   };
 
   return store;
 }
 
+// ─── Named Stores ─────────────────────────────────────────────────────────────
+
 export const Projects = createStore("Project", base44.entities.Project, {
   onAfterSync: (tempId, realId) => {
-    // When a project syncs, update all areas that referenced the old temp project_id
-    const areaCache = readCache("Area");
-    if (areaCache) {
-      writeCache("Area", areaCache.map(a =>
-        a.project_id === tempId ? { ...a, project_id: realId } : a
-      ));
-    }
-    // Trigger retry of any pending areas whose project_id is now resolved
+    // propagateIdRemap already updated Area.project_id references atomically
     scheduleDependentSync();
   },
 });
 
 export const Areas = createStore("Area", base44.entities.Area, {
   onAfterSync: () => {
-    // After an area syncs, try syncing any pending voice notes whose area_id is now resolved
     import("@/lib/offlineVoiceNotes").then(({ syncPendingVoiceNotes }) => {
       syncPendingVoiceNotes();
     }).catch(() => {});
   },
+  // Expose cascade for external use
+  cascadeDelete: cascadeDeleteArea,
 });
 
-// Ordered sync: Projects → Areas (operations are embedded in Area records, no separate sync needed)
+// Attach cascade helpers to the named exports for use in UI components
+Projects.cascadeDelete = (projectId) => {
+  cascadeDeleteProject(projectId);
+  markDeleted("Project", projectId);
+};
+
+Areas.cascadeDelete = (areaId) => {
+  cascadeDeleteArea(areaId, true);
+};
+
+// ─── Ordered Sync ─────────────────────────────────────────────────────────────
+
+/** Retry pending Area records only after their parent project_id is a real ID. */
 function scheduleDependentSync() {
   setTimeout(() => {
     const areaCache = readCache("Area") || [];
-    const pending = areaCache.filter(r => r._pending);
-    pending.forEach(p => {
-      // Only sync if parent project_id is now a real ID
-      if (!p.project_id || !p.project_id.startsWith('_local_')) {
-        retrySyncRecord("Area", p, base44.entities.Area);
-      }
-    });
+    areaCache
+      .filter(r => r._pending && !r._deleted && !r.project_id?.startsWith('_local_'))
+      .forEach(p => retrySyncRecord("Area", p, base44.entities.Area, Areas._onAfterSync));
   }, 500);
 }

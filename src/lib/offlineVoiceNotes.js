@@ -87,25 +87,36 @@ async function _syncRecord(record) {
 
 export const VoiceNotes = {
   async filter(query) {
-    // Return cached immediately
     const cached = readCache();
+    // Hide deleted records from all views immediately
     const filtered = cached.filter(r =>
+      !r._deleted &&
       Object.entries(query || {}).every(([k, v]) => r[k] === v)
     );
 
-    // Background: refresh from server, then retry pending
+    // Background: merge server records — never reinsert locally-deleted ones
     withTimeout(base44.entities.VoiceNote.filter(query), BACKGROUND_TIMEOUT_MS)
       .then(records => {
         const all = readCache();
-        const serverIds = new Set(records.map(r => r.id));
-        const stillPending = all.filter(r => r._pending && !serverIds.has(r.id));
-        writeCache([...records, ...stillPending]);
-        stillPending.forEach(r => _syncRecord(r));
+        const localById = new Map(all.map(r => [r.id, r]));
+        const merged = [...all];
+        for (const serverRec of records) {
+          const local = localById.get(serverRec.id);
+          if (!local) {
+            merged.push(serverRec); // net-new from server
+          } else if (local._deleted || local._pending) {
+            // local state is source of truth — skip server version
+          } else {
+            const idx = merged.findIndex(r => r.id === serverRec.id);
+            if (idx >= 0) merged[idx] = serverRec;
+          }
+        }
+        writeCache(merged);
+        merged.filter(r => r._pending && !r._deleted).forEach(r => _syncRecord(r));
         notify();
       })
       .catch(() => {
-        // Offline — attempt syncing pending records (will no-op if still offline)
-        readCache().filter(r => r._pending).forEach(r => _syncRecord(r));
+        cached.filter(r => r._pending && !r._deleted).forEach(r => _syncRecord(r));
       });
 
     return filtered;
@@ -114,6 +125,7 @@ export const VoiceNotes = {
   // Synchronous read from cache (for event-driven refreshes)
   getCached(query) {
     return readCache().filter(r =>
+      !r._deleted &&
       Object.entries(query || {}).every(([k, v]) => r[k] === v)
     );
   },
@@ -147,13 +159,19 @@ export const VoiceNotes = {
   async delete(id) {
     const all = readCache();
     const record = all.find(r => r.id === id);
-    writeCache(all.filter(r => r.id !== id));
 
-    if (record?._pending) {
+    if (record?._pending || id.startsWith('PENDING_') || id.startsWith('_local_')) {
+      // Never synced — purge permanently and clean up blob
+      writeCache(all.filter(r => r.id !== id));
       await deleteBlob(id).catch(() => {});
-    }
-    if (!id.startsWith('PENDING_') && !id.startsWith('_local_')) {
-      withTimeout(base44.entities.VoiceNote.delete(id)).catch(() => {});
+    } else {
+      // Synced — mark as deleted, queue server delete
+      writeCache(all.map(r =>
+        r.id === id
+          ? { ...r, _deleted: true, _syncPending: true, _syncAction: "delete" }
+          : r
+      ));
+      withTimeout(base44.entities.VoiceNote.delete(id), BACKGROUND_TIMEOUT_MS).catch(() => {});
     }
     notify();
   },

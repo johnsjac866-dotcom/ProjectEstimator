@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Projects as OfflineProjects, Areas as OfflineAreas, resolveId } from "@/lib/offlineStore";
+import { Projects as OfflineProjects, Areas as OfflineAreas, Areas, resolveId } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -105,8 +105,9 @@ export default function ProjectDetail() {
   async function handleDeleteArea(e, id) {
     e.preventDefault();
     e.stopPropagation();
-    await OfflineAreas.delete(id);
-    load();
+    // Cascade: marks area + its voice notes as deleted
+    Areas.cascadeDelete(id);
+    setAreas(prev => prev.filter(a => a.id !== id));
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
