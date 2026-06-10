@@ -28,7 +28,24 @@ Deno.serve(async (req) => {
 
     // Analyze all transcripts together
     const analysis = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract a consolidated summary, key insights, recommended operations, and structured data for each operation.\n\nValid operation types: Walkway/Patio, Site Management & Daily Cleanup, Bed Preparation, Rough Grading & Hauling, Demolition & Removals, Bed Edging, Planting, Mulch, Drainage, Lawn Repair & Install, Boulders/Accents & Structures, Hardscape - Repair Existing, Maintenance, Pathway / Steps, Retaining Wall\n\nFor Rough Grading & Hauling operations, extract:\n- sub_type: One of "excavation_hand", "excavation_machine", "importation_hand", "importation_machine"\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n- depth_inches: Depth in inches (number)\n- machine_type: "Vermeer" or "Dingo" (if applicable)\n- sod_vegetation_removed: "Yes" or "No"\n- disposal_needed: "Yes" or "No"\n\nFor Bed Preparation operations, extract:\n- bed_main_type: One of "till", "no_till", "lawn", "reprofiling"\n- bed_sub_type: One of "till_1in", "till_3in", "notill_hand", "notill_machine", "notill_deadsod", "lawn_none", "lawn_1in", "repro_hardscape", "repro_narrow", "repro_sloped", "repro_soil"\n  Choose based on context: if lawn prep with 1 inch amendments → "lawn_1in", no amendments → "lawn_none", till with 1" amendments → "till_1in", etc.\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n\nFor Mulch operations, extract:\n- mulch_type: "Organic" or "Stone"\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n- mulch_depth: Depth in inches (number, typically 2-4 for organic, 2-3 for stone)\n\nLeave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) => `Note ${i + 1}:\n${t}`).join('\n\n')}`,
+      prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract a consolidated summary, key insights, recommended operations, and structured data for each operation.\n\nValid operation types: Walkway/Patio, Site Management & Daily Cleanup, Bed Preparation, Rough Grading & Hauling, Demolition & Removals, Bed Edging, Planting, Mulch, Drainage, Lawn Repair & Install, Boulders/Accents & Structures, Hardscape - Repair Existing, Maintenance, Pathway / Steps, Retaining Wall\n\nFor Rough Grading & Hauling operations, extract:\n- sub_type: One of "excavation_hand", "excavation_machine", "importation_hand", "importation_machine"\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n- depth_inches: Depth in inches (number)\n- machine_type: "Vermeer" or "Dingo" (if applicable)\n- sod_vegetation_removed: "Yes" or "No"\n- disposal_needed: "Yes" or "No"\n\nFor Bed Preparation operations, extract:\n- bed_main_type: One of "till", "no_till", "lawn", "reprofiling"\n- bed_sub_type: One of "till_1in", "till_3in", "notill_hand", "notill_machine", "notill_deadsod", "lawn_none", "lawn_1in", "repro_hardscape", "repro_narrow", "repro_sloped", "repro_soil"\n  Choose based on context: if lawn prep with 1 inch amendments → "lawn_1in", no amendments → "lawn_none", till with 1" amendments → "till_1in", etc.\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)
+
+For Mulch operations, extract:
+- mulch_type: "Organic" or "Stone"
+- sf_length: Length in feet (number)
+- sf_width: Width in feet (number)
+- mulch_depth: Depth in inches (number, typically 2-4 for organic, 2-3 for stone)
+
+For Lawn Repair & Install operations, extract:
+- lawn_type: One of "Sod Installation", "Seed Install", "Top Dress Lawn"
+  Choose "Seed Install" if the notes mention seeding, overseeding, or installing seed.
+  Choose "Sod Installation" if the notes mention laying sod or sod rolls.
+  Choose "Top Dress Lawn" if the notes mention top dressing or topdress.
+- sf_length: Length in feet (number)
+- sf_width: Width in feet (number)
+- seed_type: One of "Madison Parks", "Tough Stuff", "Shady Place", "Carefree No Mow" (if mentioned)
+
+Leave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) => `Note ${i + 1}:\n${t}`).join('\n\n')}`,
       response_json_schema: {
         type: 'object',
         properties: {
@@ -56,7 +73,9 @@ Deno.serve(async (req) => {
                 bed_main_type: { type: 'string', description: 'For Bed Preparation: till, no_till, lawn, or reprofiling' },
                 bed_sub_type: { type: 'string', description: 'For Bed Preparation: till_1in, till_3in, notill_hand, notill_machine, notill_deadsod, lawn_none, lawn_1in, repro_hardscape, repro_narrow, repro_sloped, or repro_soil' },
                 mulch_type: { type: 'string', description: 'For Mulch: Organic or Stone' },
-                mulch_depth: { type: ['number', 'null'], description: 'For Mulch: depth in inches' }
+                mulch_depth: { type: ['number', 'null'], description: 'For Mulch: depth in inches' },
+                lawn_type: { type: 'string', description: 'For Lawn Repair: "Sod Installation", "Seed Install", or "Top Dress Lawn"' },
+                seed_type: { type: 'string', description: 'For Lawn Repair Seed Install: "Madison Parks", "Tough Stuff", "Shady Place", or "Carefree No Mow"' }
               },
               required: ['operation_type', 'description']
             },

@@ -60,7 +60,7 @@ export default function LawnWizard() {
         if (existing) { setLawnType(existing.lawn_type); setForm(existing); setStep(2); }
       }
     })();
-  }, [areaId]);
+  }, [areaId, opId]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 

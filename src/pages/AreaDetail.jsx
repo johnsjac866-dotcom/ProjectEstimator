@@ -269,6 +269,15 @@ export default function AreaDetail() {
                 width: sfWidth,
                 depth: operation.mulch_depth != null ? String(operation.mulch_depth) : '',
               }),
+              // For Lawn Repair & Install: include lawn_type, dimensions, and seed_type
+              ...(operation.operation_type === 'Lawn Repair & Install' && {
+                lawn_type: operation.lawn_type || '',
+                sub_type: operation.lawn_type || '',
+                length: sfLength,
+                width: sfWidth,
+                sf: sf || '',
+                seed_type: operation.seed_type || '',
+              }),
             };
             
             const updated = [...entries, newEntry];
