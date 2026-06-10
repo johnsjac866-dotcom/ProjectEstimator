@@ -193,7 +193,10 @@ const _syncingIds = new Set();
 
 function retrySyncRecord(entityName, record, sdk, onAfterSync) {
   if (_syncingIds.has(record.id)) return;
-  const { id: tempId, _pending, _deleted, created_date, updated_date, ...rawData } = record;
+  // Use the most current version of the record from cache (it may have been updated since queued)
+  const currentCache = readCache(entityName) || [];
+  const currentRecord = currentCache.find(r => r.id === record.id) || record;
+  const { id: tempId, _pending, _deleted, created_date, updated_date, ...rawData } = currentRecord;
 
   // Don't sync deleted records
   if (_deleted) return;
@@ -316,15 +319,20 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
       const resolvedProjectId = resolveId(projectId);
       const allCached = readCache(entityName);
 
+      // Match on original id, resolved id, OR any _local_ id that resolves to the same project
       const filterFn = (arr) =>
-        visible(arr || []).filter(r =>
-          r.project_id === projectId ||
-          (resolvedProjectId !== projectId && r.project_id === resolvedProjectId)
-        );
+        visible(arr || []).filter(r => {
+          if (r.project_id === projectId) return true;
+          if (resolvedProjectId !== projectId && r.project_id === resolvedProjectId) return true;
+          // Also catch areas whose project_id is a temp ID that remaps to resolvedProjectId
+          if (r.project_id?.startsWith('_local_') && resolveId(r.project_id) === resolvedProjectId) return true;
+          return false;
+        });
 
       const local = filterFn(allCached);
 
       if (allCached !== null && local.length > 0) {
+        // Always background-refresh from server
         withTimeout(sdk.filter({ project_id: resolvedProjectId }), BACKGROUND_TIMEOUT_MS)
           .then(records => mergeServerRecords(entityName, records))
           .catch(() => {});
@@ -335,12 +343,16 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
         try {
           const records = await withTimeout(sdk.filter({ project_id: resolvedProjectId }), 4000);
           mergeServerRecords(entityName, records);
-          return filterFn(readCache(entityName));
+          // Re-read cache after merge — pending local areas may now appear
+          const afterMerge = filterFn(readCache(entityName));
+          return afterMerge;
         } catch {
-          return [];
+          // Network failed — return anything in cache that could belong to this project
+          return filterFn(readCache(entityName)) || [];
         }
       }
 
+      // No cache at all — wait for network
       try {
         const records = await withTimeout(sdk.filter({ project_id: resolvedProjectId }));
         const all = readCache(entityName) || [];
@@ -348,7 +360,7 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
         writeCache(entityName, [...all.filter(r => !ids.has(r.id)), ...records]);
         return visible(records);
       } catch {
-        return local;
+        return [];
       }
     },
 
@@ -420,27 +432,35 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
     async update(id, data) {
       const resolvedId = resolveId(id);
       const cached = readCache(entityName) || [];
-      const idx = cached.findIndex(r => r.id === resolvedId);
+      // Try to find by resolvedId first, then by original id
+      let idx = cached.findIndex(r => r.id === resolvedId);
+      if (idx === -1 && resolvedId !== id) idx = cached.findIndex(r => r.id === id);
 
       // Don't update a deleted record
-      if (cached[idx]?._deleted) return cached[idx];
+      if (idx >= 0 && cached[idx]?._deleted) return cached[idx];
+
+      // Use whichever ID the record is actually stored under
+      const storedId = idx >= 0 ? cached[idx].id : resolvedId;
 
       const updated = idx >= 0
         ? { ...cached[idx], ...data }
-        : { id: resolvedId, ...data };
+        : { id: storedId, ...data };
       if (idx >= 0) cached[idx] = updated; else cached.push(updated);
       writeCache(entityName, cached);
 
-      if (!resolvedId.startsWith("_local_")) {
-        withTimeout(sdk.update(resolvedId, data), BACKGROUND_TIMEOUT_MS)
+      if (!storedId.startsWith("_local_")) {
+        withTimeout(sdk.update(storedId, data), BACKGROUND_TIMEOUT_MS)
           .then(record => {
             const all = readCache(entityName) || [];
-            const i = all.findIndex(r => r.id === resolvedId);
+            const i = all.findIndex(r => r.id === storedId);
             // Don't overwrite if now locally deleted or pending
             if (all[i]?._deleted || all[i]?._pending) return;
             if (i >= 0) { all[i] = record; writeCache(entityName, all); }
           })
           .catch(() => {});
+      } else {
+        // Record is still pending (local ID) — the data is already merged into cache.
+        // When this record eventually syncs, retrySyncRecord will pick up all merged data.
       }
 
       return updated;
