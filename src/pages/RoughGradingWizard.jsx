@@ -85,8 +85,8 @@ export default function RoughGradingWizard() {
 
     // Auto-add Strip Sod demolition entry to same area if excavation + sod/vegetation removed
     if (EXCAVATION_SUB_TYPES.includes(data.sub_type) && data.sod_vegetation_removed === "Yes") {
-      const currentArea = await OfflineAreas.get(areaId);
-      const demoOps = parseOps(currentArea.demolition_data);
+      // Use the area already in state to avoid a race with the background server fetch
+      const demoOps = parseOps(area?.demolition_data);
       const stripSodEntry = { id: "strip_sod_auto", group: "vegetation", sub_type: "strip_sod", sf: saveData.sf || "", sf_auto_from_rg: true };
       const demoIdx = demoOps.findIndex(o => o.id === "strip_sod_auto");
       if (demoIdx >= 0) demoOps[demoIdx] = stripSodEntry; else demoOps.push(stripSodEntry);
