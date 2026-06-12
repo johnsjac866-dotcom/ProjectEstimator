@@ -245,8 +245,12 @@ function mergeServerRecords(entityName, serverRecords) {
   for (const serverRec of serverRecords) {
     const local = localById.get(serverRec.id);
     if (!local) {
-      // Net-new record from server — add it
-      merged.push(serverRec);
+      // Check if this server record was already synced from a local temp record
+      // (i.e. a _local_ entry was replaced by this server ID — don't add it again)
+      const alreadyMapped = merged.some(r => {
+        try { return localStorage.getItem(`_id_remap_${r.id}`) === serverRec.id; } catch { return false; }
+      });
+      if (!alreadyMapped) merged.push(serverRec);
     } else if (local._deleted) {
       // Locally deleted — skip server version, let pending delete finish
       // do nothing
