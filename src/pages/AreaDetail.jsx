@@ -242,6 +242,7 @@ export default function AreaDetail() {
               materials: operation.materials?.join(', ') || '',
               notes: operation.notes || '',
               priority: operation.priority || 'medium',
+              ...(operation.time_estimate != null && { time_estimate: String(operation.time_estimate) }),
               // For Rough Grading: include structured form fields
               ...(operation.operation_type === 'Rough Grading & Hauling' && {
                 sub_type: operation.sub_type || '',

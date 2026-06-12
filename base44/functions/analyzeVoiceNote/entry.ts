@@ -45,6 +45,9 @@ For Lawn Repair & Install operations, extract:
 - sf_width: Width in feet (number)
 - seed_type: One of "Madison Parks", "Tough Stuff", "Shady Place", "Carefree No Mow" (if mentioned)
 
+For ALL operation types, also extract:
+- time_estimate: Time in hours mentioned for this operation. Look for phrases like "2 hours", "about 3 hrs", "half a day" (=4hrs), "a full day" (=8hrs), "45 minutes" (=0.75hrs). Null if no time is mentioned.
+
 Leave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) => `Note ${i + 1}:\n${t}`).join('\n\n')}`,
       response_json_schema: {
         type: 'object',
@@ -75,7 +78,8 @@ Leave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) =>
                 mulch_type: { type: 'string', description: 'For Mulch: Organic or Stone' },
                 mulch_depth: { type: ['number', 'null'], description: 'For Mulch: depth in inches' },
                 lawn_type: { type: 'string', description: 'For Lawn Repair: "Sod Installation", "Seed Install", or "Top Dress Lawn"' },
-                seed_type: { type: 'string', description: 'For Lawn Repair Seed Install: "Madison Parks", "Tough Stuff", "Shady Place", or "Carefree No Mow"' }
+                seed_type: { type: 'string', description: 'For Lawn Repair Seed Install: "Madison Parks", "Tough Stuff", "Shady Place", or "Carefree No Mow"' },
+                time_estimate: { type: ['number', 'null'], description: 'Time estimate in hours for this specific operation, extracted from any mention of hours, time, or duration in the voice notes (e.g. "2 hours", "about 3 hrs", "half a day = 4 hours"). Null if not mentioned.' }
               },
               required: ['operation_type', 'description']
             },
