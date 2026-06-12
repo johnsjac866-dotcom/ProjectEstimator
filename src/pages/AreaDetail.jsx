@@ -4,7 +4,6 @@ import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hammer, Pencil, ChevronDown, ChevronRight, Search, Layers, Scissors, Sprout, Wind, Droplets, CheckCircle2, Mountain, Trash2, Wrench, Flag, AlertTriangle } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 import VoiceNotes from "@/components/VoiceNotes";
@@ -59,7 +58,6 @@ function getEntryLabel(entry, idx) {
 export default function AreaDetail() {
   const { areaId } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [area, setArea] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState({});
@@ -227,17 +225,9 @@ export default function AreaDetail() {
           areaId={areaId}
           initialAnalysis={area?.voice_notes_analysis}
           onCreateOperation={async (operation) => {
-            // Find the matching operation definition (case-insensitive fuzzy match)
-            const opDef = ALL_OPERATIONS.find(op =>
-              op.type === operation.operation_type ||
-              op.type.toLowerCase() === (operation.operation_type || '').toLowerCase() ||
-              op.type.toLowerCase().includes((operation.operation_type || '').toLowerCase()) ||
-              (operation.operation_type || '').toLowerCase().includes(op.type.toLowerCase())
-            );
-            if (!opDef) {
-              toast({ title: "Unknown operation type", description: `"${operation.operation_type}" doesn't match any operation. Try adding it manually.`, variant: "destructive" });
-              return;
-            }
+            // Find the matching operation definition
+            const opDef = ALL_OPERATIONS.find(op => op.type === operation.operation_type);
+            if (!opDef) return;
 
             // Create operation entry with AI-suggested data
             const entries = parseOps(area[opDef.dataKey]);
@@ -293,7 +283,6 @@ export default function AreaDetail() {
             const updated = [...entries, newEntry];
             await OfflineAreas.update(areaId, { [opDef.dataKey]: JSON.stringify(updated) });
             setArea(a => ({ ...a, [opDef.dataKey]: JSON.stringify(updated) }));
-            toast({ title: "Operation added", description: `${opDef.type} has been added to this area.` });
           }}
         />
       </div>

@@ -60,19 +60,6 @@ export default function MaintenanceWizard() {
       const a = await OfflineAreas.get(areaId);
       if (!a) { setArea(null); return; }
       setArea(a);
-      const aiPrefill = new URLSearchParams(window.location.search).get("aiPrefill");
-      if (aiPrefill) {
-        const prefill = JSON.parse(sessionStorage.getItem('ai_prefill') || 'null');
-        if (prefill) {
-          sessionStorage.removeItem('ai_prefill');
-          const type = prefill.maintenance_type || prefill.sub_type || null;
-          setMaintenanceType(type);
-          setForm(prefill);
-          if (prefill.plants) setPlants(prefill.plants);
-          if (type) setStep(2);
-          return;
-        }
-      }
       if (opId) {
         const ops = parseOps(a.maintenance_data);
         const existing = ops.find(o => o.id === opId);

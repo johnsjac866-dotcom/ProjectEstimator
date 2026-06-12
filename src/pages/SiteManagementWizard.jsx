@@ -25,14 +25,7 @@ export default function SiteManagementWizard() {
       setArea(a);
       const ops = parseOps(a.site_mgmt_data);
       setOperations(ops);
-      const aiPrefill = new URLSearchParams(window.location.search).get("aiPrefill");
-      if (aiPrefill) {
-        const prefill = JSON.parse(sessionStorage.getItem('ai_prefill') || 'null');
-        if (prefill) {
-          sessionStorage.removeItem('ai_prefill');
-          setData(prefill);
-        }
-      } else if (opId) {
+      if (opId) {
         const existing = ops.find(o => o.id === opId);
         if (existing) setData(existing);
       }
