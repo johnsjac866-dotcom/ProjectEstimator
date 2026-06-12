@@ -279,6 +279,81 @@ export default function AreaDetail() {
                 sf: sf || '',
                 seed_type: operation.seed_type || '',
               }),
+              // For Bed Edging: map all type-specific fields and auto-flag missing ones
+              ...(operation.operation_type === 'Bed Edging' && (() => {
+                const et = operation.edge_type || '';
+                const flags = [];
+                const flagLabels = {};
+                const addFlag = (key, label) => { flags.push(key); flagLabels[key] = label; };
+
+                const entry = {
+                  edge_type: et,
+                  sub_type: et,
+                  bed_edger_needed: operation.bed_edger_needed || '',
+                };
+
+                if (!operation.bed_edger_needed) addFlag('bed_edger_needed', 'Bed Edger needed?');
+
+                if (et === 'Brick') {
+                  entry.brick_width = operation.brick_width || '';
+                  entry.brick_lf_straight = operation.lf_straight != null ? String(operation.lf_straight) : (operation.lf != null ? String(operation.lf) : '');
+                  entry.brick_lf_curved = operation.lf_curved != null ? String(operation.lf_curved) : '';
+                  entry.brick_color = operation.brick_color || '';
+                  entry.brick_ends_cut = operation.brick_ends_cut || '';
+                  if (!entry.brick_width) addFlag('brick_width', 'Width (4 or 8 inch)');
+                  if (!entry.brick_lf_straight && !entry.brick_lf_curved) addFlag('brick_lf_straight', 'Linear Feet');
+                  if (!entry.brick_color) addFlag('brick_color', 'Color');
+                  if (!entry.brick_ends_cut) addFlag('brick_ends_cut', 'Ends cut to reduce gaps?');
+                } else if (et === 'Metal') {
+                  entry.metal_type = operation.metal_type || '';
+                  entry.metal_lf = operation.lf != null ? String(operation.lf) : '';
+                  entry.metal_corners = operation.metal_corners != null ? String(operation.metal_corners) : '';
+                  entry.metal_splicers = operation.metal_splicers != null ? String(operation.metal_splicers) : '';
+                  if (!entry.metal_type) addFlag('metal_type', 'Metal Type (Aluminum or Steel)');
+                  if (!entry.metal_lf) addFlag('metal_lf', 'Linear Feet');
+                  if (!entry.metal_corners) addFlag('metal_corners', 'Corners');
+                  if (!entry.metal_splicers) addFlag('metal_splicers', 'Splicers');
+                } else if (et === 'Bullet') {
+                  entry.bullet_lf = operation.lf != null ? String(operation.lf) : '';
+                  entry.bullet_color = operation.bullet_color || '';
+                  if (!entry.bullet_lf) addFlag('bullet_lf', 'Linear Feet');
+                  if (!entry.bullet_color) addFlag('bullet_color', 'Color');
+                } else if (et === 'Natural Edge') {
+                  entry.natural_method = operation.natural_method || '';
+                  entry.natural_lf = operation.lf != null ? String(operation.lf) : '';
+                  if (!entry.natural_method) addFlag('natural_method', 'Method (Hand cut or Bed Edger)');
+                  if (!entry.natural_lf) addFlag('natural_lf', 'Linear Feet');
+                } else if (et === 'Poly') {
+                  entry.poly_lf = operation.lf != null ? String(operation.lf) : '';
+                  entry.poly_corners_90 = operation.poly_corners_90 != null ? String(operation.poly_corners_90) : '';
+                  entry.poly_corners_45 = operation.poly_corners_45 != null ? String(operation.poly_corners_45) : '';
+                  entry.poly_splicers = operation.poly_splicers != null ? String(operation.poly_splicers) : '';
+                  if (!entry.poly_lf) addFlag('poly_lf', 'Linear Feet');
+                  if (!entry.poly_corners_90) addFlag('poly_corners_90', '90° Corners');
+                  if (!entry.poly_corners_45) addFlag('poly_corners_45', '45° Corners');
+                  if (!entry.poly_splicers) addFlag('poly_splicers', 'Splicers');
+                } else if (et === 'Snapped Limestone') {
+                  entry.snapped_lf = operation.lf != null ? String(operation.lf) : '';
+                  entry.snapped_ends_cut = operation.snapped_ends_cut || '';
+                  entry.snapped_corners = operation.snapped_corners != null ? String(operation.snapped_corners) : '';
+                  entry.snapped_splicers = operation.snapped_splicers != null ? String(operation.snapped_splicers) : '';
+                  if (!entry.snapped_lf) addFlag('snapped_lf', 'Linear Feet');
+                  if (!entry.snapped_ends_cut) addFlag('snapped_ends_cut', 'Ends cut to reduce gaps?');
+                  if (!entry.snapped_corners) addFlag('snapped_corners', 'Corners');
+                  if (!entry.snapped_splicers) addFlag('snapped_splicers', 'Splicers');
+                } else {
+                  // Edge type not identified — flag it
+                  addFlag('edge_type', 'Edge Type');
+                }
+
+                if (!operation.time_estimate) addFlag('time_estimate', 'Time Estimate');
+
+                if (flags.length > 0) {
+                  entry._flags = flags;
+                  entry._flag_labels = flagLabels;
+                }
+                return entry;
+              })()),
             };
             
             const updated = [...entries, newEntry];

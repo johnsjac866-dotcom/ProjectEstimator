@@ -45,6 +45,27 @@ For Lawn Repair & Install operations, extract:
 - sf_width: Width in feet (number)
 - seed_type: One of "Madison Parks", "Tough Stuff", "Shady Place", "Carefree No Mow" (if mentioned)
 
+For Bed Edging operations, extract:
+- edge_type: One of "Brick", "Metal", "Bullet", "Natural Edge", "Poly", "Snapped Limestone"
+- lf: Total linear feet (number) — can also be split as lf_straight + lf_curved for Brick
+- lf_straight: For Brick only — straight linear feet (number)
+- lf_curved: For Brick only — curved linear feet (number)
+- brick_width: For Brick — "4 inch" or "8 inch"
+- brick_color: For Brick — color description (e.g. "Natural", "Red", "Charcoal")
+- brick_ends_cut: For Brick — "Yes" or "No"
+- metal_type: For Metal — "Aluminum" or "Steel"
+- metal_corners: For Metal — number of corners
+- metal_splicers: For Metal — number of splicers
+- bullet_color: For Bullet — color description
+- natural_method: For Natural Edge — "Hand cut" or "Bed Edger"
+- poly_corners_90: For Poly — number of 90-degree corners
+- poly_corners_45: For Poly — number of 45-degree corners
+- poly_splicers: For Poly — number of splicers
+- snapped_ends_cut: For Snapped Limestone — "Yes" or "No"
+- snapped_corners: For Snapped Limestone — number of corners
+- snapped_splicers: For Snapped Limestone — number of splicers
+- bed_edger_needed: "Yes" or "No" (if mentioned)
+
 For ALL operation types, also extract:
 - time_estimate: Time in hours mentioned for this operation. Look for phrases like "2 hours", "about 3 hrs", "half a day" (=4hrs), "a full day" (=8hrs), "45 minutes" (=0.75hrs). Null if no time is mentioned.
 
@@ -79,6 +100,25 @@ Leave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) =>
                 mulch_depth: { type: ['number', 'null'], description: 'For Mulch: depth in inches' },
                 lawn_type: { type: 'string', description: 'For Lawn Repair: "Sod Installation", "Seed Install", or "Top Dress Lawn"' },
                 seed_type: { type: 'string', description: 'For Lawn Repair Seed Install: "Madison Parks", "Tough Stuff", "Shady Place", or "Carefree No Mow"' },
+                edge_type: { type: 'string', description: 'For Bed Edging: "Brick", "Metal", "Bullet", "Natural Edge", "Poly", or "Snapped Limestone"' },
+                lf: { type: ['number', 'null'], description: 'For Bed Edging: total linear feet' },
+                lf_straight: { type: ['number', 'null'], description: 'For Bed Edging Brick: straight linear feet' },
+                lf_curved: { type: ['number', 'null'], description: 'For Bed Edging Brick: curved linear feet' },
+                brick_width: { type: 'string', description: 'For Bed Edging Brick: "4 inch" or "8 inch"' },
+                brick_color: { type: 'string', description: 'For Bed Edging Brick: color (e.g. Natural, Red, Charcoal)' },
+                brick_ends_cut: { type: 'string', description: 'For Bed Edging Brick: "Yes" or "No"' },
+                metal_type: { type: 'string', description: 'For Bed Edging Metal: "Aluminum" or "Steel"' },
+                metal_corners: { type: ['number', 'null'], description: 'For Bed Edging Metal: number of corners' },
+                metal_splicers: { type: ['number', 'null'], description: 'For Bed Edging Metal: number of splicers' },
+                bullet_color: { type: 'string', description: 'For Bed Edging Bullet: color (e.g. Gray, Tan, Red)' },
+                natural_method: { type: 'string', description: 'For Bed Edging Natural Edge: "Hand cut" or "Bed Edger"' },
+                poly_corners_90: { type: ['number', 'null'], description: 'For Bed Edging Poly: number of 90-degree corners' },
+                poly_corners_45: { type: ['number', 'null'], description: 'For Bed Edging Poly: number of 45-degree corners' },
+                poly_splicers: { type: ['number', 'null'], description: 'For Bed Edging Poly: number of splicers' },
+                snapped_ends_cut: { type: 'string', description: 'For Bed Edging Snapped Limestone: "Yes" or "No"' },
+                snapped_corners: { type: ['number', 'null'], description: 'For Bed Edging Snapped Limestone: number of corners' },
+                snapped_splicers: { type: ['number', 'null'], description: 'For Bed Edging Snapped Limestone: number of splicers' },
+                bed_edger_needed: { type: 'string', description: 'For Bed Edging: "Yes" or "No"' },
                 time_estimate: { type: ['number', 'null'], description: 'Time estimate in hours for this specific operation, extracted from any mention of hours, time, or duration in the voice notes (e.g. "2 hours", "about 3 hrs", "half a day = 4 hours"). Null if not mentioned.' }
               },
               required: ['operation_type', 'description']
