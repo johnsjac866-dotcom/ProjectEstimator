@@ -176,10 +176,11 @@ export default function PlantingSummary() {
         )}
 
         {/* Shared details */}
-        {(data.additional_time_rocky || data.additional_time_roots || data.delivery_method || data.water_access) && (
+        {(data.time_estimate || data.additional_time_rocky || data.additional_time_roots || data.delivery_method || data.water_access) && (
           <div className="border rounded-lg p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Logistics</h3>
             <div className="space-y-2">
+              {data.time_estimate && <Row label="Time Estimate" value={`${data.time_estimate} hrs`} />}
               {data.additional_time_rocky === "Yes" && <Row label="Additional Time — Rocky Soil" value="Yes" />}
               {data.additional_time_roots === "Yes" && <Row label="Additional Time — Roots" value="Yes" />}
               <Row label="Delivery Method" value={data.delivery_method} />

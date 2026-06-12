@@ -99,6 +99,7 @@ export default function LawnSummary() {
             <Row label="Width" value={data.width ? `${data.width} ft` : null} />
             <Row label="Square Footage" value={data.sf ? `${data.sf} SF` : null} />
             {isSod && <Row label="Rolls Needed" value={data.rolls ? `${data.rolls} rolls` : null} />}
+            {isSod && data.pallets && <Row label="Pallets Needed" value={`${data.pallets} pallets`} />}
             {isSod && <Row label="Pins Needed" value={data.pins ? `${data.pins} pins` : null} />}
             {isSod && data.sf_waste && <Row label="SF Extra for Waste" value={`${data.sf_waste} SF`} />}
           </div>
@@ -108,8 +109,10 @@ export default function LawnSummary() {
         <div className="border rounded-lg p-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
           <div className="space-y-2">
+            {data.time_estimate && <Row label="Time Estimate" value={`${data.time_estimate} hrs`} />}
             {isSod && (
               <>
+                <Row label="On a Slope" value={data.on_slope} />
                 <Row label="Fertilizer" value={data.fertilizer} />
                 {data.fertilizer === "Yes" && <Row label="Fertilizer SF" value={data.fertilizer_sf_override ? `${data.fertilizer_sf_override} SF` : `${data.sf} SF`} />}
                 <Row label="Distance to Truck" value={data.distance_to_truck ? `${data.distance_to_truck} ft` : null} />

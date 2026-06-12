@@ -105,10 +105,11 @@ export default function MulchSummary() {
         )}
 
         {/* Details */}
-        {(data.bed_type || data.install_type || data.machine_access) && (
+        {(data.time_estimate || data.bed_type || data.install_type || data.machine_access) && (
           <div className="border rounded-lg p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
             <div className="space-y-2">
+              {data.time_estimate && <Row label="Time Estimate" value={`${data.time_estimate} hrs`} />}
               <Row label="Bed Type" value={data.bed_type} />
               {data.mulch_type === "Organic" && <Row label="Install Type" value={data.install_type} />}
               <Row label="Machine Access" value={data.machine_access} />

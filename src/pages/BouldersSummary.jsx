@@ -106,6 +106,7 @@ export default function BouldersSummary() {
           </>
         )}
 
+        <Row label="Time Estimate (hrs)" value={entry.time_estimate} />
         {entry.notes && <Row label="Notes" value={entry.notes} />}
       </div>
     </div>

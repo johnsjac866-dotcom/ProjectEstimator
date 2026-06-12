@@ -59,6 +59,8 @@ export default function HardscapeRepairSummary() {
         <Row label="Width (ft)" value={entry.width} />
         <Row label="Square Footage (SF)" value={entry.sf} />
         <Row label="Surface Material Type" value={entry.material_type} />
+        <Row label="Time Estimate (hrs)" value={entry.time_estimate} />
+        <Row label="New Material Needed" value={entry.new_material_needed} />
 
         {entry.new_material_needed === "Yes" && (
           <>

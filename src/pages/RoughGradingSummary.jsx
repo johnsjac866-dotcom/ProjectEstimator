@@ -117,6 +117,18 @@ export default function RoughGradingSummary() {
           </div>
         </div>
 
+        {/* Time Estimate */}
+        {data.time_estimate && (
+          <div className="border rounded-lg p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Time</h3>
+            <div className="flex items-start gap-2 text-sm">
+              <span className="h-2 w-2 rounded-full bg-orange-400 flex-shrink-0 mt-1.5" />
+              <span className="text-muted-foreground">Time Estimate:</span>
+              <span className="font-medium">{data.time_estimate} hrs</span>
+            </div>
+          </div>
+        )}
+
         {/* Other fields */}
         {allFields.length > 0 && (
           <div className="border rounded-lg p-4">

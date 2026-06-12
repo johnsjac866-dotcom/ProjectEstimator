@@ -91,9 +91,9 @@ export default function DrainageSummary() {
         )}
 
         {/* Type */}
-        <div className="text-sm">
-          <span className="text-muted-foreground">Drain Type:</span>{" "}
-          <span className="font-medium text-primary">{data.drain_type}</span>
+        <div className="text-sm flex flex-wrap gap-4">
+          <span><span className="text-muted-foreground">Drain Type:</span>{" "}<span className="font-medium text-primary">{data.drain_type}</span></span>
+          {data.time_estimate && <span><span className="text-muted-foreground">Time Estimate:</span>{" "}<span className="font-medium">{data.time_estimate} hrs</span></span>}
         </div>
 
         {/* Measurements */}

@@ -100,6 +100,17 @@ export default function BedPrepSummary() {
           {subTypeLabel && <> — <span className="text-sm font-medium text-primary">{subTypeLabel}</span></>}
         </div>
 
+        {data.time_estimate && (
+          <div className="border rounded-lg p-4">
+            <h3 className="font-semibold text-sm mb-2 text-muted-foreground uppercase tracking-wide text-xs">Time</h3>
+            <div className="flex items-start gap-2 text-sm">
+              <span className="h-2 w-2 rounded-full bg-blue-400 flex-shrink-0 mt-1.5" />
+              <span className="text-muted-foreground">Time Estimate:</span>
+              <span className="font-medium">{data.time_estimate} hrs</span>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           {fields.measurements.length > 0 && (
             <div className="border rounded-lg p-4">
