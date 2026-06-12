@@ -15,6 +15,7 @@ const OP_CONFIG = {
   "Planting":                         { dataKey: "planting_data",      summaryPath: (aId, opId) => `/planting-summary/${aId}?opId=${opId}`,            wizardPath: (aId, opId) => opId ? `/planting-wizard/${aId}?opId=${opId}` : `/planting-wizard/${aId}`,                 newPath: (aId) => `/planting-wizard/${aId}`,          icon: Sprout,        color: "teal" },
   "Mulch":                            { dataKey: "mulch_data",          summaryPath: (aId, opId) => `/mulch-summary/${aId}?opId=${opId}`,                wizardPath: (aId, opId) => opId ? `/mulch-wizard/${aId}?opId=${opId}` : `/mulch-wizard/${aId}`,                         newPath: (aId) => `/mulch-wizard/${aId}`,              icon: Wind,          color: "yellow" },
   "Drainage":                         { dataKey: "drainage_data",       summaryPath: (aId, opId) => `/drainage-summary/${aId}?opId=${opId}`,             wizardPath: (aId, opId) => opId ? `/drainage-wizard/${aId}?opId=${opId}` : `/drainage-wizard/${aId}`,                  newPath: (aId) => `/drainage-wizard/${aId}`,           icon: Droplets,      color: "sky" },
+  "Boulders/Accents & Structures":    { dataKey: "boulders_data",       summaryPath: (aId, opId) => `/boulders-summary/${aId}?opId=${opId}`,           wizardPath: (aId, opId) => opId ? `/boulders-wizard/${aId}?opId=${opId}` : `/boulders-wizard/${aId}`,                   newPath: (aId) => `/boulders-wizard/${aId}`,          icon: Layers,        color: "zinc" },
   "Lawn Repair & Install":            { dataKey: "lawn_data",           summaryPath: (aId, opId) => `/lawn-summary/${aId}?opId=${opId}`,                  wizardPath: (aId, opId) => opId ? `/lawn-wizard/${aId}?opId=${opId}` : `/lawn-wizard/${aId}`,                          newPath: (aId) => `/lawn-wizard/${aId}`,               icon: Leaf,          color: "lime" },
   "Maintenance":                      { dataKey: "maintenance_data",    summaryPath: (aId, opId) => `/maintenance-summary/${aId}?opId=${opId}`,          wizardPath: (aId, opId) => opId ? `/maintenance-wizard/${aId}?opId=${opId}` : `/maintenance-wizard/${aId}`,           newPath: (aId) => `/maintenance-wizard/${aId}`,        icon: Wrench,        color: "slate" },
   "Hardscape - Repair Existing":      { dataKey: "hardscape_repair_data", summaryPath: (aId, opId) => `/hardscape-repair-summary/${aId}?opId=${opId}`, wizardPath: (aId, opId) => opId ? `/hardscape-repair-wizard/${aId}?opId=${opId}` : `/hardscape-repair-wizard/${aId}`, newPath: (aId) => `/hardscape-repair-wizard/${aId}`, icon: Wrench, color: "slate" },
@@ -40,7 +41,7 @@ const colorMap = {
 
 function getOpsForArea(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") return ["Site Management & Daily Cleanup"];
-  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install", "Hardscape - Repair Existing", "Maintenance", "Retaining Wall", "Pathway / Steps"];
+  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install", "Boulders/Accents & Structures", "Hardscape - Repair Existing", "Maintenance", "Retaining Wall", "Pathway / Steps"];
 }
 
 function getEntryLabel(entry, idx) {
