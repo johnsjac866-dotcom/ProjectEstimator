@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, Square, Play, Pause, Trash2, MicOff, RefreshCw, CloudOff, Cloud, Upload, CheckCircle } from "lucide-react";
-import { VoiceNotes as OfflineVoiceNotes } from "@/lib/offlineVoiceNotes";
+import { VoiceNotes as OfflineVoiceNotes, syncAllPendingVoiceNotes } from "@/lib/offlineVoiceNotes";
 import { base44 } from "@/api/base44Client";
 
 function formatDuration(seconds) {
@@ -209,6 +209,10 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis 
     OfflineVoiceNotes.retry(id);
   }
 
+  function handleSyncAll() {
+    syncAllPendingVoiceNotes();
+  }
+
   async function handleAnalyzeAll() {
     const syncedNotes = notes.filter(n => !n._pending && n.audio_url);
     if (syncedNotes.length === 0) return;
@@ -298,8 +302,14 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis 
               {analyzing ? 'Analyzing all notes...' : `Analyze All (${syncedNotes.length})`}
             </button>
           )}
-          {pendingCount > 0 && syncedNotes.length === 0 && (
-            <p className="text-xs text-center text-muted-foreground">Notes will be analyzed once they sync.</p>
+          {pendingCount > 0 && (
+            <button
+              onClick={handleSyncAll}
+              className="w-full flex items-center justify-center gap-2 text-sm border border-amber-400 text-amber-700 bg-amber-50 px-3 py-2.5 rounded-lg hover:bg-amber-100 transition-colors font-medium"
+            >
+              <Cloud className="h-4 w-4" />
+              Sync {pendingCount} note{pendingCount !== 1 ? 's' : ''} to cloud
+            </button>
           )}
 
           {savedAnalysis && (

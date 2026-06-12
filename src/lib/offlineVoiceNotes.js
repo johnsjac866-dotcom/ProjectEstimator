@@ -112,12 +112,9 @@ export const VoiceNotes = {
           }
         }
         writeCache(merged);
-        merged.filter(r => r._pending && !r._deleted).forEach(r => _syncRecord(r));
         notify();
       })
-      .catch(() => {
-        cached.filter(r => r._pending && !r._deleted).forEach(r => _syncRecord(r));
-      });
+      .catch(() => {});
 
     return filtered;
   },
@@ -150,9 +147,7 @@ export const VoiceNotes = {
     writeCache([...readCache(), record]);
     notify();
 
-    // Try syncing immediately (succeeds online, no-ops if parent is still local)
-    _syncRecord(record);
-
+    // Do NOT auto-sync — user must press the sync button
     return record;
   },
 
@@ -182,9 +177,14 @@ export const VoiceNotes = {
   },
 };
 
+// Manual sync — called by the sync button in VoiceNotes UI
+export function syncAllPendingVoiceNotes() {
+  readCache()
+    .filter(r => r._pending && !r._deleted && r._syncStatus !== 'uploading')
+    .forEach(r => _syncRecord(r));
+}
+
 // Called by offlineStore.js after an Area syncs, to unblock waiting voice notes
 export function syncPendingVoiceNotes() {
-  readCache()
-    .filter(r => r._pending && r._syncStatus !== 'uploading')
-    .forEach(r => _syncRecord(r));
+  syncAllPendingVoiceNotes();
 }
