@@ -89,13 +89,21 @@ export const VoiceNotes = {
   async filter(query) {
     const cached = readCache();
     // Hide deleted records from all views immediately
-    const filtered = cached.filter(r =>
-      !r._deleted &&
-      Object.entries(query || {}).every(([k, v]) => r[k] === v)
-    );
+    const filtered = cached.filter(r => {
+      if (r._deleted) return false;
+      return Object.entries(query || {}).every(([k, v]) => {
+        if (r[k] === v) return true;
+        if (resolveId(r[k]) === v) return true;
+        if (r[k] === resolveId(v)) return true;
+        return false;
+      });
+    });
 
     // Background: merge server records — never reinsert locally-deleted ones
-    withTimeout(base44.entities.VoiceNote.filter(query), BACKGROUND_TIMEOUT_MS)
+    Promise.race([
+      base44.entities.VoiceNote.filter(query),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), BACKGROUND_TIMEOUT_MS))
+    ])
       .then(records => {
         const all = readCache();
         const localById = new Map(all.map(r => [r.id, r]));
@@ -121,10 +129,16 @@ export const VoiceNotes = {
 
   // Synchronous read from cache (for event-driven refreshes)
   getCached(query) {
-    return readCache().filter(r =>
-      !r._deleted &&
-      Object.entries(query || {}).every(([k, v]) => r[k] === v)
-    );
+    return readCache().filter(r => {
+      if (r._deleted) return false;
+      return Object.entries(query || {}).every(([k, v]) => {
+        if (r[k] === v) return true;
+        // Also match if the stored value resolves to the queried value, or vice versa
+        if (resolveId(r[k]) === v) return true;
+        if (r[k] === resolveId(v)) return true;
+        return false;
+      });
+    });
   },
 
   async create(areaId, blob, duration) {
