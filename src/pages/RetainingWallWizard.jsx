@@ -75,6 +75,16 @@ export default function RetainingWallWizard() {
     OfflineAreas.get(areaId).then((a) => {
       if (!a) { setArea(null); return; }
       setArea(a);
+      const aiPrefill = urlParams.get("aiPrefill");
+      if (aiPrefill) {
+        const prefill = JSON.parse(sessionStorage.getItem('ai_prefill') || 'null');
+        if (prefill) {
+          sessionStorage.removeItem('ai_prefill');
+          setOp(o => ({ ...o, ...prefill }));
+          if (prefill.wall_type) setStep(3);
+          return;
+        }
+      }
       if (opId) {
         const existing = parseOps(a.retaining_wall_data).find((e) => e.id === opId);
         if (existing) setOp(existing);

@@ -32,7 +32,16 @@ export default function DemolitionWizard() {
       setArea(a);
       const ops = parseOps(a.demolition_data);
       setOperations(ops);
-      if (opId) {
+      const aiPrefill = new URLSearchParams(window.location.search).get("aiPrefill");
+      if (aiPrefill) {
+        const prefill = JSON.parse(sessionStorage.getItem('ai_prefill') || 'null');
+        if (prefill) {
+          sessionStorage.removeItem('ai_prefill');
+          setData(prefill);
+          if (prefill.sub_type) setStep(2);
+          else if (prefill.group) setStep(1);
+        }
+      } else if (opId) {
         const existing = ops.find(o => o.id === opId);
         if (existing) setData(existing);
       }

@@ -51,6 +51,15 @@ export default function SteppingStoneWizard() {
       const a = await OfflineAreas.get(areaId);
       if (!a) { setArea(null); return; }
       setArea(a);
+      const aiPrefill = new URLSearchParams(window.location.search).get("aiPrefill");
+      if (aiPrefill) {
+        const prefill = JSON.parse(sessionStorage.getItem('ai_prefill') || 'null');
+        if (prefill) {
+          sessionStorage.removeItem('ai_prefill');
+          setForm(f => ({ ...f, ...prefill }));
+          return;
+        }
+      }
       if (opId) {
         const ops = parseOps(a.stepping_stone_data);
         const existing = ops.find(o => o.id === opId);

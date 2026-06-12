@@ -28,7 +28,14 @@ export default function HardscapeRepairWizard() {
       setArea(a);
       const ops = parseOps(a.hardscape_repair_data);
       setOperations(ops);
-      if (opId) {
+      const aiPrefill = new URLSearchParams(window.location.search).get("aiPrefill");
+      if (aiPrefill) {
+        const prefill = JSON.parse(sessionStorage.getItem('ai_prefill') || 'null');
+        if (prefill) {
+          sessionStorage.removeItem('ai_prefill');
+          setData(prefill);
+        }
+      } else if (opId) {
         const existing = ops.find(o => o.id === opId);
         if (existing) setData(existing);
       }

@@ -55,6 +55,18 @@ export default function MulchWizard() {
       const a = await OfflineAreas.get(areaId);
       if (!a) { setArea(null); return; }
       setArea(a);
+      const aiPrefill = urlParams.get("aiPrefill");
+      if (aiPrefill) {
+        const prefill = JSON.parse(sessionStorage.getItem('ai_prefill') || 'null');
+        if (prefill) {
+          sessionStorage.removeItem('ai_prefill');
+          const type = prefill.mulch_type || prefill.sub_type || null;
+          setMulchType(type);
+          setForm(prefill);
+          setStep(type ? 2 : 1);
+          return;
+        }
+      }
       if (opId) {
         const ops = parseOps(a.mulch_data);
         const existing = ops.find(o => o.id === opId);

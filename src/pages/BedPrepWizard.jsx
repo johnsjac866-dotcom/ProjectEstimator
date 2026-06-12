@@ -33,7 +33,16 @@ export default function BedPrepWizard() {
       setArea(a);
       const ops = parseOps(a.bed_prep_data);
       setOperations(ops);
-      if (opId) {
+      const aiPrefill = new URLSearchParams(window.location.search).get("aiPrefill");
+      if (aiPrefill) {
+        const prefill = JSON.parse(sessionStorage.getItem('ai_prefill') || 'null');
+        if (prefill) {
+          sessionStorage.removeItem('ai_prefill');
+          setData(prefill);
+          if (prefill.sub_type) setStep(2);
+          else if (prefill.main_type) setStep(1);
+        }
+      } else if (opId) {
         const existing = ops.find(o => o.id === opId);
         if (existing) setData(existing);
       }
