@@ -127,7 +127,7 @@ export default function BedEdgingSummary() {
         </div>
 
         {/* Details */}
-        {fields.length > 0 && (
+        {(fields.length > 0 || data.bed_edger_needed || data.time_estimate) && (
           <div className="border rounded-lg p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
             <div className="space-y-2">
@@ -142,6 +142,20 @@ export default function BedEdgingSummary() {
                   </div>
                 );
               })}
+              {data.bed_edger_needed && (
+                <div className="flex items-start gap-2 text-sm">
+                  <span className="h-2 w-2 rounded-full bg-purple-400 flex-shrink-0 mt-1.5" />
+                  <span className="text-muted-foreground">Bed Edger Needed:</span>
+                  <span className="font-medium">{data.bed_edger_needed}</span>
+                </div>
+              )}
+              {data.time_estimate && (
+                <div className="flex items-start gap-2 text-sm">
+                  <span className="h-2 w-2 rounded-full bg-purple-400 flex-shrink-0 mt-1.5" />
+                  <span className="text-muted-foreground">Time Estimate:</span>
+                  <span className="font-medium">{data.time_estimate} hrs</span>
+                </div>
+              )}
             </div>
           </div>
         )}
