@@ -17,6 +17,7 @@ const OP_CONFIG = {
   "Drainage":                         { dataKey: "drainage_data",       summaryPath: (aId, opId) => `/drainage-summary/${aId}?opId=${opId}`,             wizardPath: (aId, opId) => opId ? `/drainage-wizard/${aId}?opId=${opId}` : `/drainage-wizard/${aId}`,                  newPath: (aId) => `/drainage-wizard/${aId}`,           icon: Droplets,      color: "sky" },
   "Lawn Repair & Install":            { dataKey: "lawn_data",           summaryPath: (aId, opId) => `/lawn-summary/${aId}?opId=${opId}`,                  wizardPath: (aId, opId) => opId ? `/lawn-wizard/${aId}?opId=${opId}` : `/lawn-wizard/${aId}`,                          newPath: (aId) => `/lawn-wizard/${aId}`,               icon: Leaf,          color: "lime" },
   "Maintenance":                      { dataKey: "maintenance_data",    summaryPath: (aId, opId) => `/maintenance-summary/${aId}?opId=${opId}`,          wizardPath: (aId, opId) => opId ? `/maintenance-wizard/${aId}?opId=${opId}` : `/maintenance-wizard/${aId}`,           newPath: (aId) => `/maintenance-wizard/${aId}`,        icon: Wrench,        color: "slate" },
+  "Hardscape - Repair Existing":      { dataKey: "hardscape_repair_data", summaryPath: (aId, opId) => `/hardscape-repair-summary/${aId}?opId=${opId}`, wizardPath: (aId, opId) => opId ? `/hardscape-repair-wizard/${aId}?opId=${opId}` : `/hardscape-repair-wizard/${aId}`, newPath: (aId) => `/hardscape-repair-wizard/${aId}`, icon: Wrench, color: "slate" },
   "Retaining Wall":                   { dataKey: "retaining_wall_data", summaryPath: (aId, opId) => `/retaining-wall-summary/${aId}?opId=${opId}`,      wizardPath: (aId, opId) => opId ? `/retaining-wall-wizard/${aId}?opId=${opId}` : `/retaining-wall-wizard/${aId}`,    newPath: (aId) => `/retaining-wall-wizard/${aId}`,     icon: Layers,        color: "zinc" },
   "Pathway / Steps":                  { dataKey: "stepping_stone_data", summaryPath: (aId, opId) => `/stepping-stone-summary/${aId}?opId=${opId}`,        wizardPath: (aId, opId) => opId ? `/stepping-stone-wizard/${aId}?opId=${opId}` : `/stepping-stone-wizard/${aId}`,    newPath: (aId) => `/stepping-stone-wizard/${aId}`,     icon: Layers,        color: "indigo" },
 };
@@ -39,7 +40,7 @@ const colorMap = {
 
 function getOpsForArea(area) {
   if (area.operation_type === "Site Management & Daily Cleanup") return ["Site Management & Daily Cleanup"];
-  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install", "Maintenance", "Retaining Wall", "Pathway / Steps"];
+  return ["Walkway/Patio", "Bed Preparation", "Rough Grading & Hauling", "Demolition & Removals", "Bed Edging", "Planting", "Mulch", "Drainage", "Lawn Repair & Install", "Hardscape - Repair Existing", "Maintenance", "Retaining Wall", "Pathway / Steps"];
 }
 
 function getEntryLabel(entry, idx) {

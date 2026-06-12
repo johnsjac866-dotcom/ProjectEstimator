@@ -19,6 +19,7 @@ const CATEGORY_ORDER = [
   { label: "Hardscape - Repair Existing",                             taxable: false, dataKey: "hardscape_repair_data", match: () => true },
   { label: "Maintenance",                                              taxable: false, dataKey: "maintenance_data",      match: () => true },
   { label: "Pathway - Stepping Stones",                               taxable: false, dataKey: "stepping_stone_data",   match: () => true },
+  { label: "Retaining Wall",                                          taxable: false, dataKey: "retaining_wall_data",   match: () => true },
   { label: "Site Management & Daily Cleanup (Non-Taxable)",           taxable: false, dataKey: "site_mgmt_data",     match: e => !!e.tax_status_nontaxable || e.tax_status === "Non-Taxable" },
   // ── TAXABLE ──
   { label: "Demolition & Removals - Vegetation & Softscape Items",   taxable: true,  dataKey: "demolition_data",    match: e => e.group === "vegetation" },
@@ -160,6 +161,19 @@ function entryDescription(dataKey, entry) {
       entry.notes ? `Notes: ${entry.notes}` : null,
     ].filter(Boolean).join(" · ");
   }
+  if (dataKey === "retaining_wall_data") {
+    const excCY = entry.exc_lf && entry.exc_trench_depth && entry.exc_trench_width
+      ? ((parseFloat(entry.exc_lf) * parseFloat(entry.exc_trench_depth) * parseFloat(entry.exc_trench_width)) / 27).toFixed(2)
+      : null;
+    return [
+      entry.wall_type || "Retaining Wall",
+      entry.wall_lf ? `Wall: ${entry.wall_lf} LF` : (entry.exc_lf ? `Exc: ${entry.exc_lf} LF` : null),
+      entry.wall_exposed_height ? `Height: ${entry.wall_exposed_height} ft` : null,
+      excCY ? `Exc CY: ${excCY}` : null,
+      fmtTime(entry.time_estimate),
+      entry.notes ? `Notes: ${entry.notes}` : null,
+    ].filter(Boolean).join(" · ");
+  }
   return entry.sub_type || entry.type || "";
 }
 
@@ -231,6 +245,7 @@ function getSubTypeKey(dataKey, entry) {
   if (dataKey === "boulders_data") return entry.sub_type || "Other";
   if (dataKey === "maintenance_data") return entry.maintenance_type || "Maintenance";
   if (dataKey === "stepping_stone_data") return entry.pathway_type || "Stepping Stone";
+  if (dataKey === "retaining_wall_data") return entry.wall_type || "Retaining Wall";
   return "Other";
 }
 
