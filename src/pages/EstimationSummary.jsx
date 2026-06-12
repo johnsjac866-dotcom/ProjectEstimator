@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects, resolveId } from "@/lib/offlineStore";
-import { ArrowLeft, MapPin, ChevronDown, ChevronRight, Flag } from "lucide-react";
+import { ArrowLeft, MapPin, ChevronDown, ChevronRight, Flag, Download } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
+import { Button } from "@/components/ui/button";
+import { generateEstimationSummaryPDF } from "@/lib/pdfExport";
 
 // ─── Ordered estimation categories ────────────────────────────────────────────
 // Each category: { label, taxable, dataKey, match(entry) → bool }
@@ -410,7 +412,17 @@ export default function EstimationSummary() {
       </Link>
 
       <div className="mb-8 pb-6 border-b">
-        <h1 className="text-2xl font-bold tracking-tight">{project.name} — Estimation Summary</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">{project.name} — Estimation Summary</h1>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-shrink-0"
+            onClick={() => generateEstimationSummaryPDF({ project, areas, buckets, entryDescription, totalsFromEntries, getSubTypeKey })}
+          >
+            <Download className="h-4 w-4" /> PDF
+          </Button>
+        </div>
         <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
           {project.client_name && <span>{project.client_name}</span>}
           {project.address && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{project.address}</span>}
