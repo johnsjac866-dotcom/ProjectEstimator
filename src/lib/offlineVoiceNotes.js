@@ -49,9 +49,14 @@ function _setStatus(localId, syncStatus) {
 async function _syncRecord(record) {
   if (_syncingIds.has(record.id)) return;
 
+  // Always re-read the record from cache so we get the latest area_id after any ID remapping
+  const freshRecord = readCache().find(r => r.id === record.id) || record;
+
   // Resolve area_id — wait if parent area is still local
-  const resolvedAreaId = resolveId(record.area_id);
+  const resolvedAreaId = resolveId(freshRecord.area_id);
   if (resolvedAreaId.startsWith('_local_') || resolvedAreaId.startsWith('PENDING_')) return;
+
+  record = freshRecord;
 
   _syncingIds.add(record.id);
   _setStatus(record.id, 'uploading');
@@ -180,7 +185,7 @@ export const VoiceNotes = {
           ? { ...r, _deleted: true, _syncPending: true, _syncAction: "delete" }
           : r
       ));
-      withTimeout(base44.entities.VoiceNote.delete(id), BACKGROUND_TIMEOUT_MS).catch(() => {});
+      withTimeout(base44.entities.VoiceNote.delete(id)).catch(() => {});
     }
     notify();
   },
