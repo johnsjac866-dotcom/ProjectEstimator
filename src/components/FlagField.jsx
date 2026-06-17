@@ -14,7 +14,7 @@ import { Flag } from "lucide-react";
 export default function FlagField({ fieldKey, label, flags = [], onToggle, children, className = "" }) {
   const isFlagged = flags.includes(fieldKey);
   return (
-    <div className={`relative ${isFlagged ? "rounded-lg ring-1 ring-orange-300 bg-orange-50/30 p-2 -mx-2" : ""} ${className}`}>
+    <div data-flagfield={fieldKey} className={`relative ${isFlagged ? "rounded-lg ring-1 ring-orange-300 bg-orange-50/30 p-2 -mx-2" : ""} ${className}`}>
       <div className="flex items-center gap-1 mb-1">
         <span className="text-sm font-medium leading-none">{label}</span>
         <button

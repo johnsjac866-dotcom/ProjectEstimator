@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,21 @@ export default function BedEdgingWizard() {
       }
     })();
   }, [areaId]);
+
+  // Scroll to first flagged field when opening step 2 with flags
+  useEffect(() => {
+    if (step !== 2 || !(form._flags?.length > 0)) return;
+    const timer = setTimeout(() => {
+      const allFlagFields = document.querySelectorAll('[data-flagfield]');
+      for (const el of allFlagFields) {
+        if ((form._flags || []).includes(el.getAttribute('data-flagfield'))) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [step]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 

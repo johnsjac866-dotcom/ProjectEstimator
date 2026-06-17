@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { BED_MAIN_TYPES, BED_FIELDS, getSubTypes } from "@/lib/bedPrepStages";
+import { useRef } from "react";
 import { parseOps } from "@/lib/opsUtils";
 import FlagField from "@/components/FlagField";
 
@@ -35,7 +36,20 @@ export default function BedPrepWizard() {
       setOperations(ops);
       if (opId) {
         const existing = ops.find(o => o.id === opId);
-        if (existing) setData(existing);
+        if (existing) {
+          setData(existing);
+          // Jump to the step containing the first flagged field
+          const flags = existing._flags || [];
+          if (flags.length > 0) {
+            const constraintKeys = (BED_FIELDS[existing.sub_type]?.constraints || []).map(f => f.key);
+            if (flags.includes('main_type')) setStep(0);
+            else if (flags.includes('sub_type')) setStep(1);
+            else if (flags.some(f => constraintKeys.includes(f))) setStep(3);
+            else setStep(2);
+          } else {
+            setStep(2);
+          }
+        }
       }
       setLoading(false);
     })();
@@ -81,6 +95,23 @@ export default function BedPrepWizard() {
   }
 
   const flags = data._flags || [];
+
+  // Scroll to first flagged field whenever step changes
+  useEffect(() => {
+    if (flags.length === 0) return;
+    const timer = setTimeout(() => {
+      const firstFlagged = document.querySelector('[data-flagfield]');
+      // Find the first one that is actually flagged
+      const allFlagFields = document.querySelectorAll('[data-flagfield]');
+      for (const el of allFlagFields) {
+        if (flags.includes(el.getAttribute('data-flagfield'))) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [step]);
 
   function renderField(field) {
     if (field.type === "checkbox") return (
