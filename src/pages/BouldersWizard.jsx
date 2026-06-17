@@ -169,8 +169,27 @@ export default function BouldersWizard() {
               </div>
 
               <div>
+                <Label>Ball Cart Needed?</Label>
+                <SelectButtons value={form.ball_cart_needed} onChange={v => set("ball_cart_needed", v)} options={["Yes", "No"]} />
+              </div>
+
+              <div>
+                <Label>Dump Trailer Needed?</Label>
+                <SelectButtons value={form.dump_trailer_needed} onChange={v => set("dump_trailer_needed", v)} options={["Yes", "No"]} />
+              </div>
+
+              <div>
                 <Label>Machine Access</Label>
                 <SelectButtons value={form.machine_access} onChange={v => set("machine_access", v)} options={["Vermeer", "Dingo", "None"]} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Delivery</p>
+                <Label>Supplier</Label>
+                <SelectButtons value={form.delivery_supplier} onChange={v => set("delivery_supplier", v)} options={["Midwest", "Madison Block", "Special Order"]} />
+                {form.delivery_supplier === "Special Order" && (
+                  <Input className="mt-2" value={form.delivery_special_order || ""} onChange={e => set("delivery_special_order", e.target.value)} placeholder="Specify supplier..." />
+                )}
               </div>
 
               <div>
@@ -213,8 +232,23 @@ export default function BouldersWizard() {
               </div>
 
               <div>
-                <Label>Material</Label>
-                <Input className="mt-1" value={form.material || ""} onChange={e => set("material", e.target.value)} placeholder="e.g. Wood, Vinyl, Aluminum..." />
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Material</p>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Cedar 2x2" (count)</Label>
+                      <Input className="mt-1" type="number" value={form.fence_cedar_2x2 || ""} onChange={e => set("fence_cedar_2x2", e.target.value)} placeholder="0" />
+                    </div>
+                    <div>
+                      <Label>4x4x8' Rough Sawn Cedar (count)</Label>
+                      <Input className="mt-1" type="number" value={form.fence_cedar_4x4 || ""} onChange={e => set("fence_cedar_4x4", e.target.value)} placeholder="0" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Fasteners (count)</Label>
+                    <Input className="mt-1" type="number" value={form.fence_fasteners || ""} onChange={e => set("fence_fasteners", e.target.value)} placeholder="0" />
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -223,9 +257,27 @@ export default function BouldersWizard() {
               </div>
 
               <div>
-                <Label>Machine Access</Label>
-                <SelectButtons value={form.machine_access} onChange={v => set("machine_access", v)} options={["Vermeer", "Dingo", "None"]} />
+                <Label>Hand or Machine</Label>
+                <SelectButtons value={form.fence_dig_mode} onChange={v => set("fence_dig_mode", v)} options={["Hand", "Machine"]} />
               </div>
+              {form.fence_dig_mode === "Hand" && (
+                <div>
+                  <Label>Dig Post Holes — Unit Hours</Label>
+                  <Input className="mt-1" type="number" value={form.fence_dig_hours || ""} onChange={e => set("fence_dig_hours", e.target.value)} placeholder="0" />
+                </div>
+              )}
+              {form.fence_dig_mode === "Machine" && (
+                <>
+                  <div>
+                    <Label>Machine Type</Label>
+                    <SelectButtons value={form.fence_machine_type} onChange={v => set("fence_machine_type", v)} options={["Dingo", "Vermeer"]} />
+                  </div>
+                  <div>
+                    <Label>Dig Post Holes — Unit Hours</Label>
+                    <Input className="mt-1" type="number" value={form.fence_dig_hours || ""} onChange={e => set("fence_dig_hours", e.target.value)} placeholder="0" />
+                  </div>
+                </>
+              )}
             </>
           )}
 
@@ -238,14 +290,20 @@ export default function BouldersWizard() {
                   <Input className="mt-1" type="number" value={form.count || ""} onChange={e => set("count", e.target.value)} placeholder="0" />
                 </div>
                 <div>
-                  <Label>Height (ft)</Label>
-                  <Input className="mt-1" type="number" value={form.height || ""} onChange={e => set("height", e.target.value)} placeholder="0" />
+                  <Label>Length (ft)</Label>
+                  <Input className="mt-1" type="number" value={form.length || ""} onChange={e => set("length", e.target.value)} placeholder="0" />
                 </div>
               </div>
 
-              <div>
-                <Label>Width (ft)</Label>
-                <Input className="mt-1" type="number" value={form.width || ""} onChange={e => set("width", e.target.value)} placeholder="0" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Height (ft)</Label>
+                  <Input className="mt-1" type="number" value={form.height || ""} onChange={e => set("height", e.target.value)} placeholder="0" />
+                </div>
+                <div>
+                  <Label>Width (ft)</Label>
+                  <Input className="mt-1" type="number" value={form.width || ""} onChange={e => set("width", e.target.value)} placeholder="0" />
+                </div>
               </div>
 
               <div>
@@ -259,8 +317,36 @@ export default function BouldersWizard() {
               </div>
 
               <div>
-                <Label>Machine Access</Label>
-                <SelectButtons value={form.machine_access} onChange={v => set("machine_access", v)} options={["Vermeer", "Dingo", "None"]} />
+                <Label>Hand or Machine</Label>
+                <SelectButtons value={form.arbor_dig_mode} onChange={v => set("arbor_dig_mode", v)} options={["Hand", "Machine"]} />
+              </div>
+              {form.arbor_dig_mode === "Hand" && (
+                <div>
+                  <Label>Dig Post Holes — Unit Hours</Label>
+                  <Input className="mt-1" type="number" value={form.arbor_dig_hours || ""} onChange={e => set("arbor_dig_hours", e.target.value)} placeholder="0" />
+                </div>
+              )}
+              {form.arbor_dig_mode === "Machine" && (
+                <>
+                  <div>
+                    <Label>Machine Type</Label>
+                    <SelectButtons value={form.arbor_machine_type} onChange={v => set("arbor_machine_type", v)} options={["Dingo", "Vermeer"]} />
+                  </div>
+                  <div>
+                    <Label>Dig Post Holes — Unit Hours</Label>
+                    <Input className="mt-1" type="number" value={form.arbor_dig_hours || ""} onChange={e => set("arbor_dig_hours", e.target.value)} placeholder="0" />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <Label>Needs Level Pad?</Label>
+                <SelectButtons value={form.needs_level_pad} onChange={v => set("needs_level_pad", v)} options={["Yes", "No"]} />
+              </div>
+
+              <div>
+                <Label>Remove Count</Label>
+                <Input className="mt-1" type="number" value={form.remove_count || ""} onChange={e => set("remove_count", e.target.value)} placeholder="0" />
               </div>
             </>
           )}
