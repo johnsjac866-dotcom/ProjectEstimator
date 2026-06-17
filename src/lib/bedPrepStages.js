@@ -17,7 +17,7 @@ export const BED_SUB_TYPES = {
   ],
   lawn: [
     { value: "lawn_none", label: "Lawn - No Amendments", category: "Bed Preparation - Lawn - No Amendments" },
-    { value: "lawn_1in", label: "Lawn - 1\" Amendments", category: "Bed Preparation - Lawn - 1\" Amendments" },
+    { value: "lawn_1in", label: "Lawn - With Amendments", category: "Bed Preparation - Lawn - With Amendments" },
   ],
   reprofiling: [
     { value: "repro_hardscape", label: "Reprofiling - Against Existing Hardscape/Fence", category: "Bed Preparation - Reprofiling - Against Existing Hardscape/Fence" },
@@ -28,24 +28,17 @@ export const BED_SUB_TYPES = {
 };
 
 // Fields per sub-type: { measurements, decisions, constraints }
+// Note: till_1in, till_3in, lawn_none, lawn_1in, notill_hand, notill_machine, reprofiling types
+// use custom rendering in BedPrepWizard for complex conditional fields.
 export const BED_FIELDS = {
   till_1in: {
     measurements: [
       { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
-      { key: "amendment_depth", label: "Amendment depth (1\")", type: "text", defaultValue: "1\"" },
-      { key: "access_path_distance", label: "Access path distance", type: "text" },
-      { key: "machine_type", label: "Machine type if used", type: "text" },
     ],
-    decisions: [
-      { key: "amendment_spec", label: "Amendment spec", type: "text" },
-      { key: "till_depth", label: "Till depth", type: "text" },
-      { key: "hand_vs_machine", label: "Hand vs machine", type: "select", options: ["By Hand", "By Machine"] },
-    ],
+    decisions: [],
     constraints: [
-      { key: "roots", label: "Roots present?", type: "checkbox" },
       { key: "soil_condition", label: "Soil condition notes", type: "text" },
-      { key: "access_notes", label: "Access constraints", type: "text" },
       { key: "missing_info", label: "Missing Info / flags", type: "textarea" },
     ],
   },
@@ -53,19 +46,10 @@ export const BED_FIELDS = {
     measurements: [
       { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
-      { key: "amendment_depth", label: "Amendment depth (3\")", type: "text", defaultValue: "3\"" },
-      { key: "access_path_distance", label: "Access path distance", type: "text" },
-      { key: "machine_type", label: "Machine type if used", type: "text" },
     ],
-    decisions: [
-      { key: "amendment_spec", label: "Amendment spec", type: "text" },
-      { key: "till_depth", label: "Till depth", type: "text" },
-      { key: "hand_vs_machine", label: "Hand vs machine", type: "select", options: ["By Hand", "By Machine"] },
-    ],
+    decisions: [],
     constraints: [
-      { key: "roots", label: "Roots present?", type: "checkbox" },
       { key: "soil_condition", label: "Soil condition notes", type: "text" },
-      { key: "access_notes", label: "Access constraints", type: "text" },
       { key: "missing_info", label: "Missing Info / flags", type: "textarea" },
     ],
   },
@@ -73,16 +57,10 @@ export const BED_FIELDS = {
     measurements: [
       { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
-      { key: "amendment_depth", label: "Amendment depth (1\")", type: "text", defaultValue: "1\"" },
-      { key: "access_path_distance", label: "Access path distance", type: "text" },
     ],
-    decisions: [
-      { key: "compost_spec", label: "Compost spec", type: "text" },
-      { key: "hand_vs_machine", label: "Hand vs machine", type: "select", options: ["By Hand", "By Machine"] },
-    ],
+    decisions: [],
     constraints: [
       { key: "carry_distance", label: "Carry distance", type: "text" },
-      { key: "access_notes", label: "Access constraints", type: "text" },
       { key: "missing_info", label: "Missing Info / flags", type: "textarea" },
     ],
   },
@@ -90,16 +68,10 @@ export const BED_FIELDS = {
     measurements: [
       { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
-      { key: "amendment_depth", label: "Amendment depth (1\")", type: "text", defaultValue: "1\"" },
-      { key: "access_path_distance", label: "Access path distance", type: "text" },
     ],
-    decisions: [
-      { key: "compost_spec", label: "Compost spec", type: "text" },
-      { key: "hand_vs_machine", label: "Hand vs machine", type: "select", options: ["By Hand", "By Machine"] },
-    ],
+    decisions: [],
     constraints: [
       { key: "carry_distance", label: "Carry distance", type: "text" },
-      { key: "access_notes", label: "Access constraints", type: "text" },
       { key: "missing_info", label: "Missing Info / flags", type: "textarea" },
     ],
   },
@@ -126,7 +98,6 @@ export const BED_FIELDS = {
       { key: "repair_vs_new", label: "Repair vs new install context", type: "select", options: ["Repair", "New Install"] },
     ],
     constraints: [
-      { key: "access_notes", label: "Access constraints", type: "text" },
       { key: "soil_readiness", label: "Soil readiness notes", type: "text" },
       { key: "missing_info", label: "Missing Info / flags", type: "textarea" },
     ],
@@ -135,14 +106,11 @@ export const BED_FIELDS = {
     measurements: [
       { key: "time_estimate", label: "Time Estimate (hrs)", type: "number" },
       { key: "sf", label: "SF (Square Feet)", type: "number" },
-      { key: "amendment_depth", label: "Amendment depth (1\")", type: "text", defaultValue: "1\"" },
     ],
     decisions: [
-      { key: "amendment_spec", label: "Amendment spec", type: "text" },
       { key: "repair_vs_new", label: "Repair vs new install context", type: "select", options: ["Repair", "New Install"] },
     ],
     constraints: [
-      { key: "access_notes", label: "Access constraints", type: "text" },
       { key: "soil_readiness", label: "Soil readiness notes", type: "text" },
       { key: "missing_info", label: "Missing Info / flags", type: "textarea" },
     ],
@@ -154,12 +122,10 @@ export const BED_FIELDS = {
       { key: "lf_new_bed_edge", label: "LF along new bed edge", type: "number" },
       { key: "lf_existing_hardscape", label: "LF along existing hardscape", type: "number" },
       { key: "depth_elevation_change", label: "Depth / elevation change", type: "text" },
-      { key: "access_path_distance", label: "Access path distance", type: "text" },
     ],
     decisions: [
       { key: "soil_addition", label: "Soil addition required?", type: "select", options: ["Yes", "No"] },
       { key: "final_grading_intent", label: "Final grading intent", type: "text" },
-      { key: "hand_or_machine", label: "Hand or machine", type: "select", options: ["By Hand", "By Machine"] },
     ],
     constraints: [
       { key: "fence_hardscape_proximity", label: "Fence / hardscape proximity notes", type: "text" },
@@ -172,7 +138,6 @@ export const BED_FIELDS = {
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "lf_new_bed_edge", label: "LF along new bed edge", type: "number" },
       { key: "depth_elevation_change", label: "Depth / elevation change", type: "text" },
-      { key: "access_path_distance", label: "Access path distance", type: "text" },
     ],
     decisions: [
       { key: "soil_addition", label: "Soil addition required?", type: "select", options: ["Yes", "No"] },
@@ -189,7 +154,6 @@ export const BED_FIELDS = {
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "lf_new_bed_edge", label: "LF along new bed edge", type: "number" },
       { key: "depth_elevation_change", label: "Depth / elevation change", type: "text" },
-      { key: "access_path_distance", label: "Access path distance", type: "text" },
     ],
     decisions: [
       { key: "soil_addition", label: "Soil addition required?", type: "select", options: ["Yes", "No"] },
@@ -206,7 +170,6 @@ export const BED_FIELDS = {
       { key: "sf", label: "SF (Square Feet)", type: "number" },
       { key: "lf_new_bed_edge", label: "LF along new bed edge", type: "number" },
       { key: "depth_elevation_change", label: "Depth / elevation change", type: "text" },
-      { key: "access_path_distance", label: "Access path distance", type: "text" },
     ],
     decisions: [
       { key: "soil_addition", label: "Soil addition required?", type: "select", options: ["Yes", "No"] },
