@@ -2,59 +2,93 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Flag } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
 const OBSTRUCTION_NOTE = "Check for tree roots, pipes, or other obstructions within top three inches of soil";
 
+// All fields per edge type
 const EDGE_TYPE_FIELDS = {
-  "Brick": [
+  Brick: [
     { label: "Width", key: "brick_width" },
     { label: "Linear Feet — Straight", key: "brick_lf_straight" },
     { label: "Linear Feet — Curved", key: "brick_lf_curved" },
     { label: "Color", key: "brick_color" },
     { label: "Ends cut to reduce gaps?", key: "brick_ends_cut" },
+    { label: "Prep area for brick? (hrs)", key: "brick_prep_hours" },
+    { label: "Coarse / Washed Sand needed?", key: "brick_sand_needed" },
+    { label: "Cut Off Saw needed?", key: "brick_cut_off_saw" },
+    { label: "Disposal of debris or extra brick? (hrs)", key: "brick_disposal_hours" },
   ],
-  "Metal": [
+  Metal: [
     { label: "Metal Type", key: "metal_type" },
     { label: "Linear Feet", key: "metal_lf" },
     { label: "Corners", key: "metal_corners" },
     { label: "Splicers", key: "metal_splicers" },
+    { label: "Cut Off Saw needed?", key: "metal_cut_off_saw" },
+    { label: "Remove sod behind edge? (hrs)", key: "metal_remove_sod_hours" },
   ],
-  "Bullet": [
+  Bullet: [
+    { label: "Supplier", key: "bullet_supplier" },
     { label: "Linear Feet", key: "bullet_lf" },
     { label: "Color", key: "bullet_color" },
+    { label: "Prep area for brick? (hrs)", key: "bullet_prep_hours" },
+    { label: "Bulk Permeable Chips for leveling needed?", key: "bullet_permeable_chips" },
+    { label: "Cut Off Saw needed?", key: "bullet_cut_off_saw" },
+    { label: "Disposal of debris or extra brick? (hrs)", key: "bullet_disposal_hours" },
   ],
   "Natural Edge": [
     { label: "Method", key: "natural_method" },
     { label: "Linear Feet", key: "natural_lf" },
   ],
-  "Poly": [
+  Poly: [
     { label: "Linear Feet", key: "poly_lf" },
-    { label: "Corners — 90°", key: "poly_corners_90" },
-    { label: "Corners — 45°", key: "poly_corners_45" },
-    { label: "Splicers", key: "poly_splicers" },
+    { label: "Angular connectors needed?", key: "poly_angular_connectors" },
+    { label: "Remove sod or soil behind edge? (hrs)", key: "poly_remove_sod_hours" },
   ],
   "Snapped Limestone": [
     { label: "Linear Feet", key: "snapped_lf" },
     { label: "Ends cut to reduce gaps?", key: "snapped_ends_cut" },
-    { label: "Corners", key: "snapped_corners" },
-    { label: "Splicers", key: "snapped_splicers" },
+    { label: "Coarse / Washed Sand needed?", key: "snapped_sand_needed" },
+    { label: "Prep area for stone? (hrs)", key: "snapped_prep_hours" },
+    { label: "Cut Off Saw needed?", key: "snapped_cut_off_saw" },
   ],
-};
-
-const CATEGORY_MAP = {
-  "Brick":             "Bed Edging - Brick",
-  "Metal":             null, // resolved dynamically
-  "Bullet":            "Bed Edging - Bullet",
-  "Natural Edge":      "Bed Edging - Natural Edge",
-  "Poly":              "Bed Edging - Poly",
-  "Snapped Limestone": "Bed Edging - Snapped Limestone",
 };
 
 function getCategory(data) {
   if (data.edge_type === "Metal") return `Bed Edging - ${data.metal_type || "Metal"}`;
-  return CATEGORY_MAP[data.edge_type] || null;
+  const map = {
+    Brick: "Bed Edging - Brick",
+    Bullet: "Bed Edging - Bullet",
+    "Natural Edge": "Bed Edging - Natural Edge",
+    Poly: "Bed Edging - Poly",
+    "Snapped Limestone": "Bed Edging - Snapped Limestone",
+  };
+  return map[data.edge_type] || null;
+}
+
+function Row({ label, value, flagged }) {
+  if (!value && value !== 0) return null;
+  return (
+    <div className={`flex items-start gap-2 text-sm ${flagged ? "text-orange-700" : ""}`}>
+      <span className={`h-2 w-2 rounded-full flex-shrink-0 mt-1.5 ${flagged ? "bg-orange-400" : "bg-purple-400"}`} />
+      <span className="text-muted-foreground">{label}:</span>
+      <span className="font-medium">{String(value)}</span>
+      {flagged && <Flag className="h-3 w-3 text-orange-400 flex-shrink-0 mt-0.5" fill="currentColor" />}
+    </div>
+  );
+}
+
+function FlaggedRow({ label, fieldKey, flags, flagLabels }) {
+  if (!flags.includes(fieldKey)) return null;
+  return (
+    <div className="flex items-start gap-2 text-sm text-orange-700">
+      <span className="h-2 w-2 rounded-full bg-orange-400 flex-shrink-0 mt-1.5" />
+      <span className="text-muted-foreground">{flagLabels?.[fieldKey] || label}:</span>
+      <span className="font-medium italic">Not provided</span>
+      <Flag className="h-3 w-3 text-orange-400 flex-shrink-0 mt-0.5" fill="currentColor" />
+    </div>
+  );
 }
 
 export default function BedEdgingSummary() {
@@ -83,8 +117,27 @@ export default function BedEdgingSummary() {
 
   const fields = EDGE_TYPE_FIELDS[data.edge_type] || [];
   const category = getCategory(data);
+  const flags = data._flags || [];
+  const flagLabels = data._flag_labels || {};
   const hasObstructionNote = ["Brick", "Metal", "Bullet", "Poly", "Snapped Limestone"].includes(data.edge_type);
   const hasRollingNote = data.edge_type === "Metal";
+
+  // Bricks/pieces calculations for display
+  let calcNote = null;
+  if (data.edge_type === "Brick") {
+    const totalLf = (parseFloat(data.brick_lf_straight) || 0) + (parseFloat(data.brick_lf_curved) || 0);
+    if (totalLf > 0) calcNote = `Bricks needed: ${Math.ceil((totalLf * 12) / 7.75)} bricks (${totalLf} LF ÷ 7.75" each)`;
+  } else if (data.edge_type === "Bullet" && data.bullet_lf) {
+    const lf = parseFloat(data.bullet_lf) || 0;
+    const brickLen = data.bullet_supplier === "Rochester" ? 12.25 : 11.75;
+    if (lf > 0) calcNote = `Bricks needed: ${Math.ceil((lf * 12) / brickLen)} bricks (${lf} LF ÷ ${brickLen}" each — ${data.bullet_supplier || "Menards"})`;
+  } else if (data.edge_type === "Poly" && data.poly_lf) {
+    const lf = parseFloat(data.poly_lf) || 0;
+    if (lf > 0) {
+      const pieces = Math.ceil(lf / 20);
+      calcNote = `Pieces needed: ${pieces} (${lf} LF ÷ 20 ft) — Stakes needed: ${pieces * 7}`;
+    }
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -109,6 +162,14 @@ export default function BedEdgingSummary() {
           </div>
         </div>
 
+        {/* Flags banner */}
+        {flags.length > 0 && (
+          <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+            <Flag className="h-4 w-4 flex-shrink-0" fill="currentColor" />
+            <span className="font-medium">{flags.length} item{flags.length !== 1 ? "s" : ""} flagged for review</span>
+          </div>
+        )}
+
         {/* Estimate Category */}
         {category && (
           <div>
@@ -120,47 +181,47 @@ export default function BedEdgingSummary() {
           </div>
         )}
 
-        {/* Edge Type label */}
+        {/* Edge Type */}
         <div className="text-sm">
           <span className="text-muted-foreground">Edge Type:</span>{" "}
-          <span className="font-medium text-primary">{data.edge_type}</span>
+          <span className="font-semibold text-primary">{data.edge_type}</span>
         </div>
 
         {/* Details */}
-        {(fields.length > 0 || data.bed_edger_needed || data.time_estimate) && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
-            <div className="space-y-2">
-              {fields.map(field => {
-                const val = data[field.key];
-                if (!val && val !== 0) return null;
-                return (
-                  <div key={field.key} className="flex items-start gap-2 text-sm">
-                    <span className="h-2 w-2 rounded-full bg-purple-400 flex-shrink-0 mt-1.5" />
-                    <span className="text-muted-foreground">{field.label}:</span>
-                    <span className="font-medium">{String(val)}</span>
-                  </div>
-                );
-              })}
-              {data.bed_edger_needed && (
-                <div className="flex items-start gap-2 text-sm">
-                  <span className="h-2 w-2 rounded-full bg-purple-400 flex-shrink-0 mt-1.5" />
-                  <span className="text-muted-foreground">Bed Edger Needed:</span>
-                  <span className="font-medium">{data.bed_edger_needed}</span>
-                </div>
-              )}
-              {data.time_estimate && (
-                <div className="flex items-start gap-2 text-sm">
-                  <span className="h-2 w-2 rounded-full bg-purple-400 flex-shrink-0 mt-1.5" />
-                  <span className="text-muted-foreground">Time Estimate:</span>
-                  <span className="font-medium">{data.time_estimate} hrs</span>
-                </div>
-              )}
-            </div>
+        <div className="border rounded-lg p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
+          <div className="space-y-2">
+            {data.time_estimate && (
+              <Row label="Time Estimate" value={`${data.time_estimate} hrs`} flagged={flags.includes("time_estimate")} />
+            )}
+            {flags.includes("time_estimate") && !data.time_estimate && (
+              <FlaggedRow label="Time Estimate" fieldKey="time_estimate" flags={flags} flagLabels={flagLabels} />
+            )}
+
+            {fields.map(field => {
+              const val = data[field.key];
+              const isFlagged = flags.includes(field.key);
+              if (val || val === 0) return <Row key={field.key} label={field.label} value={val} flagged={isFlagged} />;
+              if (isFlagged) return <FlaggedRow key={field.key} label={field.label} fieldKey={field.key} flags={flags} flagLabels={flagLabels} />;
+              return null;
+            })}
+
+            {(data.bed_edger_needed || flags.includes("bed_edger_needed")) && (
+              data.bed_edger_needed
+                ? <Row label="Bed Edger Needed" value={data.bed_edger_needed} flagged={flags.includes("bed_edger_needed")} />
+                : <FlaggedRow label="Bed Edger Needed" fieldKey="bed_edger_needed" flags={flags} flagLabels={flagLabels} />
+            )}
+          </div>
+        </div>
+
+        {/* Calculated quantities */}
+        {calcNote && (
+          <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+            <span className="font-semibold">Calculated:</span> {calcNote}
           </div>
         )}
 
-        {/* Notes */}
+        {/* Notes & Warnings */}
         {(data.notes || hasObstructionNote || hasRollingNote) && (
           <div className="border rounded-lg p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Notes</h3>
