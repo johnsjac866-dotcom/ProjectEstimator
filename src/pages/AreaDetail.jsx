@@ -254,14 +254,7 @@ export default function AreaDetail() {
                 sod_vegetation_removed: operation.sod_vegetation_removed || '',
                 disposal_needed: operation.disposal_needed || '',
               }),
-              // For Bed Preparation: include main_type, sub_type, and dimensions
-              ...(operation.operation_type === 'Bed Preparation' && {
-                main_type: operation.bed_main_type || '',
-                sub_type: operation.bed_sub_type || '',
-                sf_length: sfLength,
-                sf_width: sfWidth,
-                sf,
-              }),
+
               // For Mulch: include mulch_type and dimensions
               ...(operation.operation_type === 'Mulch' && operation.mulch_type && {
                 mulch_type: operation.mulch_type,
@@ -285,73 +278,218 @@ export default function AreaDetail() {
                 const flags = [];
                 const flagLabels = {};
                 const addFlag = (key, label) => { flags.push(key); flagLabels[key] = label; };
+                const s = (v) => (v != null && v !== '') ? String(v) : '';
 
-                const entry = {
-                  edge_type: et,
-                  sub_type: et,
-                  bed_edger_needed: operation.bed_edger_needed || '',
-                };
-
+                const entry = { edge_type: et, sub_type: et, bed_edger_needed: s(operation.bed_edger_needed) };
                 if (!operation.bed_edger_needed) addFlag('bed_edger_needed', 'Bed Edger needed?');
 
                 if (et === 'Brick') {
-                  entry.brick_width = operation.brick_width || '';
-                  entry.brick_lf_straight = operation.lf_straight != null ? String(operation.lf_straight) : (operation.lf != null ? String(operation.lf) : '');
-                  entry.brick_lf_curved = operation.lf_curved != null ? String(operation.lf_curved) : '';
-                  entry.brick_color = operation.brick_color || '';
-                  entry.brick_ends_cut = operation.brick_ends_cut || '';
+                  entry.brick_width = s(operation.brick_width);
+                  entry.brick_lf_straight = s(operation.lf_straight ?? operation.lf);
+                  entry.brick_lf_curved = s(operation.lf_curved);
+                  entry.brick_color = s(operation.brick_color);
+                  entry.brick_ends_cut = s(operation.brick_ends_cut);
+                  entry.brick_prep_hours = s(operation.brick_prep_hours);
+                  entry.brick_sand_needed = s(operation.brick_sand_needed);
+                  entry.brick_cut_off_saw = s(operation.brick_cut_off_saw);
+                  entry.brick_disposal_hours = s(operation.brick_disposal_hours);
                   if (!entry.brick_width) addFlag('brick_width', 'Width (4 or 8 inch)');
                   if (!entry.brick_lf_straight && !entry.brick_lf_curved) addFlag('brick_lf_straight', 'Linear Feet');
                   if (!entry.brick_color) addFlag('brick_color', 'Color');
                   if (!entry.brick_ends_cut) addFlag('brick_ends_cut', 'Ends cut to reduce gaps?');
+                  if (!entry.brick_prep_hours) addFlag('brick_prep_hours', 'Prep area for brick? (hrs)');
+                  if (!entry.brick_sand_needed) addFlag('brick_sand_needed', 'Coarse / Washed Sand needed?');
+                  if (!entry.brick_cut_off_saw) addFlag('brick_cut_off_saw', 'Cut Off Saw needed?');
+                  if (!entry.brick_disposal_hours) addFlag('brick_disposal_hours', 'Disposal of debris or extra brick? (hrs)');
                 } else if (et === 'Metal') {
-                  entry.metal_type = operation.metal_type || '';
-                  entry.metal_lf = operation.lf != null ? String(operation.lf) : '';
-                  entry.metal_corners = operation.metal_corners != null ? String(operation.metal_corners) : '';
-                  entry.metal_splicers = operation.metal_splicers != null ? String(operation.metal_splicers) : '';
+                  entry.metal_type = s(operation.metal_type);
+                  entry.metal_lf = s(operation.metal_lf ?? operation.lf);
+                  entry.metal_corners = s(operation.metal_corners);
+                  entry.metal_splicers = s(operation.metal_splicers);
+                  entry.metal_cut_off_saw = s(operation.metal_cut_off_saw);
+                  entry.metal_remove_sod_hours = s(operation.metal_remove_sod_hours);
                   if (!entry.metal_type) addFlag('metal_type', 'Metal Type (Aluminum or Steel)');
                   if (!entry.metal_lf) addFlag('metal_lf', 'Linear Feet');
                   if (!entry.metal_corners) addFlag('metal_corners', 'Corners');
                   if (!entry.metal_splicers) addFlag('metal_splicers', 'Splicers');
+                  if (!entry.metal_cut_off_saw) addFlag('metal_cut_off_saw', 'Cut Off Saw needed?');
+                  if (!entry.metal_remove_sod_hours) addFlag('metal_remove_sod_hours', 'Remove sod behind edge? (hrs)');
                 } else if (et === 'Bullet') {
-                  entry.bullet_lf = operation.lf != null ? String(operation.lf) : '';
-                  entry.bullet_color = operation.bullet_color || '';
+                  entry.bullet_supplier = s(operation.bullet_supplier);
+                  entry.bullet_lf = s(operation.bullet_lf ?? operation.lf);
+                  entry.bullet_color = s(operation.bullet_color);
+                  entry.bullet_prep_hours = s(operation.bullet_prep_hours);
+                  entry.bullet_permeable_chips = s(operation.bullet_permeable_chips);
+                  entry.bullet_cut_off_saw = s(operation.bullet_cut_off_saw);
+                  entry.bullet_disposal_hours = s(operation.bullet_disposal_hours);
+                  if (!entry.bullet_supplier) addFlag('bullet_supplier', 'Supplier (Menards or Rochester)');
                   if (!entry.bullet_lf) addFlag('bullet_lf', 'Linear Feet');
                   if (!entry.bullet_color) addFlag('bullet_color', 'Color');
+                  if (!entry.bullet_prep_hours) addFlag('bullet_prep_hours', 'Prep area for brick? (hrs)');
+                  if (!entry.bullet_permeable_chips) addFlag('bullet_permeable_chips', 'Bulk Permeable Chips needed?');
+                  if (!entry.bullet_cut_off_saw) addFlag('bullet_cut_off_saw', 'Cut Off Saw needed?');
+                  if (!entry.bullet_disposal_hours) addFlag('bullet_disposal_hours', 'Disposal of debris? (hrs)');
                 } else if (et === 'Natural Edge') {
-                  entry.natural_method = operation.natural_method || '';
-                  entry.natural_lf = operation.lf != null ? String(operation.lf) : '';
+                  entry.natural_method = s(operation.natural_method);
+                  entry.natural_lf = s(operation.natural_lf ?? operation.lf);
                   if (!entry.natural_method) addFlag('natural_method', 'Method (Hand cut or Bed Edger)');
                   if (!entry.natural_lf) addFlag('natural_lf', 'Linear Feet');
                 } else if (et === 'Poly') {
-                  entry.poly_lf = operation.lf != null ? String(operation.lf) : '';
-                  entry.poly_corners_90 = operation.poly_corners_90 != null ? String(operation.poly_corners_90) : '';
-                  entry.poly_corners_45 = operation.poly_corners_45 != null ? String(operation.poly_corners_45) : '';
-                  entry.poly_splicers = operation.poly_splicers != null ? String(operation.poly_splicers) : '';
+                  entry.poly_lf = s(operation.poly_lf ?? operation.lf);
+                  entry.poly_angular_connectors = s(operation.poly_angular_connectors);
+                  entry.poly_remove_sod_hours = s(operation.poly_remove_sod_hours);
                   if (!entry.poly_lf) addFlag('poly_lf', 'Linear Feet');
-                  if (!entry.poly_corners_90) addFlag('poly_corners_90', '90° Corners');
-                  if (!entry.poly_corners_45) addFlag('poly_corners_45', '45° Corners');
-                  if (!entry.poly_splicers) addFlag('poly_splicers', 'Splicers');
+                  if (!entry.poly_angular_connectors) addFlag('poly_angular_connectors', 'Angular connectors needed?');
+                  if (!entry.poly_remove_sod_hours) addFlag('poly_remove_sod_hours', 'Remove sod or soil behind edge? (hrs)');
                 } else if (et === 'Snapped Limestone') {
-                  entry.snapped_lf = operation.lf != null ? String(operation.lf) : '';
-                  entry.snapped_ends_cut = operation.snapped_ends_cut || '';
-                  entry.snapped_corners = operation.snapped_corners != null ? String(operation.snapped_corners) : '';
-                  entry.snapped_splicers = operation.snapped_splicers != null ? String(operation.snapped_splicers) : '';
+                  entry.snapped_lf = s(operation.snapped_lf ?? operation.lf);
+                  entry.snapped_ends_cut = s(operation.snapped_ends_cut);
+                  entry.snapped_sand_needed = s(operation.snapped_sand_needed);
+                  entry.snapped_prep_hours = s(operation.snapped_prep_hours);
+                  entry.snapped_cut_off_saw = s(operation.snapped_cut_off_saw);
                   if (!entry.snapped_lf) addFlag('snapped_lf', 'Linear Feet');
                   if (!entry.snapped_ends_cut) addFlag('snapped_ends_cut', 'Ends cut to reduce gaps?');
-                  if (!entry.snapped_corners) addFlag('snapped_corners', 'Corners');
-                  if (!entry.snapped_splicers) addFlag('snapped_splicers', 'Splicers');
+                  if (!entry.snapped_sand_needed) addFlag('snapped_sand_needed', 'Coarse / Washed Sand needed?');
+                  if (!entry.snapped_prep_hours) addFlag('snapped_prep_hours', 'Prep area for stone? (hrs)');
+                  if (!entry.snapped_cut_off_saw) addFlag('snapped_cut_off_saw', 'Cut Off Saw needed?');
                 } else {
-                  // Edge type not identified — flag it
                   addFlag('edge_type', 'Edge Type');
                 }
 
                 if (!operation.time_estimate) addFlag('time_estimate', 'Time Estimate');
+                if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
+                return entry;
+              })()),
+              // For Bed Preparation: map all sub-type-specific fields and flag missing ones
+              ...(operation.operation_type === 'Bed Preparation' && (() => {
+                const sub = operation.bed_sub_type || '';
+                const flags = [];
+                const flagLabels = {};
+                const addFlag = (key, label) => { flags.push(key); flagLabels[key] = label; };
+                const s = (v) => (v != null && v !== '') ? String(v) : '';
 
-                if (flags.length > 0) {
-                  entry._flags = flags;
-                  entry._flag_labels = flagLabels;
+                const sfLength = s(operation.sf_length);
+                const sfWidth = s(operation.sf_width);
+                const sf = sfLength && sfWidth ? String(Math.round(parseFloat(sfLength) * parseFloat(sfWidth))) : '';
+
+                const entry = {
+                  main_type: operation.bed_main_type || '',
+                  sub_type: sub,
+                  sf_length: sfLength,
+                  sf_width: sfWidth,
+                  sf,
+                };
+
+                if (!sf) addFlag('sf', 'Square Footage');
+
+                // ── Till 1" and Till 3" ────────────────────────────────────
+                if (sub === 'till_1in' || sub === 'till_3in') {
+                  entry.till_tilling_mode = s(operation.till_tilling_mode);
+                  entry.till_hand_tiller_type = s(operation.till_hand_tiller_type);
+                  entry.till_hand_tiller_hours = s(operation.till_hand_tiller_hours);
+                  entry.till_machine_type = s(operation.till_machine_type);
+                  entry.till_hydraulic_tiller = s(operation.till_hydraulic_tiller);
+                  entry.remove_rock_hours = s(operation.remove_rock_hours);
+                  entry.fertilizer_hours = s(operation.fertilizer_hours);
+                  entry.chicken_crumbles = s(operation.chicken_crumbles);
+                  entry.amend_amendment_type = s(operation.amend_amendment_type);
+                  entry.finish_bed_hours = s(operation.finish_bed_hours);
+                  if (!entry.till_tilling_mode) addFlag('till_tilling_mode', 'Hand vs Machine');
+                  if (entry.till_tilling_mode === 'Hand' && !entry.till_hand_tiller_type) addFlag('till_hand_tiller_type', 'Hand Tiller Type');
+                  if (entry.till_tilling_mode === 'Hand' && !entry.till_hand_tiller_hours) addFlag('till_hand_tiller_hours', 'Hand Tiller Unit Hours');
+                  if (entry.till_tilling_mode === 'Machine' && !entry.till_machine_type) addFlag('till_machine_type', 'Machine Type (Dingo or Vermeer)');
+                  if (entry.till_tilling_mode === 'Machine' && !entry.till_hydraulic_tiller) addFlag('till_hydraulic_tiller', 'Hydraulic Tiller Attachment?');
+                  if (!entry.remove_rock_hours) addFlag('remove_rock_hours', 'Remove rock/debris/roots? (hrs)');
+                  if (!entry.fertilizer_hours) addFlag('fertilizer_hours', 'Fertilizer? (hrs)');
+                  if (!entry.chicken_crumbles) addFlag('chicken_crumbles', 'Chicken Crumbles?');
+                  if (!entry.amend_amendment_type) addFlag('amend_amendment_type', 'Amendment type (Topsoil or Compost)');
+                  if (!entry.finish_bed_hours) addFlag('finish_bed_hours', 'Finish bed by hand? (hrs)');
                 }
+
+                // ── Lawn No Amendments ──────────────────────────────────────
+                if (sub === 'lawn_none') {
+                  entry.lawn_tilling_mode = s(operation.lawn_tilling_mode);
+                  entry.lawn_hand_tiller_type = s(operation.lawn_hand_tiller_type);
+                  entry.lawn_hand_tiller_hours = s(operation.lawn_hand_tiller_hours);
+                  entry.lawn_machine_type = s(operation.lawn_machine_type);
+                  entry.lawn_hydraulic_tiller = s(operation.lawn_hydraulic_tiller);
+                  entry.fertilizer_hours = s(operation.fertilizer_hours);
+                  entry.finish_bed_hours = s(operation.finish_bed_hours);
+                  if (!entry.lawn_tilling_mode) addFlag('lawn_tilling_mode', 'Hand vs Machine');
+                  if (entry.lawn_tilling_mode === 'Hand' && !entry.lawn_hand_tiller_type) addFlag('lawn_hand_tiller_type', 'Hand Tiller Type');
+                  if (entry.lawn_tilling_mode === 'Hand' && !entry.lawn_hand_tiller_hours) addFlag('lawn_hand_tiller_hours', 'Hand Tiller Unit Hours');
+                  if (entry.lawn_tilling_mode === 'Machine' && !entry.lawn_machine_type) addFlag('lawn_machine_type', 'Machine Type (Dingo or Vermeer)');
+                  if (entry.lawn_tilling_mode === 'Machine' && !entry.lawn_hydraulic_tiller) addFlag('lawn_hydraulic_tiller', 'Hydraulic Tiller Attachment?');
+                  if (!entry.fertilizer_hours) addFlag('fertilizer_hours', 'Fertilizer? (hrs)');
+                  if (!entry.finish_bed_hours) addFlag('finish_bed_hours', 'Finish bed by hand? (hrs)');
+                }
+
+                // ── Lawn With Amendments ────────────────────────────────────
+                if (sub === 'lawn_1in') {
+                  entry.lawn_tilling_mode = s(operation.lawn_tilling_mode);
+                  entry.lawn_hand_tiller_type = s(operation.lawn_hand_tiller_type);
+                  entry.lawn_hand_tiller_hours = s(operation.lawn_hand_tiller_hours);
+                  entry.lawn_machine_type = s(operation.lawn_machine_type);
+                  entry.lawn_hydraulic_tiller = s(operation.lawn_hydraulic_tiller);
+                  entry.fertilizer_hours = s(operation.fertilizer_hours);
+                  entry.finish_bed_hours = s(operation.finish_bed_hours);
+                  entry.amend_amendment_type = s(operation.amend_amendment_type);
+                  entry.amend_amendment_depth_in = s(operation.amend_amendment_depth_in);
+                  if (!entry.lawn_tilling_mode) addFlag('lawn_tilling_mode', 'Hand vs Machine');
+                  if (entry.lawn_tilling_mode === 'Hand' && !entry.lawn_hand_tiller_type) addFlag('lawn_hand_tiller_type', 'Hand Tiller Type');
+                  if (entry.lawn_tilling_mode === 'Hand' && !entry.lawn_hand_tiller_hours) addFlag('lawn_hand_tiller_hours', 'Hand Tiller Unit Hours');
+                  if (entry.lawn_tilling_mode === 'Machine' && !entry.lawn_machine_type) addFlag('lawn_machine_type', 'Machine Type (Dingo or Vermeer)');
+                  if (entry.lawn_tilling_mode === 'Machine' && !entry.lawn_hydraulic_tiller) addFlag('lawn_hydraulic_tiller', 'Hydraulic Tiller Attachment?');
+                  if (!entry.fertilizer_hours) addFlag('fertilizer_hours', 'Fertilizer? (hrs)');
+                  if (!entry.finish_bed_hours) addFlag('finish_bed_hours', 'Finish bed by hand? (hrs)');
+                  if (!entry.amend_amendment_type) addFlag('amend_amendment_type', 'Amendment type (Topsoil or Compost)');
+                  if (!entry.amend_amendment_depth_in) addFlag('amend_amendment_depth_in', 'Amendment depth (inches)');
+                }
+
+                // ── No Till Hand ────────────────────────────────────────────
+                if (sub === 'notill_hand') {
+                  entry.slope_distance_hours = s(operation.slope_distance_hours);
+                  if (!entry.slope_distance_hours) addFlag('slope_distance_hours', 'Additional time for slopes/distance/challenges? (hrs)');
+                }
+
+                // ── No Till Machine ─────────────────────────────────────────
+                if (sub === 'notill_machine') {
+                  entry.notill_machine_type = s(operation.notill_machine_type);
+                  if (!entry.notill_machine_type) addFlag('notill_machine_type', 'Machine type (Vermeer or Dingo)');
+                }
+
+                // ── Reprofiling ─────────────────────────────────────────────
+                if (sub && sub.startsWith('repro_')) {
+                  entry.repro_tilling = s(operation.repro_tilling);
+                  entry.repro_till_tilling_mode = s(operation.repro_till_tilling_mode);
+                  entry.repro_till_hand_tiller_type = s(operation.repro_till_hand_tiller_type);
+                  entry.repro_till_hand_tiller_hours = s(operation.repro_till_hand_tiller_hours);
+                  entry.repro_till_machine_type = s(operation.repro_till_machine_type);
+                  entry.repro_till_hydraulic_tiller = s(operation.repro_till_hydraulic_tiller);
+                  entry.remove_rock_hours = s(operation.remove_rock_hours);
+                  entry.repro_amendments = s(operation.repro_amendments);
+                  entry.repro_amend_amendment_type = s(operation.repro_amend_amendment_type);
+                  entry.repro_amend_amendment_depth_in = s(operation.repro_amend_amendment_depth_in);
+                  entry.repro_chicken_crumbles = s(operation.repro_chicken_crumbles);
+                  entry.fertilizer_hours = s(operation.fertilizer_hours);
+                  entry.finish_bed_hours = s(operation.finish_bed_hours);
+                  if (!entry.repro_tilling) addFlag('repro_tilling', 'Tilling needed?');
+                  if (entry.repro_tilling === 'Yes' && !entry.repro_till_tilling_mode) addFlag('repro_till_tilling_mode', 'Tilling: Hand vs Machine');
+                  if (entry.repro_till_tilling_mode === 'Hand' && !entry.repro_till_hand_tiller_type) addFlag('repro_till_hand_tiller_type', 'Hand Tiller Type');
+                  if (entry.repro_till_tilling_mode === 'Hand' && !entry.repro_till_hand_tiller_hours) addFlag('repro_till_hand_tiller_hours', 'Hand Tiller Unit Hours');
+                  if (entry.repro_till_tilling_mode === 'Machine' && !entry.repro_till_machine_type) addFlag('repro_till_machine_type', 'Tilling Machine (Dingo or Vermeer)');
+                  if (entry.repro_till_tilling_mode === 'Machine' && !entry.repro_till_hydraulic_tiller) addFlag('repro_till_hydraulic_tiller', 'Hydraulic Tiller Attachment?');
+                  if (!entry.remove_rock_hours) addFlag('remove_rock_hours', 'Remove rock/debris/roots? (hrs)');
+                  if (!entry.repro_amendments) addFlag('repro_amendments', 'Amendments needed?');
+                  if (entry.repro_amendments === 'Yes' && !entry.repro_amend_amendment_type) addFlag('repro_amend_amendment_type', 'Amendment type (Topsoil or Compost)');
+                  if (entry.repro_amendments === 'Yes' && !entry.repro_amend_amendment_depth_in) addFlag('repro_amend_amendment_depth_in', 'Amendment depth (inches)');
+                  if (entry.repro_amendments === 'Yes' && !entry.repro_chicken_crumbles) addFlag('repro_chicken_crumbles', 'Chicken Crumbles?');
+                  if (!entry.fertilizer_hours) addFlag('fertilizer_hours', 'Fertilizer? (hrs)');
+                  if (!entry.finish_bed_hours) addFlag('finish_bed_hours', 'Finish bed by hand? (hrs)');
+                }
+
+                if (!operation.time_estimate) addFlag('time_estimate', 'Time Estimate');
+                if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
                 return entry;
               })()),
             };

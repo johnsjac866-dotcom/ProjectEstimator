@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     // Analyze all transcripts together
     const analysis = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract a consolidated summary, key insights, recommended operations, and structured data for each operation.\n\nValid operation types: Walkway/Patio, Site Management & Daily Cleanup, Bed Preparation, Rough Grading & Hauling, Demolition & Removals, Bed Edging, Planting, Mulch, Drainage, Lawn Repair & Install, Boulders/Accents & Structures, Hardscape - Repair Existing, Maintenance, Pathway / Steps, Retaining Wall\n\nFor Rough Grading & Hauling operations, extract:\n- sub_type: One of "excavation_hand", "excavation_machine", "importation_hand", "importation_machine"\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n- depth_inches: Depth in inches (number)\n- machine_type: "Vermeer" or "Dingo" (if applicable)\n- sod_vegetation_removed: "Yes" or "No"\n- disposal_needed: "Yes" or "No"\n\nFor Bed Preparation operations, extract:\n- bed_main_type: One of "till", "no_till", "lawn", "reprofiling"\n- bed_sub_type: One of "till_1in", "till_3in", "notill_hand", "notill_machine", "notill_deadsod", "lawn_none", "lawn_1in", "repro_hardscape", "repro_narrow", "repro_sloped", "repro_soil"\n  Choose based on context: if lawn prep with 1 inch amendments → "lawn_1in", no amendments → "lawn_none", till with 1" amendments → "till_1in", etc.\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)
+      prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract a consolidated summary, key insights, recommended operations, and structured data for each operation.\n\nValid operation types: Walkway/Patio, Site Management & Daily Cleanup, Bed Preparation, Rough Grading & Hauling, Demolition & Removals, Bed Edging, Planting, Mulch, Drainage, Lawn Repair & Install, Boulders/Accents & Structures, Hardscape - Repair Existing, Maintenance, Pathway / Steps, Retaining Wall\n\nFor Rough Grading & Hauling operations, extract:\n- sub_type: One of "excavation_hand", "excavation_machine", "importation_hand", "importation_machine"\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\n- depth_inches: Depth in inches (number)\n- machine_type: "Vermeer" or "Dingo" (if applicable)\n- sod_vegetation_removed: "Yes" or "No"\n- disposal_needed: "Yes" or "No"\n\nFor Bed Preparation operations, extract:\n- bed_main_type: One of "till", "no_till", "lawn", "reprofiling"\n- bed_sub_type: One of "till_1in", "till_3in", "notill_hand", "notill_machine", "notill_deadsod", "lawn_none", "lawn_1in", "repro_hardscape", "repro_narrow", "repro_sloped", "repro_soil"\n  Choose based on context: if lawn prep with 1 inch amendments → "lawn_1in", no amendments → "lawn_none", till with 1" amendments → "till_1in", etc.\n- sf_length: Length in feet (number)\n- sf_width: Width in feet (number)\nFor TILL (till_1in, till_3in) also extract:\n- till_tilling_mode: "Hand" or "Machine"\n- till_hand_tiller_type: "16\\\" Hand Tiller" or "FG 110 Hand Tiller" (if hand)\n- till_hand_tiller_hours: Unit hours (number, if hand)\n- till_machine_type: "Dingo" or "Vermeer" (if machine)\n- till_hydraulic_tiller: "Yes" or "No" (if machine)\n- remove_rock_hours: Hours to remove rock/debris/roots (number)\n- fertilizer_hours: Hours for fertilizer (number)\n- chicken_crumbles: "Yes" or "No"\n- amend_amendment_type: "Topsoil" or "Compost"\n- finish_bed_hours: Hours to finish bed by hand (number)\nFor LAWN (lawn_none, lawn_1in) also extract:\n- lawn_tilling_mode: "Hand" or "Machine"\n- lawn_hand_tiller_type: "16\\\" Hand Tiller" or "FG 110 Hand Tiller" (if hand)\n- lawn_hand_tiller_hours: Unit hours (number, if hand)\n- lawn_machine_type: "Dingo" or "Vermeer" (if machine)\n- lawn_hydraulic_tiller: "Yes" or "No" (if machine)\n- fertilizer_hours: Hours for fertilizer (number)\n- finish_bed_hours: Hours to finish bed by hand (number)\n- amend_amendment_type: "Topsoil" or "Compost" (for lawn_1in only)\n- amend_amendment_depth_in: Amendment depth in inches (number, for lawn_1in only)\nFor NO TILL HAND (notill_hand) also extract:\n- slope_distance_hours: Additional time for slopes/distance/challenges (number)\nFor NO TILL MACHINE (notill_machine) also extract:\n- notill_machine_type: "Vermeer" or "Dingo"\nFor REPROFILING (repro_*) also extract:\n- repro_tilling: "Yes" or "No"\n- repro_till_tilling_mode: "Hand" or "Machine" (if tilling)\n- repro_till_hand_tiller_type: "16\\\" Hand Tiller" or "FG 110 Hand Tiller" (if hand)\n- repro_till_hand_tiller_hours: Unit hours (number, if hand)\n- repro_till_machine_type: "Dingo" or "Vermeer" (if machine)\n- repro_till_hydraulic_tiller: "Yes" or "No" (if machine)\n- remove_rock_hours: Hours to remove rock/debris/roots (number)\n- repro_amendments: "Yes" or "No"\n- repro_amend_amendment_type: "Topsoil" or "Compost" (if amendments)\n- repro_amend_amendment_depth_in: Amendment depth in inches (number, if amendments)\n- repro_chicken_crumbles: "Yes" or "No" (if amendments)\n- fertilizer_hours: Hours for fertilizer (number)\n- finish_bed_hours: Hours to finish bed by hand (number)
 
 For Mulch operations, extract:
 - mulch_type: "Organic" or "Stone"
@@ -45,25 +45,48 @@ For Lawn Repair & Install operations, extract:
 - sf_width: Width in feet (number)
 - seed_type: One of "Madison Parks", "Tough Stuff", "Shady Place", "Carefree No Mow" (if mentioned)
 
-For Bed Edging operations, extract:
+For Bed Edging operations, extract ALL fields that are mentioned:
 - edge_type: One of "Brick", "Metal", "Bullet", "Natural Edge", "Poly", "Snapped Limestone"
-- lf: Total linear feet (number) — can also be split as lf_straight + lf_curved for Brick
-- lf_straight: For Brick only — straight linear feet (number)
-- lf_curved: For Brick only — curved linear feet (number)
-- brick_width: For Brick — "4 inch" or "8 inch"
-- brick_color: For Brick — color description (e.g. "Natural", "Red", "Charcoal")
-- brick_ends_cut: For Brick — "Yes" or "No"
-- metal_type: For Metal — "Aluminum" or "Steel"
-- metal_corners: For Metal — number of corners
-- metal_splicers: For Metal — number of splicers
-- bullet_color: For Bullet — color description
-- natural_method: For Natural Edge — "Hand cut" or "Bed Edger"
-- poly_corners_90: For Poly — number of 90-degree corners
-- poly_corners_45: For Poly — number of 45-degree corners
-- poly_splicers: For Poly — number of splicers
-- snapped_ends_cut: For Snapped Limestone — "Yes" or "No"
-- snapped_corners: For Snapped Limestone — number of corners
-- snapped_splicers: For Snapped Limestone — number of splicers
+- lf: Total linear feet (number)
+BRICK fields:
+- lf_straight: Straight linear feet (number)
+- lf_curved: Curved linear feet (number)
+- brick_width: "4 inch" or "8 inch"
+- brick_color: color description (e.g. "Natural", "Red", "Charcoal")
+- brick_ends_cut: "Yes" or "No"
+- brick_prep_hours: Hours to prep area for brick (number)
+- brick_sand_needed: "Yes" or "No"
+- brick_cut_off_saw: "Yes" or "No"
+- brick_disposal_hours: Hours for disposal of debris/extra brick (number)
+METAL fields:
+- metal_type: "Aluminum" or "Steel"
+- metal_lf: Linear feet (number)
+- metal_corners: number of corners (number)
+- metal_splicers: number of splicers (number)
+- metal_cut_off_saw: "Yes" or "No"
+- metal_remove_sod_hours: Hours to remove sod behind edge (number)
+BULLET fields:
+- bullet_supplier: "Menards" or "Rochester"
+- bullet_lf: Linear feet (number)
+- bullet_color: color description
+- bullet_prep_hours: Hours to prep area (number)
+- bullet_permeable_chips: "Yes" or "No"
+- bullet_cut_off_saw: "Yes" or "No"
+- bullet_disposal_hours: Hours for disposal (number)
+NATURAL EDGE fields:
+- natural_method: "Hand cut" or "Bed Edger"
+- natural_lf: Linear feet (number)
+POLY fields:
+- poly_lf: Linear feet (number)
+- poly_angular_connectors: Number of angular connectors (number)
+- poly_remove_sod_hours: Hours to remove sod/soil (number)
+SNAPPED LIMESTONE fields:
+- snapped_lf: Linear feet (number)
+- snapped_ends_cut: "Yes" or "No"
+- snapped_sand_needed: "Yes" or "No"
+- snapped_prep_hours: Hours to prep area (number)
+- snapped_cut_off_saw: "Yes" or "No"
+ALL Bed Edging:
 - bed_edger_needed: "Yes" or "No" (if mentioned)
 
 For ALL operation types, also extract:
@@ -105,20 +128,64 @@ Leave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) =>
                 lf_straight: { type: ['number', 'null'], description: 'For Bed Edging Brick: straight linear feet' },
                 lf_curved: { type: ['number', 'null'], description: 'For Bed Edging Brick: curved linear feet' },
                 brick_width: { type: 'string', description: 'For Bed Edging Brick: "4 inch" or "8 inch"' },
-                brick_color: { type: 'string', description: 'For Bed Edging Brick: color (e.g. Natural, Red, Charcoal)' },
+                brick_color: { type: 'string', description: 'For Bed Edging Brick: color' },
                 brick_ends_cut: { type: 'string', description: 'For Bed Edging Brick: "Yes" or "No"' },
+                brick_prep_hours: { type: ['number', 'null'], description: 'For Bed Edging Brick: prep area hours' },
+                brick_sand_needed: { type: 'string', description: 'For Bed Edging Brick: "Yes" or "No"' },
+                brick_cut_off_saw: { type: 'string', description: 'For Bed Edging Brick: "Yes" or "No"' },
+                brick_disposal_hours: { type: ['number', 'null'], description: 'For Bed Edging Brick: disposal hours' },
                 metal_type: { type: 'string', description: 'For Bed Edging Metal: "Aluminum" or "Steel"' },
+                metal_lf: { type: ['number', 'null'], description: 'For Bed Edging Metal: linear feet' },
                 metal_corners: { type: ['number', 'null'], description: 'For Bed Edging Metal: number of corners' },
                 metal_splicers: { type: ['number', 'null'], description: 'For Bed Edging Metal: number of splicers' },
-                bullet_color: { type: 'string', description: 'For Bed Edging Bullet: color (e.g. Gray, Tan, Red)' },
+                metal_cut_off_saw: { type: 'string', description: 'For Bed Edging Metal: "Yes" or "No"' },
+                metal_remove_sod_hours: { type: ['number', 'null'], description: 'For Bed Edging Metal: remove sod hours' },
+                bullet_supplier: { type: 'string', description: 'For Bed Edging Bullet: "Menards" or "Rochester"' },
+                bullet_lf: { type: ['number', 'null'], description: 'For Bed Edging Bullet: linear feet' },
+                bullet_color: { type: 'string', description: 'For Bed Edging Bullet: color' },
+                bullet_prep_hours: { type: ['number', 'null'], description: 'For Bed Edging Bullet: prep area hours' },
+                bullet_permeable_chips: { type: 'string', description: 'For Bed Edging Bullet: "Yes" or "No"' },
+                bullet_cut_off_saw: { type: 'string', description: 'For Bed Edging Bullet: "Yes" or "No"' },
+                bullet_disposal_hours: { type: ['number', 'null'], description: 'For Bed Edging Bullet: disposal hours' },
                 natural_method: { type: 'string', description: 'For Bed Edging Natural Edge: "Hand cut" or "Bed Edger"' },
-                poly_corners_90: { type: ['number', 'null'], description: 'For Bed Edging Poly: number of 90-degree corners' },
-                poly_corners_45: { type: ['number', 'null'], description: 'For Bed Edging Poly: number of 45-degree corners' },
-                poly_splicers: { type: ['number', 'null'], description: 'For Bed Edging Poly: number of splicers' },
+                natural_lf: { type: ['number', 'null'], description: 'For Bed Edging Natural Edge: linear feet' },
+                poly_lf: { type: ['number', 'null'], description: 'For Bed Edging Poly: linear feet' },
+                poly_angular_connectors: { type: ['number', 'null'], description: 'For Bed Edging Poly: angular connectors' },
+                poly_remove_sod_hours: { type: ['number', 'null'], description: 'For Bed Edging Poly: remove sod hours' },
+                snapped_lf: { type: ['number', 'null'], description: 'For Bed Edging Snapped Limestone: linear feet' },
                 snapped_ends_cut: { type: 'string', description: 'For Bed Edging Snapped Limestone: "Yes" or "No"' },
-                snapped_corners: { type: ['number', 'null'], description: 'For Bed Edging Snapped Limestone: number of corners' },
-                snapped_splicers: { type: ['number', 'null'], description: 'For Bed Edging Snapped Limestone: number of splicers' },
+                snapped_sand_needed: { type: 'string', description: 'For Bed Edging Snapped Limestone: "Yes" or "No"' },
+                snapped_prep_hours: { type: ['number', 'null'], description: 'For Bed Edging Snapped Limestone: prep area hours' },
+                snapped_cut_off_saw: { type: 'string', description: 'For Bed Edging Snapped Limestone: "Yes" or "No"' },
                 bed_edger_needed: { type: 'string', description: 'For Bed Edging: "Yes" or "No"' },
+                till_tilling_mode: { type: 'string', description: 'For Bed Prep Till: "Hand" or "Machine"' },
+                till_hand_tiller_type: { type: 'string', description: 'For Bed Prep Till Hand: tiller type' },
+                till_hand_tiller_hours: { type: ['number', 'null'], description: 'For Bed Prep Till Hand: unit hours' },
+                till_machine_type: { type: 'string', description: 'For Bed Prep Till Machine: "Dingo" or "Vermeer"' },
+                till_hydraulic_tiller: { type: 'string', description: 'For Bed Prep Till Machine: "Yes" or "No"' },
+                remove_rock_hours: { type: ['number', 'null'], description: 'For Bed Prep: remove rock/debris/roots hours' },
+                fertilizer_hours: { type: ['number', 'null'], description: 'For Bed Prep: fertilizer hours' },
+                chicken_crumbles: { type: 'string', description: 'For Bed Prep Till: "Yes" or "No"' },
+                amend_amendment_type: { type: 'string', description: 'For Bed Prep Till/Lawn: "Topsoil" or "Compost"' },
+                amend_amendment_depth_in: { type: ['number', 'null'], description: 'For Bed Prep Lawn with amendments: depth in inches' },
+                finish_bed_hours: { type: ['number', 'null'], description: 'For Bed Prep: finish bed by hand hours' },
+                lawn_tilling_mode: { type: 'string', description: 'For Bed Prep Lawn: "Hand" or "Machine"' },
+                lawn_hand_tiller_type: { type: 'string', description: 'For Bed Prep Lawn Hand: tiller type' },
+                lawn_hand_tiller_hours: { type: ['number', 'null'], description: 'For Bed Prep Lawn Hand: unit hours' },
+                lawn_machine_type: { type: 'string', description: 'For Bed Prep Lawn Machine: "Dingo" or "Vermeer"' },
+                lawn_hydraulic_tiller: { type: 'string', description: 'For Bed Prep Lawn Machine: "Yes" or "No"' },
+                slope_distance_hours: { type: ['number', 'null'], description: 'For Bed Prep No-Till Hand: additional time hours' },
+                notill_machine_type: { type: 'string', description: 'For Bed Prep No-Till Machine: "Vermeer" or "Dingo"' },
+                repro_tilling: { type: 'string', description: 'For Bed Prep Reprofiling: "Yes" or "No"' },
+                repro_till_tilling_mode: { type: 'string', description: 'For Bed Prep Reprofiling tilling: "Hand" or "Machine"' },
+                repro_till_hand_tiller_type: { type: 'string', description: 'For Bed Prep Reprofiling Hand: tiller type' },
+                repro_till_hand_tiller_hours: { type: ['number', 'null'], description: 'For Bed Prep Reprofiling Hand: unit hours' },
+                repro_till_machine_type: { type: 'string', description: 'For Bed Prep Reprofiling Machine: "Dingo" or "Vermeer"' },
+                repro_till_hydraulic_tiller: { type: 'string', description: 'For Bed Prep Reprofiling Machine: "Yes" or "No"' },
+                repro_amendments: { type: 'string', description: 'For Bed Prep Reprofiling: "Yes" or "No"' },
+                repro_amend_amendment_type: { type: 'string', description: 'For Bed Prep Reprofiling amendments: "Topsoil" or "Compost"' },
+                repro_amend_amendment_depth_in: { type: ['number', 'null'], description: 'For Bed Prep Reprofiling amendments: depth in inches' },
+                repro_chicken_crumbles: { type: 'string', description: 'For Bed Prep Reprofiling: "Yes" or "No"' },
                 time_estimate: { type: ['number', 'null'], description: 'Time estimate in hours for this specific operation, extracted from any mention of hours, time, or duration in the voice notes (e.g. "2 hours", "about 3 hrs", "half a day = 4 hours"). Null if not mentioned.' }
               },
               required: ['operation_type', 'description']
