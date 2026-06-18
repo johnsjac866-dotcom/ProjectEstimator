@@ -7,6 +7,7 @@ import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hamme
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 import VoiceNotes from "@/components/VoiceNotes";
+import { mapDemolitionEntry, mapBouldersEntry } from "@/lib/voiceNoteMapper";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
@@ -491,6 +492,16 @@ export default function AreaDetail() {
                 if (!operation.time_estimate) addFlag('time_estimate', 'Time Estimate');
                 if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
                 return entry;
+              })()),
+              // For Demolition & Removals: config-driven field mapping with auto-flagging
+              ...(operation.operation_type === 'Demolition & Removals' && (() => {
+                const mapped = mapDemolitionEntry(operation);
+                return mapped || {};
+              })()),
+              // For Boulders/Accents & Structures: type-specific field mapping with auto-flagging
+              ...(operation.operation_type === 'Boulders/Accents & Structures' && (() => {
+                const mapped = mapBouldersEntry(operation);
+                return mapped || {};
               })()),
             };
             

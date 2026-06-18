@@ -34,11 +34,37 @@ export default function DemolitionWizard() {
       setOperations(ops);
       if (opId) {
         const existing = ops.find(o => o.id === opId);
-        if (existing) setData(existing);
+        if (existing) {
+          setData(existing);
+          // Jump to the step containing the first flagged field
+          if (existing._flags?.length > 0 && existing.sub_type) {
+            const c = DEMO_FIELDS[existing.sub_type] || { measurements: [], details: [] };
+            const measKeys = new Set([
+              ...(c.hasSFCalc ? ['sf', 'sf_length', 'sf_width'] : []),
+              ...(c.hasCYCalc ? ['depth_inches'] : []),
+              ...c.measurements.map(ff => ff.key)
+            ]);
+            setStep(measKeys.has(existing._flags[0]) ? 2 : 3);
+          }
+        }
       }
       setLoading(false);
     })();
   }, [areaId]);
+
+  // Scroll to first flagged field when step renders
+  useEffect(() => {
+    if (step < 2 || !(data._flags?.length > 0)) return;
+    const timer = setTimeout(() => {
+      for (const el of document.querySelectorAll('[data-flagfield]')) {
+        if ((data._flags || []).includes(el.getAttribute('data-flagfield'))) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [step]);
 
   function set(key, value) { setData(d => ({ ...d, [key]: value })); }
 
@@ -168,18 +194,16 @@ export default function DemolitionWizard() {
           <>
             <div><h2 className="text-lg font-bold">Measurements</h2></div>
             {cfg.hasSFCalc && (
-              <div className="space-y-2">
-                <Label>Square Footage</Label>
+              <FlagField fieldKey="sf" label="Square Footage" flags={flags} onToggle={toggleFlag}>
                 <div className="grid grid-cols-3 gap-2">
                   <div><Label className="text-xs text-muted-foreground">Length (ft)</Label><Input type="number" className="mt-1" placeholder="0" value={data.sf_length || ""} onChange={e => setDim("sf_length", e.target.value)} /></div>
                   <div><Label className="text-xs text-muted-foreground">Width (ft)</Label><Input type="number" className="mt-1" placeholder="0" value={data.sf_width || ""} onChange={e => setDim("sf_width", e.target.value)} /></div>
                   <div><Label className="text-xs text-muted-foreground">SF (auto)</Label><Input type="number" className="mt-1 bg-muted/50" placeholder="0" value={data.sf || ""} onChange={e => set("sf", e.target.value)} /></div>
                 </div>
-              </div>
+              </FlagField>
             )}
             {cfg.hasCYCalc && (
-              <div className="space-y-2">
-                <Label>Depth &amp; Volume</Label>
+              <FlagField fieldKey="depth_inches" label="Depth &amp; Volume" flags={flags} onToggle={toggleFlag}>
                 <div className="grid grid-cols-2 gap-2">
                   <div><Label className="text-xs text-muted-foreground">Depth (inches)</Label><Input type="number" className="mt-1" placeholder="0" value={data.depth_inches || ""} onChange={e => set("depth_inches", e.target.value)} /></div>
                   <div><Label className="text-xs text-muted-foreground">Cubic Yards (auto)</Label><Input className="mt-1 bg-muted/50" readOnly value={cy != null ? cy : ""} placeholder="—" /></div>
@@ -189,7 +213,7 @@ export default function DemolitionWizard() {
                     <span className="font-semibold">Disposal fees:</span> {Math.ceil(cy / 2.5)} (1 per 2.5 CY — {cy} CY total)
                   </div>
                 )}
-              </div>
+              </FlagField>
             )}
             {cfg.measurements.map(renderField)}
             {cfg.measurements.length === 0 && !cfg.hasSFCalc && !cfg.hasCYCalc && <p className="text-sm text-muted-foreground italic">No measurements required.</p>}

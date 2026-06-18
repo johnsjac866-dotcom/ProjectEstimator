@@ -1,16 +1,34 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Pencil, Flag, AlertTriangle } from "lucide-react";
 import { DEMO_FIELDS, getDemoCategory, getDemoSubTypeLabel, getDemoGroupLabel } from "@/lib/demolitionStages";
 
 function parseOps(jsonStr) {
   try { const p = JSON.parse(jsonStr || '[]'); if (Array.isArray(p)) return p; if (p && typeof p === 'object' && Object.keys(p).length > 0) return [{ ...p, id: 'legacy' }]; } catch {} return [];
 }
 
+function SummaryRow({ label, value, isFlagged }) {
+  const hasVal = value !== null && value !== undefined && value !== '';
+  return (
+    <div className={`flex items-start gap-2 text-sm py-1.5 ${isFlagged ? 'bg-orange-50 rounded px-2 -mx-2' : ''}`}>
+      {isFlagged ? (
+        <Flag className="h-3.5 w-3.5 text-orange-500 flex-shrink-0 mt-0.5" fill="currentColor" />
+      ) : (
+        <span className="h-2 w-2 rounded-full bg-red-400 flex-shrink-0 mt-1.5" />
+      )}
+      <span className="text-muted-foreground min-w-0">{label}:</span>
+      <span className={`font-medium ${!hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
+        {hasVal ? String(value) : '— not set'}
+      </span>
+    </div>
+  );
+}
+
 export default function DemolitionSummary() {
   const { areaId } = useParams();
+  const navigate = useNavigate();
   const opId = new URLSearchParams(window.location.search).get('opId');
   const from = new URLSearchParams(window.location.search).get('from');
   const [area, setArea] = useState(null);
@@ -35,7 +53,7 @@ export default function DemolitionSummary() {
 
   const cfg = DEMO_FIELDS[data.sub_type] || { hasSFCalc: false, hasCYCalc: false, measurements: [], details: [] };
   const category = getDemoCategory(data.group, data.sub_type);
-  const allFields = [...cfg.measurements, ...cfg.details];
+  const flagSet = new Set(data._flags || []);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -43,13 +61,17 @@ export default function DemolitionSummary() {
         <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="h-4 w-4 mr-2" /> Print
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/demolition-wizard/${areaId}?opId=${data.id}`)}>
+            <Pencil className="h-4 w-4 mr-1" /> Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-1" /> Print
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card border rounded-xl p-8 print:border-0 space-y-6">
-        {/* Header */}
         <div className="border-b pb-6">
           <h1 className="text-2xl font-bold">Demolition &amp; Removals Summary</h1>
           <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
@@ -60,7 +82,13 @@ export default function DemolitionSummary() {
           </div>
         </div>
 
-        {/* Category */}
+        {flagSet.size > 0 && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-sm">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention</span>
+          </div>
+        )}
+
         {category && (
           <div>
             <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2">Estimate Category</h2>
@@ -71,33 +99,29 @@ export default function DemolitionSummary() {
           </div>
         )}
 
-        {/* Group & Sub-type labels */}
         <div className="flex gap-4 text-sm">
           <div><span className="text-muted-foreground">Group:</span> <span className="font-medium">{getDemoGroupLabel(data.group)}</span></div>
           <div><span className="text-muted-foreground">Type:</span> <span className="font-medium text-primary">{getDemoSubTypeLabel(data.group, data.sub_type)}</span></div>
         </div>
 
-        {/* Measurements & Calculations */}
         {(cfg.hasSFCalc || cfg.hasCYCalc || data.sf || data.cy) && (
           <div className="border rounded-lg p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Measurements &amp; Calculations</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {data.sf_length && data.sf_width && (
-                <div className="text-sm">
+              {(data.sf_length || data.sf_width) && (
+                <div className={`text-sm ${flagSet.has('sf') ? 'bg-orange-50 rounded p-2' : ''}`}>
                   <p className="text-xs text-muted-foreground">Dimensions</p>
-                  <p className="font-medium">{data.sf_length} × {data.sf_width} ft</p>
+                  <p className="font-medium">{data.sf_length || '?'} × {data.sf_width || '?'} ft</p>
                 </div>
               )}
-              {data.sf && (
-                <div className="text-sm">
-                  <p className="text-xs text-muted-foreground">Square Footage</p>
-                  <p className="font-bold text-lg">{data.sf} SF</p>
-                </div>
-              )}
-              {data.depth_inches && (
-                <div className="text-sm">
+              <div className={`text-sm ${flagSet.has('sf') ? 'bg-orange-50 rounded p-2' : ''}`}>
+                <p className="text-xs text-muted-foreground">Square Footage</p>
+                <p className="font-bold text-lg">{data.sf || '— not set'}</p>
+              </div>
+              {cfg.hasCYCalc && (
+                <div className={`text-sm ${flagSet.has('depth_inches') ? 'bg-orange-50 rounded p-2' : ''}`}>
                   <p className="text-xs text-muted-foreground">Depth</p>
-                  <p className="font-medium">{data.depth_inches}"</p>
+                  <p className="font-medium">{data.depth_inches ? `${data.depth_inches}"` : '— not set'}</p>
                 </div>
               )}
               {data.cy && (
@@ -110,33 +134,35 @@ export default function DemolitionSummary() {
           </div>
         )}
 
-        {/* Field details */}
-        {allFields.length > 0 && (
+        {cfg.measurements.length > 0 && (
           <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
-            <div className="space-y-2">
-              {allFields.map(field => {
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Measurements</h3>
+            <div className="space-y-1">
+              {cfg.measurements.map(field => {
                 const show = !field.condition || data[field.condition.key] === field.condition.value;
-                const val = data[field.key];
-                if (!show || (!val && val !== 0)) return null;
-                return (
-                  <div key={field.key} className="flex items-start gap-2 text-sm">
-                    <span className="h-2 w-2 rounded-full bg-red-400 flex-shrink-0 mt-1.5" />
-                    <span className="text-muted-foreground min-w-0">{field.label}:</span>
-                    <span className="font-medium">{String(val)}</span>
-                  </div>
-                );
+                if (!show) return null;
+                return <SummaryRow key={field.key} label={field.label} value={data[field.key]} isFlagged={flagSet.has(field.key)} />;
               })}
             </div>
           </div>
         )}
 
-        {data.notes && (
+        {cfg.details.length > 0 && (
           <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Notes</h3>
-            <p className="text-sm">{data.notes}</p>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details &amp; Decisions</h3>
+            <div className="space-y-1">
+              {cfg.details.map(field => {
+                const show = !field.condition || data[field.condition.key] === field.condition.value;
+                if (!show) return null;
+                return <SummaryRow key={field.key} label={field.label} value={data[field.key]} isFlagged={flagSet.has(field.key)} />;
+              })}
+            </div>
           </div>
         )}
+
+        <div className="border rounded-lg p-4">
+          <SummaryRow label="Notes" value={data.notes} isFlagged={flagSet.has('notes')} />
+        </div>
       </div>
     </div>
   );
