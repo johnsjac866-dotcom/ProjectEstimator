@@ -184,6 +184,11 @@ export default function DemolitionWizard() {
                   <div><Label className="text-xs text-muted-foreground">Depth (inches)</Label><Input type="number" className="mt-1" placeholder="0" value={data.depth_inches || ""} onChange={e => set("depth_inches", e.target.value)} /></div>
                   <div><Label className="text-xs text-muted-foreground">Cubic Yards (auto)</Label><Input className="mt-1 bg-muted/50" readOnly value={cy != null ? cy : ""} placeholder="—" /></div>
                 </div>
+                {cy != null && (
+                  <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+                    <span className="font-semibold">Disposal fees:</span> {Math.ceil(cy / 2.5)} (1 per 2.5 CY — {cy} CY total)
+                  </div>
+                )}
               </div>
             )}
             {cfg.measurements.map(renderField)}
