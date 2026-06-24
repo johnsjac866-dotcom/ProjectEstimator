@@ -119,6 +119,14 @@ For Drainage operations, extract:
   Dry Stream Bed: width (ft), stream_depth (in), existing_downspout, existing_lf, ball_cart_needed ("Yes"/"No"), boulders_needed ("Yes"/"No"), fieldstone_10_18, fieldstone_18_24, fieldstone_24_30, drainage_rock_needed ("Yes"/"No"), drainage_rock_cy, stone_type, stream_purpose ("Decorative"/"Functional")
   Impervious Membrane: rough_grading_needed ("Yes"/"No"), mem_length, mem_width, mem_depth, excavation_mode, excavation_machine_type, detail_excavation_hours, place_membrane_hours, roofing_membrane_needed ("Yes"/"No"), roofing_membrane_rolls, woven_fabric_needed ("Yes"/"No"), woven_fabric_sf, place_stone_hours, drainage_rock_needed ("Yes"/"No"), drainage_rock_tons, edging_needed ("Yes"/"No"), poly_plastic_needed ("Yes"/"No"), poly_plastic_rolls
 
+For Lawn Repair & Install operations, extract:
+- lawn_type: One of "Sod Installation", "Seed Install", "Top Dress Lawn"
+- lawn_fields: object with all extracted form field values:
+  Common (all types): time_estimate (hrs), length (ft), width (ft)
+  Sod Installation: on_slope ("Yes"/"No"), sf_waste, diff_easy_hours, diff_avg_hours, diff_hard_hours, diff_very_hard_hours, sod_staples_needed ("Yes"/"No"), sod_staples_count, pallets_needed ("Yes"/"No"), pallets_count, watering_on_install ("Yes"/"No"), water_access ("Yes"/"No"), watering_time_hours, fertilizer ("Yes"/"No"), fertilizer_sf_override, distance_to_truck (ft), machine_access ("Dingo"/"Vermeer"/"None"), sod_type ("Bluegrass"/"Tall Fescue Blend")
+  Seed Install: sf_seed, seed_type ("Madison Parks"/"Shady Place"/"Survivor"), seed_lbs, extra_seed ("Yes"/"No"), cover_method ("Mulch Pellet"/"Straw Netting"), mulch_bags, mulch_buckets, straw_mat_type ("Single Net 60"/"Curlex Doublenet"), straw_rolls, straw_sod_staples, temp_downspout_needed ("Yes"/"No"), temp_downspout_lf, water_access ("Yes"/"No"), fertilizer ("Yes"/"No"), bed_prep_needed ("Yes"/"No")
+  Top Dress Lawn: top_dress_depth (in), material ("Compost"/"Soil Blend"), overseed ("Yes"/"No"), aerate ("Yes"/"No")
+
 For ALL operation types, also extract:
 - time_estimate: Time in hours mentioned for this operation. Look for phrases like "2 hours", "about 3 hrs", "half a day" (=4hrs), "a full day" (=8hrs), "45 minutes" (=0.75hrs). Null if no time is mentioned.
 
@@ -223,7 +231,9 @@ Leave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) =>
                 boulders_type: { type: 'string', description: 'For Boulders: "Boulders / Accents", "Structures - Fence", "Structures - Arbor", or "Raised Garden Bed"' },
                 boulders_fields: { type: 'object', description: 'For Boulders: all extracted form field key-value pairs' },
                 drain_type: { type: 'string', description: 'For Drainage: "Buried Downspout", "Buried Drain", "Buried Sump Line", "Curtain Drain", "French Drain", "Dry Stream Bed", or "Impervious Membrane"' },
-                drainage_fields: { type: 'object', description: 'For Drainage: all extracted form field key-value pairs' }
+                drainage_fields: { type: 'object', description: 'For Drainage: all extracted form field key-value pairs' },
+                lawn_type: { type: 'string', description: 'For Lawn Repair: "Sod Installation", "Seed Install", or "Top Dress Lawn"' },
+                lawn_fields: { type: 'object', description: 'For Lawn Repair: all extracted form field key-value pairs' }
               },
               required: ['operation_type', 'description']
             },

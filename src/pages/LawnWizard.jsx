@@ -62,6 +62,20 @@ export default function LawnWizard() {
     })();
   }, [areaId, opId]);
 
+  // Scroll to first flagged field
+  useEffect(() => {
+    if (step !== 2 || !(form._flags?.length > 0)) return;
+    const timer = setTimeout(() => {
+      for (const el of document.querySelectorAll('[data-flagfield]')) {
+        if ((form._flags || []).includes(el.getAttribute('data-flagfield'))) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [step]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   function toggleFlag(key, label) {
@@ -151,8 +165,12 @@ export default function LawnWizard() {
               <Input type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
             </FlagField>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Length (ft)</Label><Input className="mt-1" type="number" value={form.length || ""} onChange={e => set("length", e.target.value)} placeholder="0" /></div>
-              <div><Label>Width (ft)</Label><Input className="mt-1" type="number" value={form.width || ""} onChange={e => set("width", e.target.value)} placeholder="0" /></div>
+              <FlagField fieldKey="length" label="Length (ft)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.length || ""} onChange={e => set("length", e.target.value)} placeholder="0" />
+              </FlagField>
+              <FlagField fieldKey="width" label="Width (ft)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.width || ""} onChange={e => set("width", e.target.value)} placeholder="0" />
+              </FlagField>
             </div>
             {sfDisplay && <CalcBox label="Square Footage" value={sfDisplay} unit="SF" />}
           </div>
@@ -168,10 +186,9 @@ export default function LawnWizard() {
 
               {pins && <CalcBox label="Pins Needed (3/roll)" value={pins} unit="pins" />}
 
-              <div>
-                <Label>SF Extra for Waste</Label>
-                <Input className="mt-1" type="number" value={form.sf_waste || ""} onChange={e => set("sf_waste", e.target.value)} placeholder="0" />
-              </div>
+              <FlagField fieldKey="sf_waste" label="SF Extra for Waste" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.sf_waste || ""} onChange={e => set("sf_waste", e.target.value)} placeholder="0" />
+              </FlagField>
 
               {/* Sod Installation Difficulty */}
               <div className="border rounded-lg p-4 space-y-3">
@@ -335,13 +352,11 @@ export default function LawnWizard() {
                   </FlagField>
                 )}
 
-                <div>
-                  <Label>Water Access?</Label>
+                <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
                   <SelectButtons value={form.water_access} onChange={v => set("water_access", v)} options={["Yes", "No"]} />
-                </div>
+                </FlagField>
 
-                <div>
-                  <Label>Fertilizer?</Label>
+                <FlagField fieldKey="fertilizer" label="Fertilizer?" flags={form._flags || []} onToggle={toggleFlag}>
                   <SelectButtons value={form.fertilizer} onChange={v => set("fertilizer", v)} options={["Yes", "No"]} />
                   {form.fertilizer === "Yes" && (
                     <div className="mt-2">
@@ -349,12 +364,11 @@ export default function LawnWizard() {
                       <Input className="mt-1" type="number" value={form.fertilizer_sf_override || sfDisplay || ""} onChange={e => set("fertilizer_sf_override", e.target.value)} placeholder={sfDisplay || "0"} />
                     </div>
                   )}
-                </div>
+                </FlagField>
 
-                <div>
-                  <Label>Bed Preparation Needed?</Label>
+                <FlagField fieldKey="bed_prep_needed" label="Bed Preparation Needed?" flags={form._flags || []} onToggle={toggleFlag}>
                   <SelectButtons value={form.bed_prep_needed} onChange={v => set("bed_prep_needed", v)} options={["Yes", "No"]} />
-                </div>
+                </FlagField>
               </>
             );
           })()}
@@ -362,25 +376,21 @@ export default function LawnWizard() {
           {/* TOP DRESS LAWN */}
           {lawnType === "Top Dress Lawn" && (
             <>
-              <div>
-                <Label>Top Dress Depth (in)</Label>
-                <Input className="mt-1" type="number" value={form.top_dress_depth || ""} onChange={e => set("top_dress_depth", e.target.value)} placeholder="0" />
-              </div>
+              <FlagField fieldKey="top_dress_depth" label="Top Dress Depth (in)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.top_dress_depth || ""} onChange={e => set("top_dress_depth", e.target.value)} placeholder="0" />
+              </FlagField>
 
-              <div>
-                <Label>Material</Label>
+              <FlagField fieldKey="material" label="Material" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.material} onChange={v => set("material", v)} options={["Compost", "Soil Blend"]} />
-              </div>
+              </FlagField>
 
-              <div>
-                <Label>Overseed?</Label>
+              <FlagField fieldKey="overseed" label="Overseed?" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.overseed} onChange={v => set("overseed", v)} options={["Yes", "No"]} />
-              </div>
+              </FlagField>
 
-              <div>
-                <Label>Aerate?</Label>
+              <FlagField fieldKey="aerate" label="Aerate?" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.aerate} onChange={v => set("aerate", v)} options={["Yes", "No"]} />
-              </div>
+              </FlagField>
             </>
           )}
 

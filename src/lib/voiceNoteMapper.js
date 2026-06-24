@@ -443,3 +443,118 @@ export function mapDrainageEntry(op) {
   if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
   return entry;
 }
+
+/**
+ * Map AI-extracted data to a Lawn Repair entry with auto-flagging.
+ */
+export function mapLawnEntry(op) {
+  const type = op.lawn_type || '';
+  if (!type) return null;
+
+  const f = op.lawn_fields || {};
+  const flags = [], flagLabels = {};
+  const addFlag = (k, l) => { flags.push(k); flagLabels[k] = l; };
+  const v = (key) => s(f[key] ?? op[key]);
+
+  const entry = { lawn_type: type, sub_type: type, time_estimate: v('time_estimate'), notes: v('notes') };
+  if (!entry.time_estimate) addFlag('time_estimate', 'Time Estimate (hrs)');
+
+  entry.length = v('length');
+  entry.width = v('width');
+  if (!entry.length) addFlag('length', 'Length (ft)');
+  if (!entry.width) addFlag('width', 'Width (ft)');
+
+  if (type === 'Sod Installation') {
+    entry.on_slope = v('on_slope');
+    if (!entry.on_slope) addFlag('on_slope', 'On a Slope?');
+    entry.sf_waste = v('sf_waste');
+    if (!entry.sf_waste) addFlag('sf_waste', 'SF Extra for Waste');
+    entry.diff_easy_hours = v('diff_easy_hours');
+    if (!entry.diff_easy_hours) addFlag('diff_easy_hours', 'Easy difficulty (hrs)');
+    entry.diff_avg_hours = v('diff_avg_hours');
+    if (!entry.diff_avg_hours) addFlag('diff_avg_hours', 'Average difficulty (hrs)');
+    entry.diff_hard_hours = v('diff_hard_hours');
+    if (!entry.diff_hard_hours) addFlag('diff_hard_hours', 'Hard difficulty (hrs)');
+    entry.diff_very_hard_hours = v('diff_very_hard_hours');
+    if (!entry.diff_very_hard_hours) addFlag('diff_very_hard_hours', 'Very Hard / Patching (hrs)');
+    entry.sod_staples_needed = v('sod_staples_needed');
+    if (!entry.sod_staples_needed) addFlag('sod_staples_needed', 'Sod Staples Needed?');
+    if (entry.sod_staples_needed === 'Yes') {
+      entry.sod_staples_count = v('sod_staples_count');
+      if (!entry.sod_staples_count) addFlag('sod_staples_count', 'Sod Staples Count');
+    }
+    entry.pallets_needed = v('pallets_needed');
+    if (!entry.pallets_needed) addFlag('pallets_needed', 'Pallets Needed?');
+    if (entry.pallets_needed === 'Yes') {
+      entry.pallets_count = v('pallets_count');
+      if (!entry.pallets_count) addFlag('pallets_count', 'Pallets Count');
+    }
+    entry.watering_on_install = v('watering_on_install');
+    if (!entry.watering_on_install) addFlag('watering_on_install', 'Watering Upon Installation?');
+    if (entry.watering_on_install === 'Yes') {
+      entry.water_access = v('water_access');
+      if (!entry.water_access) addFlag('water_access', 'Water Access?');
+      entry.watering_time_hours = v('watering_time_hours');
+      if (!entry.watering_time_hours) addFlag('watering_time_hours', 'Watering Time (hrs)');
+    }
+    entry.fertilizer = v('fertilizer');
+    if (!entry.fertilizer) addFlag('fertilizer', 'Fertilizer?');
+    if (entry.fertilizer === 'Yes') {
+      entry.fertilizer_sf_override = v('fertilizer_sf_override');
+    }
+    entry.distance_to_truck = v('distance_to_truck');
+    if (!entry.distance_to_truck) addFlag('distance_to_truck', 'Distance to Truck (ft)');
+    entry.machine_access = v('machine_access');
+    if (!entry.machine_access) addFlag('machine_access', 'Machine Access');
+    entry.sod_type = v('sod_type');
+    if (!entry.sod_type) addFlag('sod_type', 'Sod Type');
+  }
+
+  if (type === 'Seed Install') {
+    entry.sf_seed = v('sf_seed');
+    entry.seed_type = v('seed_type');
+    if (!entry.seed_type) addFlag('seed_type', 'Seed Type');
+    entry.seed_lbs = v('seed_lbs');
+    entry.extra_seed = v('extra_seed');
+    if (!entry.extra_seed) addFlag('extra_seed', 'Extra Seed to Match Installed?');
+    entry.cover_method = v('cover_method');
+    if (!entry.cover_method) addFlag('cover_method', 'Cover Method');
+    if (entry.cover_method === 'Mulch Pellet') {
+      entry.mulch_bags = v('mulch_bags');
+      entry.mulch_buckets = v('mulch_buckets');
+    }
+    if (entry.cover_method === 'Straw Netting') {
+      entry.straw_mat_type = v('straw_mat_type');
+      if (!entry.straw_mat_type) addFlag('straw_mat_type', 'Straw Mat Type');
+      entry.straw_rolls = v('straw_rolls');
+      entry.straw_sod_staples = v('straw_sod_staples');
+      if (!entry.straw_sod_staples) addFlag('straw_sod_staples', 'Sod Staples (count)');
+    }
+    entry.temp_downspout_needed = v('temp_downspout_needed');
+    if (!entry.temp_downspout_needed) addFlag('temp_downspout_needed', 'Temporary Downspout Extensions?');
+    if (entry.temp_downspout_needed === 'Yes') {
+      entry.temp_downspout_lf = v('temp_downspout_lf');
+      if (!entry.temp_downspout_lf) addFlag('temp_downspout_lf', 'Downspout Extension Length (LF)');
+    }
+    entry.water_access = v('water_access');
+    if (!entry.water_access) addFlag('water_access', 'Water Access?');
+    entry.fertilizer = v('fertilizer');
+    if (!entry.fertilizer) addFlag('fertilizer', 'Fertilizer?');
+    entry.bed_prep_needed = v('bed_prep_needed');
+    if (!entry.bed_prep_needed) addFlag('bed_prep_needed', 'Bed Preparation Needed?');
+  }
+
+  if (type === 'Top Dress Lawn') {
+    entry.top_dress_depth = v('top_dress_depth');
+    if (!entry.top_dress_depth) addFlag('top_dress_depth', 'Top Dress Depth (in)');
+    entry.material = v('material');
+    if (!entry.material) addFlag('material', 'Material');
+    entry.overseed = v('overseed');
+    if (!entry.overseed) addFlag('overseed', 'Overseed?');
+    entry.aerate = v('aerate');
+    if (!entry.aerate) addFlag('aerate', 'Aerate?');
+  }
+
+  if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
+  return entry;
+}

@@ -7,7 +7,7 @@ import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hamme
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 import VoiceNotes from "@/components/VoiceNotes";
-import { mapDemolitionEntry, mapBouldersEntry, mapDrainageEntry } from "@/lib/voiceNoteMapper";
+import { mapDemolitionEntry, mapBouldersEntry, mapDrainageEntry, mapLawnEntry } from "@/lib/voiceNoteMapper";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
@@ -506,6 +506,11 @@ export default function AreaDetail() {
               // For Drainage: type-specific field mapping with auto-flagging
               ...(operation.operation_type === 'Drainage' && (() => {
                 const mapped = mapDrainageEntry(operation);
+                return mapped || {};
+              })()),
+              // For Lawn Repair & Install: type-specific field mapping with auto-flagging
+              ...(operation.operation_type === 'Lawn Repair & Install' && (() => {
+                const mapped = mapLawnEntry(operation);
                 return mapped || {};
               })()),
             };
