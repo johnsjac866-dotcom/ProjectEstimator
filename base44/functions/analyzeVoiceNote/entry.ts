@@ -32,9 +32,10 @@ Deno.serve(async (req) => {
 
 For Mulch operations, extract:
 - mulch_type: "Organic" or "Stone"
-- sf_length: Length in feet (number)
-- sf_width: Width in feet (number)
-- mulch_depth: Depth in inches (number, typically 2-4 for organic, 2-3 for stone)
+- mulch_fields: object with all extracted form field values:
+  Common (all types): time_estimate (hrs), length (ft), width (ft), depth (in), bed_type, machine_access ("Vermeer"/"Dingo"/"None")
+  Organic: install_type ("Refresh"/"Full Install"), organic_subtype ("Shredded Hardwood"/"Dyed"/"Red Cedar"), distance_to_truck (ft)
+  Stone: fabric_needed ("Yes"/"No"), fabric_sf
 
 For Lawn Repair & Install operations, extract:
 - lawn_type: One of "Sod Installation", "Seed Install", "Top Dress Lawn"
@@ -157,8 +158,8 @@ Leave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) =>
                 disposal_needed: { type: 'string', description: 'For Rough Grading: Yes or No' },
                 bed_main_type: { type: 'string', description: 'For Bed Preparation: till, no_till, lawn, or reprofiling' },
                 bed_sub_type: { type: 'string', description: 'For Bed Preparation: till_1in, till_3in, notill_hand, notill_machine, notill_deadsod, lawn_none, lawn_1in, repro_hardscape, repro_narrow, repro_sloped, or repro_soil' },
-                mulch_type: { type: 'string', description: 'For Mulch: Organic or Stone' },
-                mulch_depth: { type: ['number', 'null'], description: 'For Mulch: depth in inches' },
+                mulch_type: { type: 'string', description: 'For Mulch: "Organic" or "Stone"' },
+                mulch_fields: { type: 'object', description: 'For Mulch: all extracted form field key-value pairs' },
                 lawn_type: { type: 'string', description: 'For Lawn Repair: "Sod Installation", "Seed Install", or "Top Dress Lawn"' },
                 seed_type: { type: 'string', description: 'For Lawn Repair Seed Install: "Madison Parks", "Tough Stuff", "Shady Place", or "Carefree No Mow"' },
                 edge_type: { type: 'string', description: 'For Bed Edging: "Brick", "Metal", "Bullet", "Natural Edge", "Poly", or "Snapped Limestone"' },

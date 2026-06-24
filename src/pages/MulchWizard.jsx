@@ -68,6 +68,20 @@ export default function MulchWizard() {
     })();
   }, [areaId, opId]);
 
+  // Scroll to first flagged field
+  useEffect(() => {
+    if (step !== 2 || !(form._flags?.length > 0)) return;
+    const timer = setTimeout(() => {
+      for (const el of document.querySelectorAll('[data-flagfield]')) {
+        if ((form._flags || []).includes(el.getAttribute('data-flagfield'))) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [step]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   function handleInstallTypeChange(v) {
@@ -149,18 +163,16 @@ export default function MulchWizard() {
 
           {/* Organic: Refresh vs Full Install (above dimensions) */}
           {mulchType === "Organic" && (
-            <div>
-              <Label>Refresh vs Full Install</Label>
+            <FlagField fieldKey="install_type" label="Refresh vs Full Install" flags={form._flags || []} onToggle={toggleFlag}>
               <SelectButtons value={form.install_type} onChange={handleInstallTypeChange} options={["Refresh", "Full Install"]} />
-            </div>
+            </FlagField>
           )}
 
           {/* Organic: Mulch Subtype */}
           {mulchType === "Organic" && (
-            <div>
-              <Label>Mulch Subtype</Label>
+            <FlagField fieldKey="organic_subtype" label="Mulch Subtype" flags={form._flags || []} onToggle={toggleFlag}>
               <SelectButtons value={form.organic_subtype} onChange={v => set("organic_subtype", v)} options={["Shredded Hardwood", "Dyed", "Red Cedar"]} />
-            </div>
+            </FlagField>
           )}
 
           {/* Dimensions */}
@@ -170,18 +182,15 @@ export default function MulchWizard() {
               <Input type="number" value={form.time_estimate || ""} onChange={e => set("time_estimate", e.target.value)} placeholder="0" />
             </FlagField>
             <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Length (ft)</Label>
-                <Input className="mt-1" type="number" value={form.length || ""} onChange={e => set("length", e.target.value)} placeholder="0" />
-              </div>
-              <div>
-                <Label>Width (ft)</Label>
-                <Input className="mt-1" type="number" value={form.width || ""} onChange={e => set("width", e.target.value)} placeholder="0" />
-              </div>
-              <div>
-                <Label>Depth (in)</Label>
-                <Input className="mt-1" type="number" value={form.depth || ""} onChange={e => set("depth", e.target.value)} placeholder="0" />
-              </div>
+              <FlagField fieldKey="length" label="Length (ft)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.length || ""} onChange={e => set("length", e.target.value)} placeholder="0" />
+              </FlagField>
+              <FlagField fieldKey="width" label="Width (ft)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.width || ""} onChange={e => set("width", e.target.value)} placeholder="0" />
+              </FlagField>
+              <FlagField fieldKey="depth" label="Depth (in)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.depth || ""} onChange={e => set("depth", e.target.value)} placeholder="0" />
+              </FlagField>
             </div>
 
             {/* Auto-calculated results */}
@@ -193,41 +202,36 @@ export default function MulchWizard() {
           </div>
 
           {/* Bed Type */}
-          <div>
-            <Label>Bed Type</Label>
-            <Input className="mt-1" value={form.bed_type || ""} onChange={e => set("bed_type", e.target.value)} placeholder="e.g. Garden bed, Tree ring, Slope" />
-          </div>
+          <FlagField fieldKey="bed_type" label="Bed Type" flags={form._flags || []} onToggle={toggleFlag}>
+            <Input value={form.bed_type || ""} onChange={e => set("bed_type", e.target.value)} placeholder="e.g. Garden bed, Tree ring, Slope" />
+          </FlagField>
 
           {/* Organic: Distance to Truck */}
           {mulchType === "Organic" && (
-            <div>
-              <Label>Distance to Truck (ft)</Label>
-              <Input className="mt-1" type="number" value={form.distance_to_truck || ""} onChange={e => set("distance_to_truck", e.target.value)} placeholder="0" />
+            <FlagField fieldKey="distance_to_truck" label="Distance to Truck (ft)" flags={form._flags || []} onToggle={toggleFlag}>
+              <Input type="number" value={form.distance_to_truck || ""} onChange={e => set("distance_to_truck", e.target.value)} placeholder="0" />
               {parseFloat(form.distance_to_truck) > 80 && (
                 <p className="text-xs text-amber-600 mt-1">⚠️ Extra labor for distance beyond 80 ft</p>
               )}
-            </div>
+            </FlagField>
           )}
 
           {/* Stone: Fabric Needed */}
           {mulchType === "Stone" && (
-            <div>
-              <Label>Fabric Needed?</Label>
+            <FlagField fieldKey="fabric_needed" label="Fabric Needed?" flags={form._flags || []} onToggle={toggleFlag}>
               <SelectButtons value={form.fabric_needed} onChange={v => set("fabric_needed", v)} options={["Yes", "No"]} />
-            </div>
+            </FlagField>
           )}
           {mulchType === "Stone" && form.fabric_needed === "Yes" && (
-            <div>
-              <Label>Fabric SF (defaults to stone SF)</Label>
-              <Input className="mt-1" type="number" value={form.fabric_sf || sf || ""} onChange={e => set("fabric_sf", e.target.value)} placeholder={sf || "0"} />
-            </div>
+            <FlagField fieldKey="fabric_sf" label="Fabric SF (defaults to stone SF)" flags={form._flags || []} onToggle={toggleFlag}>
+              <Input type="number" value={form.fabric_sf || sf || ""} onChange={e => set("fabric_sf", e.target.value)} placeholder={sf || "0"} />
+            </FlagField>
           )}
 
           {/* Machine Access */}
-          <div>
-            <Label>Machine Access</Label>
+          <FlagField fieldKey="machine_access" label="Machine Access" flags={form._flags || []} onToggle={toggleFlag}>
             <SelectButtons value={form.machine_access} onChange={v => set("machine_access", v)} options={["Vermeer", "Dingo", "None"]} />
-          </div>
+          </FlagField>
 
           <FlagField fieldKey="notes" label="Additional Notes" flags={form._flags || []} onToggle={toggleFlag}>
             <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional notes..." rows={3} />

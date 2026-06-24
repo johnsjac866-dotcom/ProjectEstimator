@@ -558,3 +558,51 @@ export function mapLawnEntry(op) {
   if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
   return entry;
 }
+
+/**
+ * Map AI-extracted data to a Mulch entry with auto-flagging.
+ */
+export function mapMulchEntry(op) {
+  const type = op.mulch_type || '';
+  if (!type) return null;
+
+  const f = op.mulch_fields || {};
+  const flags = [], flagLabels = {};
+  const addFlag = (k, l) => { flags.push(k); flagLabels[k] = l; };
+  const v = (key) => s(f[key] ?? op[key]);
+
+  const entry = { mulch_type: type, sub_type: type, time_estimate: v('time_estimate'), notes: v('notes') };
+  if (!entry.time_estimate) addFlag('time_estimate', 'Time Estimate (hrs)');
+
+  entry.length = v('length') || (op.sf_length != null ? String(op.sf_length) : '');
+  entry.width = v('width') || (op.sf_width != null ? String(op.sf_width) : '');
+  entry.depth = v('depth') || (op.mulch_depth != null ? String(op.mulch_depth) : '');
+  if (!entry.length) addFlag('length', 'Length (ft)');
+  if (!entry.width) addFlag('width', 'Width (ft)');
+  if (!entry.depth) addFlag('depth', 'Depth (in)');
+
+  entry.bed_type = v('bed_type');
+
+  if (type === 'Organic') {
+    entry.install_type = v('install_type');
+    if (!entry.install_type) addFlag('install_type', 'Refresh vs Full Install');
+    entry.organic_subtype = v('organic_subtype');
+    if (!entry.organic_subtype) addFlag('organic_subtype', 'Mulch Subtype');
+    entry.distance_to_truck = v('distance_to_truck');
+    if (!entry.distance_to_truck) addFlag('distance_to_truck', 'Distance to Truck (ft)');
+  }
+
+  if (type === 'Stone') {
+    entry.fabric_needed = v('fabric_needed');
+    if (!entry.fabric_needed) addFlag('fabric_needed', 'Fabric Needed?');
+    if (entry.fabric_needed === 'Yes') {
+      entry.fabric_sf = v('fabric_sf');
+    }
+  }
+
+  entry.machine_access = v('machine_access');
+  if (!entry.machine_access) addFlag('machine_access', 'Machine Access');
+
+  if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
+  return entry;
+}
