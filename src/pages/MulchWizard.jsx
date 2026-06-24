@@ -70,6 +70,12 @@ export default function MulchWizard() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  function handleInstallTypeChange(v) {
+    set("install_type", v);
+    if (v === "Refresh") set("depth", "1.5");
+    if (v === "Full Install") set("depth", "3");
+  }
+
   function toggleFlag(key, label) {
     setForm(f => {
       const flags = f._flags || [];
@@ -141,6 +147,22 @@ export default function MulchWizard() {
             <span className="font-semibold">{mulchType} Mulch</span>
           </div>
 
+          {/* Organic: Refresh vs Full Install (above dimensions) */}
+          {mulchType === "Organic" && (
+            <div>
+              <Label>Refresh vs Full Install</Label>
+              <SelectButtons value={form.install_type} onChange={handleInstallTypeChange} options={["Refresh", "Full Install"]} />
+            </div>
+          )}
+
+          {/* Organic: Mulch Subtype */}
+          {mulchType === "Organic" && (
+            <div>
+              <Label>Mulch Subtype</Label>
+              <SelectButtons value={form.organic_subtype} onChange={v => set("organic_subtype", v)} options={["Shredded Hardwood", "Dyed", "Red Cedar"]} />
+            </div>
+          )}
+
           {/* Dimensions */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dimensions</p>
@@ -176,11 +198,28 @@ export default function MulchWizard() {
             <Input className="mt-1" value={form.bed_type || ""} onChange={e => set("bed_type", e.target.value)} placeholder="e.g. Garden bed, Tree ring, Slope" />
           </div>
 
-          {/* Organic only: Refresh vs Full Install */}
+          {/* Organic: Distance to Truck */}
           {mulchType === "Organic" && (
             <div>
-              <Label>Refresh vs Full Install</Label>
-              <SelectButtons value={form.install_type} onChange={v => set("install_type", v)} options={["Refresh", "Full Install"]} />
+              <Label>Distance to Truck (ft)</Label>
+              <Input className="mt-1" type="number" value={form.distance_to_truck || ""} onChange={e => set("distance_to_truck", e.target.value)} placeholder="0" />
+              {parseFloat(form.distance_to_truck) > 80 && (
+                <p className="text-xs text-amber-600 mt-1">⚠️ Extra labor for distance beyond 80 ft</p>
+              )}
+            </div>
+          )}
+
+          {/* Stone: Fabric Needed */}
+          {mulchType === "Stone" && (
+            <div>
+              <Label>Fabric Needed?</Label>
+              <SelectButtons value={form.fabric_needed} onChange={v => set("fabric_needed", v)} options={["Yes", "No"]} />
+            </div>
+          )}
+          {mulchType === "Stone" && form.fabric_needed === "Yes" && (
+            <div>
+              <Label>Fabric SF (defaults to stone SF)</Label>
+              <Input className="mt-1" type="number" value={form.fabric_sf || sf || ""} onChange={e => set("fabric_sf", e.target.value)} placeholder={sf || "0"} />
             </div>
           )}
 
