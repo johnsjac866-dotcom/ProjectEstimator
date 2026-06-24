@@ -161,7 +161,6 @@ export default function LawnWizard() {
           {lawnType === "Sod Installation" && (
             <>
               {rolls && <CalcBox label="Rolls Needed (10 SF/roll)" value={rolls} unit="rolls" />}
-              {pallets && <CalcBox label="Pallets Needed (1 per 15 rolls)" value={pallets} unit="pallets" />}
 
               <FlagField fieldKey="on_slope" label="On a Slope?" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.on_slope} onChange={v => set("on_slope", v)} options={["Yes", "No"]} />
@@ -173,6 +172,58 @@ export default function LawnWizard() {
                 <Label>SF Extra for Waste</Label>
                 <Input className="mt-1" type="number" value={form.sf_waste || ""} onChange={e => set("sf_waste", e.target.value)} placeholder="0" />
               </div>
+
+              {/* Sod Installation Difficulty */}
+              <div className="border rounded-lg p-4 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Installation Difficulty (hrs per difficulty)</p>
+                <FlagField fieldKey="diff_easy_hours" label="Easy — large area over 1000 SF with easy cuts (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.diff_easy_hours || ""} onChange={e => set("diff_easy_hours", e.target.value)} placeholder="0" />
+                </FlagField>
+                <FlagField fieldKey="diff_avg_hours" label="Average (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.diff_avg_hours || ""} onChange={e => set("diff_avg_hours", e.target.value)} placeholder="0" />
+                </FlagField>
+                <FlagField fieldKey="diff_hard_hours" label="Hard — less than 100 SF (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.diff_hard_hours || ""} onChange={e => set("diff_hard_hours", e.target.value)} placeholder="0" />
+                </FlagField>
+                <FlagField fieldKey="diff_very_hard_hours" label="Very Hard / Patching In (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.diff_very_hard_hours || ""} onChange={e => set("diff_very_hard_hours", e.target.value)} placeholder="0" />
+                </FlagField>
+              </div>
+
+              {/* Sod Staples */}
+              <FlagField fieldKey="sod_staples_needed" label="Sod Staples Needed?" flags={form._flags || []} onToggle={toggleFlag}>
+                <SelectButtons value={form.sod_staples_needed} onChange={v => set("sod_staples_needed", v)} options={["Yes", "No"]} />
+              </FlagField>
+              {form.sod_staples_needed === "Yes" && (
+                <FlagField fieldKey="sod_staples_count" label="Sod Staples Count" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.sod_staples_count || ""} onChange={e => set("sod_staples_count", e.target.value)} placeholder="0" />
+                </FlagField>
+              )}
+
+              {/* Pallets */}
+              <FlagField fieldKey="pallets_needed" label="Pallets Needed?" flags={form._flags || []} onToggle={toggleFlag}>
+                <SelectButtons value={form.pallets_needed} onChange={v => set("pallets_needed", v)} options={["Yes", "No"]} />
+              </FlagField>
+              {form.pallets_needed === "Yes" && (
+                <FlagField fieldKey="pallets_count" label="Pallets Count" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.pallets_count || ""} onChange={e => set("pallets_count", e.target.value)} placeholder="0" />
+                </FlagField>
+              )}
+
+              {/* Watering */}
+              <FlagField fieldKey="watering_on_install" label="Watering Upon Installation?" flags={form._flags || []} onToggle={toggleFlag}>
+                <SelectButtons value={form.watering_on_install} onChange={v => set("watering_on_install", v)} options={["Yes", "No"]} />
+              </FlagField>
+              {form.watering_on_install === "Yes" && (
+                <>
+                  <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <SelectButtons value={form.water_access} onChange={v => set("water_access", v)} options={["Yes", "No"]} />
+                  </FlagField>
+                  <FlagField fieldKey="watering_time_hours" label="Watering Time (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+                    <Input type="number" value={form.watering_time_hours || ""} onChange={e => set("watering_time_hours", e.target.value)} placeholder="0" />
+                  </FlagField>
+                </>
+              )}
 
               <FlagField fieldKey="fertilizer" label="Fertilizer?" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.fertilizer} onChange={v => set("fertilizer", v)} options={["Yes", "No"]} />
@@ -195,48 +246,118 @@ export default function LawnWizard() {
               <FlagField fieldKey="sod_type" label="Sod Type" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.sod_type} onChange={v => set("sod_type", v)} options={["Bluegrass", "Tall Fescue Blend"]} />
               </FlagField>
-
-              <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
-                <SelectButtons value={form.water_access} onChange={v => set("water_access", v)} options={["Yes", "No"]} />
-              </FlagField>
             </>
           )}
 
           {/* SEED INSTALL */}
-          {lawnType === "Seed Install" && (
-            <>
-              <div>
-                <Label>Fertilizer?</Label>
-                <SelectButtons value={form.fertilizer} onChange={v => set("fertilizer", v)} options={["Yes", "No"]} />
-                {form.fertilizer === "Yes" && (
-                  <div className="mt-2">
-                    <Label className="text-xs">Fertilizer SF (default: same as area SF)</Label>
-                    <Input className="mt-1" type="number" value={form.fertilizer_sf_override || sfDisplay || ""} onChange={e => set("fertilizer_sf_override", e.target.value)} placeholder={sfDisplay || "0"} />
+          {lawnType === "Seed Install" && (() => {
+            const seedSF = parseFloat(form.sf_seed) || sf || 0;
+            const baseSeedLbs = seedSF ? (seedSF / 1000) * 10 : 0;
+            const extraSeedLbs = form.extra_seed === "Yes" && baseSeedLbs ? (baseSeedLbs * 0.25).toFixed(1) : null;
+            const coverSF = parseFloat(form.sf_seed) || sf || 0;
+            const mulchBags = form.cover_method === "Mulch Pellet" && coverSF ? Math.ceil(coverSF / 200) : null; // 50lb bag covers ~200SF
+            const mulchBuckets = mulchBags ? Math.ceil(mulchBags * 0.25) : null;
+            const strawRolls = form.cover_method === "Straw Netting" && coverSF ? Math.ceil(coverSF / 800) : null;
+            return (
+              <>
+                {/* Area */}
+                <FlagField fieldKey="sf_seed" label="Area to Seed (SF)" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.sf_seed || ""} onChange={e => set("sf_seed", e.target.value)} placeholder={sfDisplay || "0"} />
+                </FlagField>
+
+                {/* Seed Type */}
+                <FlagField fieldKey="seed_type" label="Seed Type" flags={form._flags || []} onToggle={toggleFlag}>
+                  <SelectButtons value={form.seed_type} onChange={v => set("seed_type", v)} options={["Madison Parks", "Shady Place", "Survivor"]} />
+                </FlagField>
+
+                {/* Seed Amount */}
+                {baseSeedLbs > 0 && (
+                  <div className="flex items-center justify-between rounded-lg bg-muted/50 border px-3 py-2 text-sm">
+                    <span className="text-muted-foreground">Estimated Seed (10 lb/1000 SF)</span>
+                    <span className="font-semibold">{baseSeedLbs.toFixed(1)} <span className="text-muted-foreground font-normal">lbs</span></span>
                   </div>
                 )}
-              </div>
+                <FlagField fieldKey="seed_lbs" label="Seed Amount (lbs) — edit if needed" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.seed_lbs || (baseSeedLbs > 0 ? baseSeedLbs.toFixed(1) : "")} onChange={e => set("seed_lbs", e.target.value)} placeholder={baseSeedLbs > 0 ? baseSeedLbs.toFixed(1) : "0"} />
+                </FlagField>
 
-              <div>
-                <Label>Seed Type</Label>
-                <SelectButtons value={form.seed_type} onChange={v => set("seed_type", v)} options={["Madison Parks", "Tough Stuff", "Shady Place", "Carefree No Mow"]} />
-              </div>
+                {/* Extra seed to match installed */}
+                <FlagField fieldKey="extra_seed" label="Extra Seed to Match Installed?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <SelectButtons value={form.extra_seed} onChange={v => set("extra_seed", v)} options={["Yes", "No"]} />
+                </FlagField>
+                {form.extra_seed === "Yes" && extraSeedLbs && (
+                  <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-sm">
+                    <span className="text-blue-700">Extra Seed (25% of above)</span>
+                    <span className="font-semibold text-blue-800">{extraSeedLbs} <span className="font-normal">lbs</span></span>
+                  </div>
+                )}
 
-              <div>
-                <Label>Cover Method</Label>
-                <SelectButtons value={form.cover_method} onChange={v => set("cover_method", v)} options={["Mulch Pellet", "Straw Netting"]} />
-              </div>
+                {/* Cover Method */}
+                <FlagField fieldKey="cover_method" label="Cover Method" flags={form._flags || []} onToggle={toggleFlag}>
+                  <SelectButtons value={form.cover_method} onChange={v => set("cover_method", v)} options={["Mulch Pellet", "Straw Netting"]} />
+                </FlagField>
 
-              <div>
-                <Label>Water Access?</Label>
-                <SelectButtons value={form.water_access} onChange={v => set("water_access", v)} options={["Yes", "No"]} />
-              </div>
+                {form.cover_method === "Mulch Pellet" && (
+                  <div className="border rounded-lg p-3 space-y-2">
+                    {mulchBags && <CalcBox label="Bags Needed (50 lb each)" value={mulchBags} unit="bags" />}
+                    <FlagField fieldKey="mulch_bags" label="Bags (confirm/edit)" flags={form._flags || []} onToggle={toggleFlag}>
+                      <Input type="number" value={form.mulch_bags || mulchBags || ""} onChange={e => set("mulch_bags", e.target.value)} placeholder={mulchBags || "0"} />
+                    </FlagField>
+                    {mulchBuckets && <CalcBox label="Bucket Needed (25% of bags)" value={mulchBuckets} unit="buckets" />}
+                    <FlagField fieldKey="mulch_buckets" label="Buckets (confirm/edit)" flags={form._flags || []} onToggle={toggleFlag}>
+                      <Input type="number" value={form.mulch_buckets || mulchBuckets || ""} onChange={e => set("mulch_buckets", e.target.value)} placeholder={mulchBuckets || "0"} />
+                    </FlagField>
+                  </div>
+                )}
 
-              <div>
-                <Label>Bed Preparation Needed?</Label>
-                <SelectButtons value={form.bed_prep_needed} onChange={v => set("bed_prep_needed", v)} options={["Yes", "No"]} />
-              </div>
-            </>
-          )}
+                {form.cover_method === "Straw Netting" && (
+                  <div className="border rounded-lg p-3 space-y-2">
+                    <FlagField fieldKey="straw_mat_type" label="Straw Mat Type" flags={form._flags || []} onToggle={toggleFlag}>
+                      <SelectButtons value={form.straw_mat_type} onChange={v => set("straw_mat_type", v)} options={["Single Net 60", "Curlex Doublenet"]} />
+                    </FlagField>
+                    {strawRolls && <CalcBox label="Rolls Needed (1 roll = 800 SF)" value={strawRolls} unit="rolls" />}
+                    <FlagField fieldKey="straw_rolls" label="Rolls (confirm/edit)" flags={form._flags || []} onToggle={toggleFlag}>
+                      <Input type="number" value={form.straw_rolls || strawRolls || ""} onChange={e => set("straw_rolls", e.target.value)} placeholder={strawRolls || "0"} />
+                    </FlagField>
+                    <FlagField fieldKey="straw_sod_staples" label="Sod Staples (count)" flags={form._flags || []} onToggle={toggleFlag}>
+                      <Input type="number" value={form.straw_sod_staples || ""} onChange={e => set("straw_sod_staples", e.target.value)} placeholder="0" />
+                    </FlagField>
+                  </div>
+                )}
+
+                {/* Temporary downspout extensions */}
+                <FlagField fieldKey="temp_downspout_needed" label="Temporary Downspout Extensions Needed?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <SelectButtons value={form.temp_downspout_needed} onChange={v => set("temp_downspout_needed", v)} options={["Yes", "No"]} />
+                </FlagField>
+                {form.temp_downspout_needed === "Yes" && (
+                  <FlagField fieldKey="temp_downspout_lf" label="Downspout Extension Length (LF)" flags={form._flags || []} onToggle={toggleFlag}>
+                    <Input type="number" value={form.temp_downspout_lf || ""} onChange={e => set("temp_downspout_lf", e.target.value)} placeholder="0" />
+                  </FlagField>
+                )}
+
+                <div>
+                  <Label>Water Access?</Label>
+                  <SelectButtons value={form.water_access} onChange={v => set("water_access", v)} options={["Yes", "No"]} />
+                </div>
+
+                <div>
+                  <Label>Fertilizer?</Label>
+                  <SelectButtons value={form.fertilizer} onChange={v => set("fertilizer", v)} options={["Yes", "No"]} />
+                  {form.fertilizer === "Yes" && (
+                    <div className="mt-2">
+                      <Label className="text-xs">Fertilizer SF</Label>
+                      <Input className="mt-1" type="number" value={form.fertilizer_sf_override || sfDisplay || ""} onChange={e => set("fertilizer_sf_override", e.target.value)} placeholder={sfDisplay || "0"} />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label>Bed Preparation Needed?</Label>
+                  <SelectButtons value={form.bed_prep_needed} onChange={v => set("bed_prep_needed", v)} options={["Yes", "No"]} />
+                </div>
+              </>
+            );
+          })()}
 
           {/* TOP DRESS LAWN */}
           {lawnType === "Top Dress Lawn" && (
