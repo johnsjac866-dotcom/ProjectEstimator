@@ -136,3 +136,310 @@ export function mapBouldersEntry(op) {
   if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
   return entry;
 }
+
+/**
+ * Map AI-extracted data to a Drainage entry with auto-flagging.
+ */
+export function mapDrainageEntry(op) {
+  const type = op.drain_type || '';
+  if (!type) return null;
+
+  const f = op.drainage_fields || {};
+  const flags = [], flagLabels = {};
+  const addFlag = (k, l) => { flags.push(k); flagLabels[k] = l; };
+  const v = (key) => s(f[key] ?? op[key]);
+
+  const entry = { drain_type: type, sub_type: type, time_estimate: v('time_estimate'), notes: v('notes') };
+  if (!entry.time_estimate) addFlag('time_estimate', 'Time Estimate (hrs)');
+
+  const isMembrane = type === 'Impervious Membrane';
+  const pipeTypes = ['Buried Downspout', 'Buried Drain', 'Buried Sump Line'];
+  const filterTypes = ['Curtain Drain', 'French Drain'];
+
+  if (!isMembrane) {
+    entry.lf = v('lf');
+    if (!entry.lf) addFlag('lf', 'Linear Feet (LF)');
+
+    entry.excavation_mode = v('excavation_mode');
+    if (!entry.excavation_mode) addFlag('excavation_mode', 'Excavation Method');
+    if (entry.excavation_mode === 'Machine') {
+      entry.excavation_machine_type = v('excavation_machine_type');
+      if (!entry.excavation_machine_type) addFlag('excavation_machine_type', 'Machine Type');
+    }
+    entry.trencher_attachment = v('trencher_attachment');
+    if (!entry.trencher_attachment) addFlag('trencher_attachment', 'Trencher/Excavator Attachment?');
+    entry.excavation_depth = v('excavation_depth');
+    if (!entry.excavation_depth) addFlag('excavation_depth', 'Excavation Depth (in)');
+    entry.soil_composition = f.soil_composition || op.soil_composition || [];
+    if (!entry.soil_composition.length) addFlag('soil_composition', 'Soil Type');
+    entry.spoil_type = v('spoil_type');
+    if (!entry.spoil_type) addFlag('spoil_type', 'Spoil Disposal');
+    if (entry.spoil_type === 'Hauled off') {
+      entry.disposal_site = v('disposal_site');
+      if (!entry.disposal_site) addFlag('disposal_site', 'Disposal Site');
+    }
+    entry.sod_removal = v('sod_removal');
+    if (!entry.sod_removal) addFlag('sod_removal', 'Sod Removal?');
+    if (type === 'Curtain Drain' && entry.sod_removal === 'Yes') {
+      entry.sod_disposal_method = v('sod_disposal_method');
+      if (!entry.sod_disposal_method) addFlag('sod_disposal_method', 'Sod Disposal Method');
+    }
+    entry.obstruction_hours = v('obstruction_hours');
+    if (!entry.obstruction_hours) addFlag('obstruction_hours', 'Obstruction Time (hrs)');
+    entry.zip_level = v('zip_level');
+    if (!entry.zip_level) addFlag('zip_level', 'Zip Level Needed?');
+  }
+
+  if ([...pipeTypes, ...filterTypes].includes(type)) {
+    entry.pipe_size = v('pipe_size');
+    if (!entry.pipe_size) addFlag('pipe_size', 'Pipe Size (in)');
+  }
+
+  if (['Buried Downspout', 'Buried Sump Line', 'Dry Stream Bed'].includes(type)) {
+    entry.existing_downspout = v('existing_downspout');
+    if (!entry.existing_downspout) addFlag('existing_downspout', 'Existing Downspout?');
+    if (entry.existing_downspout === 'Yes') {
+      entry.existing_lf = v('existing_lf');
+      if (!entry.existing_lf) addFlag('existing_lf', 'Existing LF');
+    }
+  }
+  if (filterTypes.includes(type)) {
+    entry.existing_drain = v('existing_drain');
+    if (!entry.existing_drain) addFlag('existing_drain', 'Existing Drain?');
+    if (entry.existing_drain === 'Yes') {
+      entry.existing_lf = v('existing_lf');
+      if (!entry.existing_lf) addFlag('existing_lf', 'Existing LF');
+    }
+  }
+
+  if (type === 'Dry Stream Bed') {
+    entry.width = v('width');
+    if (!entry.width) addFlag('width', 'Width (ft)');
+    entry.stream_depth = v('stream_depth');
+    if (!entry.stream_depth) addFlag('stream_depth', 'Depth (in)');
+    entry.ball_cart_needed = v('ball_cart_needed');
+    if (!entry.ball_cart_needed) addFlag('ball_cart_needed', 'Ball Cart Needed?');
+    entry.boulders_needed = v('boulders_needed');
+    if (!entry.boulders_needed) addFlag('boulders_needed', 'Boulders Needed?');
+    if (entry.boulders_needed === 'Yes') {
+      entry.fieldstone_10_18 = v('fieldstone_10_18');
+      entry.fieldstone_18_24 = v('fieldstone_18_24');
+      entry.fieldstone_24_30 = v('fieldstone_24_30');
+      if (!entry.fieldstone_10_18 && !entry.fieldstone_18_24 && !entry.fieldstone_24_30) addFlag('fieldstone_10_18', 'Fieldstone Counts');
+    }
+    entry.drainage_rock_needed = v('drainage_rock_needed');
+    if (!entry.drainage_rock_needed) addFlag('drainage_rock_needed', 'Drainage Rock Needed?');
+    if (entry.drainage_rock_needed === 'Yes') {
+      entry.drainage_rock_cy = v('drainage_rock_cy');
+      if (!entry.drainage_rock_cy) addFlag('drainage_rock_cy', 'Drainage Rock CY');
+    }
+    entry.stone_type = v('stone_type');
+    if (!entry.stone_type) addFlag('stone_type', 'Stone Type');
+    entry.stream_purpose = v('stream_purpose');
+    if (!entry.stream_purpose) addFlag('stream_purpose', 'Decorative vs Functional?');
+  }
+
+  if (pipeTypes.includes(type)) {
+    entry.pvc_supplies_needed = v('pvc_supplies_needed');
+    if (!entry.pvc_supplies_needed) addFlag('pvc_supplies_needed', 'PVC Glue/Primer/Supplies?');
+    if (entry.pvc_supplies_needed === 'Yes') {
+      entry.pvc_supplies_count = v('pvc_supplies_count');
+      if (!entry.pvc_supplies_count) addFlag('pvc_supplies_count', 'PVC Supplies Count');
+    }
+    entry.pvc_fittings_needed = v('pvc_fittings_needed');
+    if (!entry.pvc_fittings_needed) addFlag('pvc_fittings_needed', 'PVC Fittings Needed?');
+    if (entry.pvc_fittings_needed === 'Yes') {
+      ['fit_90_long_turn', 'fit_90_tight', 'fit_22_5_elbow', 'fit_hub_45_elbow', 'fit_tee', 'fit_wye', 'fit_cleanout'].forEach(k => { entry[k] = v(k); });
+      const hasAny = ['fit_90_long_turn', 'fit_90_tight', 'fit_22_5_elbow', 'fit_hub_45_elbow', 'fit_tee', 'fit_wye', 'fit_cleanout'].some(k => entry[k]);
+      if (!hasAny) addFlag('fit_90_long_turn', 'PVC Fitting Counts');
+    }
+  }
+
+  if (type === 'Buried Downspout') {
+    entry.downspout_connection_needed = v('downspout_connection_needed');
+    if (!entry.downspout_connection_needed) addFlag('downspout_connection_needed', 'Downspout Connection Assembly?');
+    if (entry.downspout_connection_needed === 'Yes') {
+      entry.downspout_connection_size = v('downspout_connection_size');
+      if (!entry.downspout_connection_size) addFlag('downspout_connection_size', 'Connection Size');
+      entry.downspout_connection_count = v('downspout_connection_count');
+      if (!entry.downspout_connection_count) addFlag('downspout_connection_count', 'Connection Count');
+    }
+    entry.catch_basin_needed = v('catch_basin_needed');
+    if (!entry.catch_basin_needed) addFlag('catch_basin_needed', 'Catch Basin Needed?');
+    if (entry.catch_basin_needed === 'Yes') {
+      entry.catch_basin_size = v('catch_basin_size');
+      if (!entry.catch_basin_size) addFlag('catch_basin_size', 'Catch Basin Size');
+      entry.catch_basin_count = v('catch_basin_count');
+      if (!entry.catch_basin_count) addFlag('catch_basin_count', 'Catch Basin Count');
+    }
+    entry.miter_drain = v('miter_drain');
+    if (!entry.miter_drain) addFlag('miter_drain', 'Miter Drain Needed?');
+    if (entry.miter_drain === 'Yes') {
+      entry.miter_drain_type = v('miter_drain_type');
+      if (!entry.miter_drain_type) addFlag('miter_drain_type', 'Miter Drain Type');
+      entry.miter_drain_count = v('miter_drain_count');
+      if (!entry.miter_drain_count) addFlag('miter_drain_count', 'Miter Drain Count');
+    }
+    entry.lawn_repair = v('lawn_repair');
+    if (!entry.lawn_repair) addFlag('lawn_repair', 'Lawn Repair Needed?');
+  }
+
+  if (type === 'Buried Drain') {
+    entry.catch_basin_needed = v('catch_basin_needed');
+    if (!entry.catch_basin_needed) addFlag('catch_basin_needed', 'Catch Basin Needed?');
+    if (entry.catch_basin_needed === 'Yes') {
+      entry.catch_basin_size = v('catch_basin_size');
+      if (!entry.catch_basin_size) addFlag('catch_basin_size', 'Catch Basin Size');
+      entry.catch_basin_count = v('catch_basin_count');
+      if (!entry.catch_basin_count) addFlag('catch_basin_count', 'Catch Basin Count');
+    }
+    entry.atrium_drain_needed = v('atrium_drain_needed');
+    if (!entry.atrium_drain_needed) addFlag('atrium_drain_needed', 'Atrium Drain Needed?');
+    if (entry.atrium_drain_needed === 'Yes') {
+      entry.atrium_drain_count = v('atrium_drain_count');
+      if (!entry.atrium_drain_count) addFlag('atrium_drain_count', 'Atrium Drain Count');
+    }
+    entry.miter_drain = v('miter_drain');
+    if (!entry.miter_drain) addFlag('miter_drain', 'Miter Drain Needed?');
+    if (entry.miter_drain === 'Yes') {
+      entry.miter_drain_type = v('miter_drain_type');
+      if (!entry.miter_drain_type) addFlag('miter_drain_type', 'Miter Drain Type');
+      entry.miter_drain_count = v('miter_drain_count');
+      if (!entry.miter_drain_count) addFlag('miter_drain_count', 'Miter Drain Count');
+    }
+    entry.lawn_repair = v('lawn_repair');
+    if (!entry.lawn_repair) addFlag('lawn_repair', 'Lawn Repair Needed?');
+  }
+
+  if (type === 'Buried Sump Line') {
+    entry.freezedrain_needed = v('freezedrain_needed');
+    if (!entry.freezedrain_needed) addFlag('freezedrain_needed', 'Freezedrain Assembly?');
+    if (entry.freezedrain_needed === 'Yes') {
+      entry.freezedrain_count = v('freezedrain_count');
+      if (!entry.freezedrain_count) addFlag('freezedrain_count', 'Freezedrain Count');
+    }
+    entry.miter_drain = v('miter_drain');
+    if (!entry.miter_drain) addFlag('miter_drain', 'Miter Drain Needed?');
+    if (entry.miter_drain === 'Yes') {
+      entry.miter_drain_type = v('miter_drain_type');
+      if (!entry.miter_drain_type) addFlag('miter_drain_type', 'Miter Drain Type');
+      entry.miter_drain_count = v('miter_drain_count');
+      if (!entry.miter_drain_count) addFlag('miter_drain_count', 'Miter Drain Count');
+    }
+    entry.topsoil_needed = v('topsoil_needed');
+    if (!entry.topsoil_needed) addFlag('topsoil_needed', 'Topsoil/Screened Soil?');
+    if (entry.topsoil_needed === 'Yes') {
+      entry.topsoil_cy = v('topsoil_cy');
+      if (!entry.topsoil_cy) addFlag('topsoil_cy', 'Topsoil CY');
+    }
+    entry.lawn_repair = v('lawn_repair');
+    if (!entry.lawn_repair) addFlag('lawn_repair', 'Lawn Repair Needed?');
+  }
+
+  if (type === 'Curtain Drain') {
+    entry.stone_needed = v('stone_needed');
+    if (!entry.stone_needed) addFlag('stone_needed', 'Stone Needed?');
+    entry.fabric_needed = v('fabric_needed');
+    if (!entry.fabric_needed) addFlag('fabric_needed', 'Fabric Needed?');
+    if (entry.fabric_needed === 'Yes') {
+      entry.fabric_sf = v('fabric_sf');
+      if (!entry.fabric_sf) addFlag('fabric_sf', 'Fabric SF');
+    }
+  }
+
+  if (type === 'French Drain') {
+    entry.corrugated_tile_needed = v('corrugated_tile_needed');
+    if (!entry.corrugated_tile_needed) addFlag('corrugated_tile_needed', 'Corrugated Drain Tile?');
+    if (entry.corrugated_tile_needed === 'Yes') {
+      entry.tile_perforated_sock_count = v('tile_perforated_sock_count');
+      entry.tile_solid_count = v('tile_solid_count');
+      if (!entry.tile_perforated_sock_count && !entry.tile_solid_count) addFlag('tile_perforated_sock_count', 'Tile Counts');
+    }
+    entry.pvc_cleanout_needed = v('pvc_cleanout_needed');
+    if (!entry.pvc_cleanout_needed) addFlag('pvc_cleanout_needed', 'PVC Cleanout Assembly?');
+    if (entry.pvc_cleanout_needed === 'Yes') {
+      entry.pvc_cleanout_count = v('pvc_cleanout_count');
+      if (!entry.pvc_cleanout_count) addFlag('pvc_cleanout_count', 'Cleanout Count');
+    }
+    entry.misc_drainage_needed = v('misc_drainage_needed');
+    if (!entry.misc_drainage_needed) addFlag('misc_drainage_needed', 'Misc Drainage Material?');
+    if (entry.misc_drainage_needed === 'Yes') {
+      entry.misc_drainage_notes = v('misc_drainage_notes');
+      if (!entry.misc_drainage_notes) addFlag('misc_drainage_notes', 'Misc Drainage Description');
+    }
+    entry.coarse_sand_needed = v('coarse_sand_needed');
+    if (!entry.coarse_sand_needed) addFlag('coarse_sand_needed', 'Coarse/Washed Sand?');
+    if (entry.coarse_sand_needed === 'Yes') {
+      entry.coarse_sand_tons = v('coarse_sand_tons');
+      if (!entry.coarse_sand_tons) addFlag('coarse_sand_tons', 'Sand Tons');
+    }
+    entry.drainage_rock_needed = v('drainage_rock_needed');
+    if (!entry.drainage_rock_needed) addFlag('drainage_rock_needed', 'Drainage Rock 1.5"?');
+    if (entry.drainage_rock_needed === 'Yes') {
+      entry.drainage_rock_tons = v('drainage_rock_tons');
+      if (!entry.drainage_rock_tons) addFlag('drainage_rock_tons', 'Drainage Rock Tons');
+    }
+    entry.stone_needed = v('stone_needed');
+    if (!entry.stone_needed) addFlag('stone_needed', 'Stone Needed?');
+    entry.fabric_needed = v('fabric_needed');
+    if (!entry.fabric_needed) addFlag('fabric_needed', 'Fabric Needed?');
+    if (entry.fabric_needed === 'Yes') {
+      entry.fabric_sf = v('fabric_sf');
+      if (!entry.fabric_sf) addFlag('fabric_sf', 'Fabric SF');
+    }
+  }
+
+  if (isMembrane) {
+    entry.rough_grading_needed = v('rough_grading_needed');
+    if (!entry.rough_grading_needed) addFlag('rough_grading_needed', 'Rough Grading/Excavation?');
+    if (entry.rough_grading_needed === 'Yes') {
+      entry.mem_length = v('mem_length');
+      entry.mem_width = v('mem_width');
+      entry.mem_depth = v('mem_depth');
+      if (!entry.mem_length) addFlag('mem_length', 'Length (ft)');
+      if (!entry.mem_width) addFlag('mem_width', 'Width (ft)');
+      if (!entry.mem_depth) addFlag('mem_depth', 'Depth (in)');
+      entry.excavation_mode = v('excavation_mode');
+      if (!entry.excavation_mode) addFlag('excavation_mode', 'Excavation Method');
+      if (entry.excavation_mode === 'Machine') {
+        entry.excavation_machine_type = v('excavation_machine_type');
+        if (!entry.excavation_machine_type) addFlag('excavation_machine_type', 'Machine Type');
+      }
+    }
+    entry.detail_excavation_hours = v('detail_excavation_hours');
+    if (!entry.detail_excavation_hours) addFlag('detail_excavation_hours', 'Detail Excavation (hrs)');
+    entry.place_membrane_hours = v('place_membrane_hours');
+    if (!entry.place_membrane_hours) addFlag('place_membrane_hours', 'Place Membrane (hrs)');
+    entry.roofing_membrane_needed = v('roofing_membrane_needed');
+    if (!entry.roofing_membrane_needed) addFlag('roofing_membrane_needed', 'Rubber Roofing Membrane?');
+    if (entry.roofing_membrane_needed === 'Yes') {
+      entry.roofing_membrane_rolls = v('roofing_membrane_rolls');
+      if (!entry.roofing_membrane_rolls) addFlag('roofing_membrane_rolls', 'Membrane Rolls');
+    }
+    entry.woven_fabric_needed = v('woven_fabric_needed');
+    if (!entry.woven_fabric_needed) addFlag('woven_fabric_needed', 'Woven Fabric w/ Pins?');
+    if (entry.woven_fabric_needed === 'Yes') {
+      entry.woven_fabric_sf = v('woven_fabric_sf');
+      if (!entry.woven_fabric_sf) addFlag('woven_fabric_sf', 'Fabric SF');
+    }
+    entry.place_stone_hours = v('place_stone_hours');
+    if (!entry.place_stone_hours) addFlag('place_stone_hours', 'Place Stone (hrs)');
+    entry.drainage_rock_needed = v('drainage_rock_needed');
+    if (!entry.drainage_rock_needed) addFlag('drainage_rock_needed', 'Drainage Rock 1.5"?');
+    if (entry.drainage_rock_needed === 'Yes') {
+      entry.drainage_rock_tons = v('drainage_rock_tons');
+      if (!entry.drainage_rock_tons) addFlag('drainage_rock_tons', 'Drainage Rock Tons');
+    }
+    entry.edging_needed = v('edging_needed');
+    if (!entry.edging_needed) addFlag('edging_needed', 'Edging Needed?');
+    entry.poly_plastic_needed = v('poly_plastic_needed');
+    if (!entry.poly_plastic_needed) addFlag('poly_plastic_needed', '6-Mil Poly Plastic?');
+    if (entry.poly_plastic_needed === 'Yes') {
+      entry.poly_plastic_rolls = v('poly_plastic_rolls');
+      if (!entry.poly_plastic_rolls) addFlag('poly_plastic_rolls', 'Poly Plastic Rolls');
+    }
+  }
+
+  if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
+  return entry;
+}

@@ -7,7 +7,7 @@ import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hamme
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 import VoiceNotes from "@/components/VoiceNotes";
-import { mapDemolitionEntry, mapBouldersEntry } from "@/lib/voiceNoteMapper";
+import { mapDemolitionEntry, mapBouldersEntry, mapDrainageEntry } from "@/lib/voiceNoteMapper";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
@@ -501,6 +501,11 @@ export default function AreaDetail() {
               // For Boulders/Accents & Structures: type-specific field mapping with auto-flagging
               ...(operation.operation_type === 'Boulders/Accents & Structures' && (() => {
                 const mapped = mapBouldersEntry(operation);
+                return mapped || {};
+              })()),
+              // For Drainage: type-specific field mapping with auto-flagging
+              ...(operation.operation_type === 'Drainage' && (() => {
+                const mapped = mapDrainageEntry(operation);
                 return mapped || {};
               })()),
             };
