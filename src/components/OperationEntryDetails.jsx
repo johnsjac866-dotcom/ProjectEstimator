@@ -64,11 +64,13 @@ export default function OperationEntryDetails({ entry }) {
           {fields.map(([k, v]) => {
             const isFlagged = flagSet.has(k);
             return (
-              <div key={k} className={`flex items-start gap-1.5 text-xs py-0.5 ${isFlagged ? "text-orange-700" : ""}`}>
-                {isFlagged && <Flag className="h-2.5 w-2.5 text-orange-500 flex-shrink-0 mt-0.5" fill="currentColor" />}
-                {!isFlagged && <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0 mt-1" />}
-                <span className="text-muted-foreground min-w-0">{formatKey(k)}:</span>
-                <span className={`font-medium ${isFlagged && (v === null || v === undefined || v === "") ? "italic text-orange-600" : ""}`}>
+              <div key={k} className={`flex flex-col gap-0.5 text-xs py-0.5 ${isFlagged ? "text-orange-700" : ""}`}>
+                <div className="flex items-start gap-1.5">
+                  {isFlagged && <Flag className="h-2.5 w-2.5 text-orange-500 flex-shrink-0 mt-0.5" fill="currentColor" />}
+                  {!isFlagged && <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0 mt-1" />}
+                  <span className="text-muted-foreground flex-shrink-0">{formatKey(k)}:</span>
+                </div>
+                <span className={`pl-4 break-words ${isFlagged && (v === null || v === undefined || v === "") ? "italic text-orange-600" : ""}`}>
                   {formatValue(v)}
                 </span>
               </div>
