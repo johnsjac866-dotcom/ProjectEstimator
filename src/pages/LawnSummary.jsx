@@ -53,6 +53,7 @@ const SEED_FIELDS = [
   { k: "temp_downspout_lf", l: "Downspout Extension LF", unit: "LF", show: d => d.temp_downspout_needed === "Yes" },
   { k: "water_access", l: "Water Access" },
   { k: "fertilizer", l: "Fertilizer" },
+  { k: "fertilizer_sf_override", l: "Fertilizer SF", unit: "SF", show: d => d.fertilizer === "Yes" },
   { k: "bed_prep_needed", l: "Bed Preparation Needed" },
 ];
 
@@ -86,8 +87,8 @@ function SummaryRow({ field, data, flagSet }) {
         <span className="h-2 w-2 rounded-full bg-lime-500 flex-shrink-0 mt-1.5" />
       )}
       <span className="text-muted-foreground min-w-0">{field.l}:</span>
-      <span className={`font-medium ${!hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
-        {hasVal ? (field.unit ? `${String(value)} ${field.unit}` : String(value)) : '— not set'}
+      <span className={`font-medium ${!hasVal && isFlagged ? 'text-orange-600 italic' : !hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
+        {hasVal ? (field.unit ? `${String(value)} ${field.unit}` : String(value)) : isFlagged ? 'Missing — needs review' : '— not set'}
       </span>
     </div>
   );
@@ -129,7 +130,7 @@ export default function LawnSummary() {
           <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate(`/lawn-wizard/${areaId}?opId=${data.id}`)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/lawn-wizard/${areaId}?opId=${opId || data.id}`)}>
             <Pencil className="h-4 w-4 mr-1" /> Edit
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}>
@@ -150,9 +151,10 @@ export default function LawnSummary() {
         </div>
 
         {flagSet.size > 0 && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-300 text-orange-800 text-sm">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention</span>
+            <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention.</span>
+            <span className="text-orange-600">Click Edit to go straight to the first flagged item.</span>
           </div>
         )}
 
