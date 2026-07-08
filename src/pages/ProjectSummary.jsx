@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Settings, ClipboardList, Leaf, Shovel, Hammer, ChevronDown, ChevronRight, FileText, Pencil, Plus, Scissors, Sprout, Wind, Droplets, Wrench, Layers, Flag, Download } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 import { generateProjectSummaryPDF } from "@/lib/pdfExport";
+import OperationEntryDetails from "@/components/OperationEntryDetails";
 
 const OP_CONFIG = {
   "Site Management & Daily Cleanup": { dataKey: "site_mgmt_data", summaryPath: (aId, opId) => `/site-management-summary/${aId}?opId=${opId}`, wizardPath: (aId, opId) => opId ? `/site-management-wizard/${aId}?opId=${opId}` : `/site-management-wizard/${aId}`, newPath: (aId) => `/site-management-wizard/${aId}`, icon: Settings, color: "blue" },
@@ -161,16 +162,17 @@ export default function ProjectSummary() {
                                    </Button>
                                  </div>
                                  {entry._flags?.length > 0 && (
-                                   <div className="mt-1 flex flex-wrap gap-1">
-                                     {entry._flags.map(fk => (
-                                       <span key={fk} className="inline-flex items-center gap-1 text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
-                                         <Flag className="h-2.5 w-2.5" fill="currentColor" />
-                                         {(entry._flag_labels && entry._flag_labels[fk]) || fk}
-                                       </span>
-                                     ))}
-                                   </div>
-                                 )}
-                               </div>
+                                     <div className="mt-1 flex flex-wrap gap-1">
+                                       {entry._flags.map(fk => (
+                                         <span key={fk} className="inline-flex items-center gap-1 text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
+                                           <Flag className="h-2.5 w-2.5" fill="currentColor" />
+                                           {(entry._flag_labels && entry._flag_labels[fk]) || fk}
+                                         </span>
+                                       ))}
+                                     </div>
+                                   )}
+                                  <OperationEntryDetails entry={entry} />
+                                 </div>
                             ))}
                           </div>
                         ) : (
