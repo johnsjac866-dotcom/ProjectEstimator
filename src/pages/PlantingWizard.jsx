@@ -21,14 +21,60 @@ function getDefaultForm(type) {
     sub_type: type,
     additional_time_rocky: "",
     additional_time_roots: "",
-    delivery_method: "",
-    water_access: "",
     notes: "",
   };
-  if (type === "Trees & Shrubs") return { ...base, plants: [{ id: generateId(), type: "", count: "", size: "" }], hand_vs_machine: "" };
-  if (type === "Perennials")     return { ...base, large_plants: [{ id: generateId(), name: "", count: "" }], large_spacing: "", small_plants: [{ id: generateId(), name: "", count: "" }], small_spacing: "", bed_condition: "" };
-  if (type === "Bulbs")          return { ...base, count: "" };
-  if (type === "Annuals")        return { ...base, count: "" };
+  if (type === "Trees & Shrubs") return {
+    ...base,
+    trees: [{ id: generateId(), type: "", count: "", size: "" }],
+    shrubs: [{ id: generateId(), type: "", count: "", size: "" }],
+    hand_vs_machine: "",
+    machine_type: "",
+    ball_cart: "",
+    tree_sling: "",
+    tree_boom: "",
+    ramps: "",
+    stake_kit: "",
+    cage: "",
+    mulch_ring: "",
+    haul_off_debris: "",
+    watering_hours: "",
+    watering_days: "",
+    water_access: "",
+    delivery_by: "",
+    box_truck: "",
+    flatbed: "",
+    forklift: "",
+    mycorrhizae_tablets: "",
+  };
+  if (type === "Perennials") return {
+    ...base,
+    large_plants: [{ id: generateId(), name: "", count: "" }],
+    large_spacing: "",
+    small_plants: [{ id: generateId(), name: "", count: "" }],
+    small_spacing: "",
+    bed_condition: "",
+    watering_hours: "",
+    water_access: "",
+    mycorrhizae_tablets: "",
+  };
+  if (type === "Bulbs") return {
+    ...base,
+    bulbs: [{ id: generateId(), name: "", count: "" }],
+    mulched_soil: "",
+    bulb_fertilizer: "",
+    milwaukee_drill: "",
+    drill_auger: "",
+    bulb_plugger: "",
+    cut_weed_barrier: "",
+    watering_hours: "",
+    water_access: "",
+  };
+  if (type === "Annuals") return {
+    ...base,
+    annuals: [{ id: generateId(), name: "", count: "" }],
+    watering_hours: "",
+    water_access: "",
+  };
   return base;
 }
 
@@ -54,6 +100,106 @@ function SelectButtons({ value, onChange, options }) {
           {opt}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Reusable plant list editor (name + count rows) */
+function PlantList({ listKey, label, addLabel, form, setForm }) {
+  function add() {
+    setForm(f => ({ ...f, [listKey]: [...(f[listKey] || []), { id: generateId(), name: "", count: "" }] }));
+  }
+  function remove(id) {
+    setForm(f => ({ ...f, [listKey]: f[listKey].filter(p => p.id !== id) }));
+  }
+  function update(id, key, val) {
+    setForm(f => ({ ...f, [listKey]: f[listKey].map(p => p.id === id ? { ...p, [key]: val } : p) }));
+  }
+  const items = form[listKey] || [];
+  return (
+    <div className="rounded-lg border p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">{label}</p>
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          <Plus className="h-3.5 w-3.5 mr-1" /> {addLabel || "Add"}
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {items.map((plant, idx) => (
+          <div key={plant.id} className="rounded-lg border p-3 space-y-2 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">#{idx + 1}</span>
+              {items.length > 1 && (
+                <button type="button" onClick={() => remove(plant.id)} className="text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Name</Label>
+                <Input className="mt-1 h-8 text-sm" value={plant.name || ""} onChange={e => update(plant.id, "name", e.target.value)} placeholder="Name" />
+              </div>
+              <div>
+                <Label className="text-xs">Count</Label>
+                <Input className="mt-1 h-8 text-sm" type="number" value={plant.count || ""} onChange={e => update(plant.id, "count", e.target.value)} placeholder="0" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Reusable tree/shrub list (type + count + size) */
+function TreeShrubList({ listKey, label, form, setForm }) {
+  function add() {
+    setForm(f => ({ ...f, [listKey]: [...(f[listKey] || []), { id: generateId(), type: "", count: "", size: "" }] }));
+  }
+  function remove(id) {
+    setForm(f => ({ ...f, [listKey]: f[listKey].filter(p => p.id !== id) }));
+  }
+  function update(id, key, val) {
+    setForm(f => ({ ...f, [listKey]: f[listKey].map(p => p.id === id ? { ...p, [key]: val } : p) }));
+  }
+  const items = form[listKey] || [];
+  return (
+    <div className="rounded-lg border p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">{label}</p>
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          <Plus className="h-3.5 w-3.5 mr-1" /> Add
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {items.map((plant, idx) => (
+          <div key={plant.id} className="rounded-lg border p-3 space-y-2 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">#{idx + 1}</span>
+              {items.length > 1 && (
+                <button type="button" onClick={() => remove(plant.id)} className="text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-xs">Type</Label>
+                <Input className="mt-1 h-8 text-sm" value={plant.type || ""} onChange={e => update(plant.id, "type", e.target.value)} placeholder="e.g. Oak" />
+              </div>
+              <div>
+                <Label className="text-xs">Count</Label>
+                <Input className="mt-1 h-8 text-sm" type="number" value={plant.count || ""} onChange={e => update(plant.id, "count", e.target.value)} placeholder="0" />
+              </div>
+              <div>
+                <Label className="text-xs">Size</Label>
+                <Input className="mt-1 h-8 text-sm" value={plant.size || ""} onChange={e => update(plant.id, "size", e.target.value)} placeholder="e.g. 3 gal" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -101,25 +247,14 @@ export default function PlantingWizard() {
     });
   }
 
-  function addPlant() {
-    setForm(f => ({ ...f, plants: [...(f.plants || []), { id: generateId(), type: "", count: "", size: "" }] }));
-  }
-  function removePlant(id) {
-    setForm(f => ({ ...f, plants: f.plants.filter(p => p.id !== id) }));
-  }
-  function updatePlant(id, key, val) {
-    setForm(f => ({ ...f, plants: f.plants.map(p => p.id === id ? { ...p, [key]: val } : p) }));
-  }
+  // Mulch ring cubic yards: 4ft ring (annular), 3" = 0.25ft depth
+  // Area = π*(r_outer² - r_inner²), r_outer = tree radius + 4, r_inner = tree radius ≈ 0
+  // Simplified: annular area for a 4ft-wide ring, assume inner r = 0 → area = π*(4²) = 50.27 sqft
+  // CY = 50.27 * 0.25 / 27 ≈ 0.47 CY
+  const MULCH_RING_CY = ((Math.PI * 4 * 4) * (3 / 12) / 27).toFixed(2);
 
-  function addPerennial(sizeKey) {
-    setForm(f => ({ ...f, [sizeKey]: [...(f[sizeKey] || []), { id: generateId(), name: "", count: "" }] }));
-  }
-  function removePerennial(sizeKey, id) {
-    setForm(f => ({ ...f, [sizeKey]: f[sizeKey].filter(p => p.id !== id) }));
-  }
-  function updatePerennial(sizeKey, id, key, val) {
-    setForm(f => ({ ...f, [sizeKey]: f[sizeKey].map(p => p.id === id ? { ...p, [key]: val } : p) }));
-  }
+  const treeCount = (form.trees || []).reduce((s, t) => s + (parseFloat(t.count) || 0), 0);
+  const totalMulchRingCY = form.mulch_ring === "Yes" ? (treeCount * parseFloat(MULCH_RING_CY)).toFixed(2) : null;
 
   async function handleSave() {
     setSaving(true);
@@ -170,60 +305,105 @@ export default function PlantingWizard() {
             <span className="font-semibold">{plantingType}</span>
           </div>
 
-          {/* Trees & Shrubs */}
+          {/* ── Trees & Shrubs ── */}
           {plantingType === "Trees & Shrubs" && (
             <>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Plants</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addPlant}>
-                    <Plus className="h-3.5 w-3.5 mr-1" /> Add Plant
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {(form.plants || []).map((plant, idx) => (
-                    <div key={plant.id} className="rounded-lg border p-3 space-y-2 bg-muted/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground">Plant {idx + 1}</span>
-                        {form.plants.length > 1 && (
-                          <button type="button" onClick={() => removePlant(plant.id)} className="text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div>
-                          <Label className="text-xs">Type</Label>
-                          <Input className="mt-1 h-8 text-sm" value={plant.type} onChange={e => updatePlant(plant.id, "type", e.target.value)} placeholder="e.g. Oak" />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Count</Label>
-                          <Input className="mt-1 h-8 text-sm" type="number" value={plant.count} onChange={e => updatePlant(plant.id, "count", e.target.value)} placeholder="0" />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Size</Label>
-                          <Input className="mt-1 h-8 text-sm" value={plant.size} onChange={e => updatePlant(plant.id, "size", e.target.value)} placeholder="e.g. 3 gal" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              <TreeShrubList listKey="trees" label="Trees" form={form} setForm={setForm} />
+              <TreeShrubList listKey="shrubs" label="Shrubs" form={form} setForm={setForm} />
+
+              <FlagField fieldKey="mycorrhizae_tablets" label="Mycorrhizae Tablets (count)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.mycorrhizae_tablets || ""} onChange={e => set("mycorrhizae_tablets", e.target.value)} placeholder="0" />
+              </FlagField>
+
+              <FlagField fieldKey="hand_vs_machine" label="Excavation: Hand or Machine?" flags={form._flags || []} onToggle={toggleFlag}>
+                <SelectButtons value={form.hand_vs_machine} onChange={v => set("hand_vs_machine", v)} options={["Hand", "Machine"]} />
+              </FlagField>
+              {form.hand_vs_machine === "Machine" && (
+                <FlagField fieldKey="machine_type" label="Machine Type" flags={form._flags || []} onToggle={toggleFlag}>
+                  <SelectButtons value={form.machine_type} onChange={v => set("machine_type", v)} options={["Vermeer", "Dingo"]} />
+                  <p className="text-xs text-amber-600 mt-1">⚠️ Check machine access before scheduling.</p>
+                </FlagField>
+              )}
+
+              <div className="rounded-lg border p-4 space-y-3">
+                <p className="text-sm font-semibold">Equipment</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <FlagField fieldKey="ball_cart" label="Ball Cart?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <YesNo value={form.ball_cart} onChange={v => set("ball_cart", v)} />
+                  </FlagField>
+                  <FlagField fieldKey="tree_sling" label="Tree Sling?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <YesNo value={form.tree_sling} onChange={v => set("tree_sling", v)} />
+                  </FlagField>
+                  <FlagField fieldKey="tree_boom" label="Tree Boom?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <YesNo value={form.tree_boom} onChange={v => set("tree_boom", v)} />
+                  </FlagField>
+                  <FlagField fieldKey="ramps" label="Ramps (count)" flags={form._flags || []} onToggle={toggleFlag}>
+                    <Input type="number" value={form.ramps || ""} onChange={e => set("ramps", e.target.value)} placeholder="0" />
+                  </FlagField>
+                  <FlagField fieldKey="stake_kit" label="Stake Kit?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <YesNo value={form.stake_kit} onChange={v => set("stake_kit", v)} />
+                  </FlagField>
+                  <FlagField fieldKey="cage" label="Cage?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <YesNo value={form.cage} onChange={v => set("cage", v)} />
+                  </FlagField>
                 </div>
               </div>
-              <div>
-                <Label>Hand vs Machine Use</Label>
-                <SelectButtons value={form.hand_vs_machine} onChange={v => set("hand_vs_machine", v)} options={["Hand", "Machine"]} />
+
+              <FlagField fieldKey="mulch_ring" label="Mulch Ring? (4ft ring, 3in deep)" flags={form._flags || []} onToggle={toggleFlag}>
+                <YesNo value={form.mulch_ring} onChange={v => set("mulch_ring", v)} />
+                {form.mulch_ring === "Yes" && treeCount > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {treeCount} tree{treeCount !== 1 ? "s" : ""} × {MULCH_RING_CY} CY = <strong>{totalMulchRingCY} CY</strong>
+                  </p>
+                )}
+              </FlagField>
+
+              <FlagField fieldKey="haul_off_debris" label="Haul Off Debris or Extra Soil?" flags={form._flags || []} onToggle={toggleFlag}>
+                <YesNo value={form.haul_off_debris} onChange={v => set("haul_off_debris", v)} />
+              </FlagField>
+
+              <div className="rounded-lg border p-4 space-y-3">
+                <p className="text-sm font-semibold">Watering</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <FlagField fieldKey="watering_hours" label="Hours" flags={form._flags || []} onToggle={toggleFlag}>
+                    <Input type="number" value={form.watering_hours || ""} onChange={e => set("watering_hours", e.target.value)} placeholder="0" />
+                  </FlagField>
+                  <FlagField fieldKey="watering_days" label="Days" flags={form._flags || []} onToggle={toggleFlag}>
+                    <Input type="number" value={form.watering_days || ""} onChange={e => set("watering_days", e.target.value)} placeholder="0" />
+                  </FlagField>
+                </div>
+                <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.water_access} onChange={v => set("water_access", v)} />
+                </FlagField>
+              </div>
+
+              <div className="rounded-lg border p-4 space-y-3">
+                <p className="text-sm font-semibold">Delivery Method</p>
+                <FlagField fieldKey="delivery_by" label="By Aspen or By Others?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <SelectButtons value={form.delivery_by} onChange={v => set("delivery_by", v)} options={["By Aspen", "By Others"]} />
+                </FlagField>
+                <div className="grid grid-cols-3 gap-3">
+                  <FlagField fieldKey="box_truck" label="Box Truck?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <YesNo value={form.box_truck} onChange={v => set("box_truck", v)} />
+                  </FlagField>
+                  <FlagField fieldKey="flatbed" label="Flatbed?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <YesNo value={form.flatbed} onChange={v => set("flatbed", v)} />
+                  </FlagField>
+                  <FlagField fieldKey="forklift" label="Forklift?" flags={form._flags || []} onToggle={toggleFlag}>
+                    <YesNo value={form.forklift} onChange={v => set("forklift", v)} />
+                  </FlagField>
+                </div>
               </div>
             </>
           )}
 
-          {/* Perennials */}
+          {/* ── Perennials ── */}
           {plantingType === "Perennials" && (
             <>
-              {/* Large Perennials */}
               <div className="rounded-lg border p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">Large Perennials</p>
-                  <Button type="button" variant="outline" size="sm" onClick={() => addPerennial("large_plants")}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setForm(f => ({ ...f, large_plants: [...(f.large_plants || []), { id: generateId(), name: "", count: "" }] }))}>
                     <Plus className="h-3.5 w-3.5 mr-1" /> Add
                   </Button>
                 </div>
@@ -233,7 +413,7 @@ export default function PlantingWizard() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-muted-foreground">Plant {idx + 1}</span>
                         {form.large_plants.length > 1 && (
-                          <button type="button" onClick={() => removePerennial("large_plants", plant.id)} className="text-muted-foreground hover:text-destructive">
+                          <button type="button" onClick={() => setForm(f => ({ ...f, large_plants: f.large_plants.filter(p => p.id !== plant.id) }))} className="text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -241,11 +421,11 @@ export default function PlantingWizard() {
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <Label className="text-xs">Plant Name</Label>
-                          <Input className="mt-1 h-8 text-sm" value={plant.name} onChange={e => updatePerennial("large_plants", plant.id, "name", e.target.value)} placeholder="e.g. Hosta" />
+                          <Input className="mt-1 h-8 text-sm" value={plant.name} onChange={e => setForm(f => ({ ...f, large_plants: f.large_plants.map(p => p.id === plant.id ? { ...p, name: e.target.value } : p) }))} placeholder="e.g. Hosta" />
                         </div>
                         <div>
                           <Label className="text-xs">Count</Label>
-                          <Input className="mt-1 h-8 text-sm" type="number" value={plant.count} onChange={e => updatePerennial("large_plants", plant.id, "count", e.target.value)} placeholder="0" />
+                          <Input className="mt-1 h-8 text-sm" type="number" value={plant.count} onChange={e => setForm(f => ({ ...f, large_plants: f.large_plants.map(p => p.id === plant.id ? { ...p, count: e.target.value } : p) }))} placeholder="0" />
                         </div>
                       </div>
                     </div>
@@ -253,15 +433,14 @@ export default function PlantingWizard() {
                 </div>
                 <div>
                   <Label className="text-xs">Spacing</Label>
-                  <Input className="mt-1" value={form.large_spacing} onChange={e => set("large_spacing", e.target.value)} placeholder='e.g. 18"' />
+                  <Input className="mt-1" value={form.large_spacing || ""} onChange={e => set("large_spacing", e.target.value)} placeholder='e.g. 18"' />
                 </div>
               </div>
 
-              {/* Small Perennials */}
               <div className="rounded-lg border p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">Small Perennials</p>
-                  <Button type="button" variant="outline" size="sm" onClick={() => addPerennial("small_plants")}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setForm(f => ({ ...f, small_plants: [...(f.small_plants || []), { id: generateId(), name: "", count: "" }] }))}>
                     <Plus className="h-3.5 w-3.5 mr-1" /> Add
                   </Button>
                 </div>
@@ -271,7 +450,7 @@ export default function PlantingWizard() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-muted-foreground">Plant {idx + 1}</span>
                         {form.small_plants.length > 1 && (
-                          <button type="button" onClick={() => removePerennial("small_plants", plant.id)} className="text-muted-foreground hover:text-destructive">
+                          <button type="button" onClick={() => setForm(f => ({ ...f, small_plants: f.small_plants.filter(p => p.id !== plant.id) }))} className="text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -279,11 +458,11 @@ export default function PlantingWizard() {
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <Label className="text-xs">Plant Name</Label>
-                          <Input className="mt-1 h-8 text-sm" value={plant.name} onChange={e => updatePerennial("small_plants", plant.id, "name", e.target.value)} placeholder="e.g. Sedum" />
+                          <Input className="mt-1 h-8 text-sm" value={plant.name} onChange={e => setForm(f => ({ ...f, small_plants: f.small_plants.map(p => p.id === plant.id ? { ...p, name: e.target.value } : p) }))} placeholder="e.g. Sedum" />
                         </div>
                         <div>
                           <Label className="text-xs">Count</Label>
-                          <Input className="mt-1 h-8 text-sm" type="number" value={plant.count} onChange={e => updatePerennial("small_plants", plant.id, "count", e.target.value)} placeholder="0" />
+                          <Input className="mt-1 h-8 text-sm" type="number" value={plant.count} onChange={e => setForm(f => ({ ...f, small_plants: f.small_plants.map(p => p.id === plant.id ? { ...p, count: e.target.value } : p) }))} placeholder="0" />
                         </div>
                       </div>
                     </div>
@@ -291,23 +470,86 @@ export default function PlantingWizard() {
                 </div>
                 <div>
                   <Label className="text-xs">Spacing</Label>
-                  <Input className="mt-1" value={form.small_spacing} onChange={e => set("small_spacing", e.target.value)} placeholder='e.g. 12"' />
+                  <Input className="mt-1" value={form.small_spacing || ""} onChange={e => set("small_spacing", e.target.value)} placeholder='e.g. 12"' />
                 </div>
               </div>
 
-              <div>
-                <Label>Bed Condition</Label>
+              <FlagField fieldKey="bed_condition" label="Bed Condition" flags={form._flags || []} onToggle={toggleFlag}>
                 <SelectButtons value={form.bed_condition} onChange={v => set("bed_condition", v)} options={["Unprepared bed", "Prepared bed"]} />
+              </FlagField>
+
+              <FlagField fieldKey="mycorrhizae_tablets" label="Mycorrhizae Tablets (count)" flags={form._flags || []} onToggle={toggleFlag}>
+                <Input type="number" value={form.mycorrhizae_tablets || ""} onChange={e => set("mycorrhizae_tablets", e.target.value)} placeholder="0" />
+              </FlagField>
+
+              <div className="rounded-lg border p-4 space-y-3">
+                <p className="text-sm font-semibold">Watering</p>
+                <FlagField fieldKey="watering_hours" label="Time for Watering (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.watering_hours || ""} onChange={e => set("watering_hours", e.target.value)} placeholder="0" />
+                </FlagField>
+                <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.water_access} onChange={v => set("water_access", v)} />
+                </FlagField>
               </div>
             </>
           )}
 
-          {/* Bulbs / Annuals */}
-          {(plantingType === "Bulbs" || plantingType === "Annuals") && (
-            <div><Label>Count</Label><Input className="mt-1" type="number" value={form.count} onChange={e => set("count", e.target.value)} placeholder="0" /></div>
+          {/* ── Bulbs ── */}
+          {plantingType === "Bulbs" && (
+            <>
+              <PlantList listKey="bulbs" label="Bulbs" addLabel="Add Bulb" form={form} setForm={setForm} />
+
+              <div className="grid grid-cols-2 gap-3">
+                <FlagField fieldKey="mulched_soil" label="Mulched Soil?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.mulched_soil} onChange={v => set("mulched_soil", v)} />
+                </FlagField>
+                <FlagField fieldKey="bulb_fertilizer" label="Bulb Fertilizer?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.bulb_fertilizer} onChange={v => set("bulb_fertilizer", v)} />
+                </FlagField>
+                <FlagField fieldKey="milwaukee_drill" label="Milwaukee Drill?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.milwaukee_drill} onChange={v => set("milwaukee_drill", v)} />
+                </FlagField>
+                <FlagField fieldKey="drill_auger" label="Drill Auger?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.drill_auger} onChange={v => set("drill_auger", v)} />
+                </FlagField>
+                <FlagField fieldKey="bulb_plugger" label="Bulb Plugger?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.bulb_plugger} onChange={v => set("bulb_plugger", v)} />
+                </FlagField>
+                <FlagField fieldKey="cut_weed_barrier" label="Cut Weed Barrier?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.cut_weed_barrier} onChange={v => set("cut_weed_barrier", v)} />
+                </FlagField>
+              </div>
+
+              <div className="rounded-lg border p-4 space-y-3">
+                <p className="text-sm font-semibold">Watering</p>
+                <FlagField fieldKey="watering_hours" label="Time for Watering (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.watering_hours || ""} onChange={e => set("watering_hours", e.target.value)} placeholder="0" />
+                </FlagField>
+                <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.water_access} onChange={v => set("water_access", v)} />
+                </FlagField>
+              </div>
+            </>
           )}
 
-          {/* Shared fields for all types */}
+          {/* ── Annuals ── */}
+          {plantingType === "Annuals" && (
+            <>
+              <PlantList listKey="annuals" label="Annuals" addLabel="Add Annual" form={form} setForm={setForm} />
+
+              <div className="rounded-lg border p-4 space-y-3">
+                <p className="text-sm font-semibold">Watering</p>
+                <FlagField fieldKey="watering_hours" label="Time for Watering (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
+                  <Input type="number" value={form.watering_hours || ""} onChange={e => set("watering_hours", e.target.value)} placeholder="0" />
+                </FlagField>
+                <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
+                  <YesNo value={form.water_access} onChange={v => set("water_access", v)} />
+                </FlagField>
+              </div>
+            </>
+          )}
+
+          {/* ── Shared fields ── */}
           <div className="space-y-4 border-t pt-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Additional Time Factors</p>
             <FlagField fieldKey="time_estimate" label="Time Estimate (hrs)" flags={form._flags || []} onToggle={toggleFlag}>
@@ -321,12 +563,6 @@ export default function PlantingWizard() {
                 <YesNo value={form.additional_time_roots} onChange={v => set("additional_time_roots", v)} />
               </FlagField>
             </div>
-            <FlagField fieldKey="delivery_method" label="Delivery Method" flags={form._flags || []} onToggle={toggleFlag}>
-              <Input value={form.delivery_method} onChange={e => set("delivery_method", e.target.value)} placeholder="e.g. Truck delivery, Pick up" />
-            </FlagField>
-            <FlagField fieldKey="water_access" label="Water Access?" flags={form._flags || []} onToggle={toggleFlag}>
-              <YesNo value={form.water_access} onChange={v => set("water_access", v)} />
-            </FlagField>
           </div>
 
           <FlagField fieldKey="notes" label="Additional Notes" flags={form._flags || []} onToggle={toggleFlag}>
