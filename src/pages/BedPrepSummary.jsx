@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Flag } from "lucide-react";
+import { ArrowLeft, Printer, Flag, Pencil, AlertTriangle } from "lucide-react";
 import { BED_FIELDS, getSubTypeLabel, getSubTypeCategory, BED_MAIN_TYPES } from "@/lib/bedPrepStages";
 import { parseOps } from "@/lib/opsUtils";
 
@@ -25,7 +25,7 @@ function FlaggedRow({ fieldKey, flags, flagLabels }) {
     <div className="flex items-start gap-2 text-sm text-orange-700">
       <span className="h-2 w-2 rounded-full bg-orange-400 flex-shrink-0 mt-1.5" />
       <span className="text-muted-foreground">{label}:</span>
-      <span className="font-medium italic">Not provided</span>
+      <span className="font-medium italic">Missing — needs review</span>
       <Flag className="h-3 w-3 text-orange-400 flex-shrink-0 mt-0.5" fill="currentColor" />
     </div>
   );
@@ -39,6 +39,7 @@ function RowOrFlag({ label, fieldKey, value, flags, flagLabels }) {
 
 export default function BedPrepSummary() {
   const { areaId } = useParams();
+  const navigate = useNavigate();
   const opId = new URLSearchParams(window.location.search).get('opId');
   const from = new URLSearchParams(window.location.search).get('from');
   const [area, setArea] = useState(null);
@@ -257,9 +258,14 @@ export default function BedPrepSummary() {
         <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="h-4 w-4 mr-2" /> Print
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/bed-prep-wizard/${areaId}?opId=${opId || data.id}`)}>
+            <Pencil className="h-4 w-4 mr-1" /> Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-1" /> Print
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card border rounded-xl p-8 print:border-0 space-y-6">
@@ -276,9 +282,10 @@ export default function BedPrepSummary() {
 
         {/* Flags banner */}
         {flags.length > 0 && (
-          <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
-            <Flag className="h-4 w-4 flex-shrink-0" fill="currentColor" />
-            <span className="font-medium">{flags.length} item{flags.length !== 1 ? "s" : ""} flagged for review</span>
+          <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-50 border border-orange-300 rounded-lg px-3 py-2">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <span className="font-medium">{flags.length} item{flags.length !== 1 ? "s" : ""} flagged for review.</span>
+            <span className="text-orange-600">Click Edit to go straight to the first flagged item.</span>
           </div>
         )}
 

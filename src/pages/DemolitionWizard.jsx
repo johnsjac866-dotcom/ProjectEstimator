@@ -62,9 +62,9 @@ export default function DemolitionWizard() {
           break;
         }
       }
-    }, 100);
+    }, 150);
     return () => clearTimeout(timer);
-  }, [step]);
+  }, [step, data._flags]);
 
   function set(key, value) { setData(d => ({ ...d, [key]: value })); }
 

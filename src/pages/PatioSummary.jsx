@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Printer, AlertTriangle, Pencil, Flag } from "lucide-react";
 import { PATIO_STAGES, getApplicableStages, getSelectedCategories, getVisibleFields } from "@/lib/patioStages";
 
 function parseOps(jsonStr) {
@@ -11,6 +11,7 @@ function parseOps(jsonStr) {
 
 export default function PatioSummary() {
   const { areaId } = useParams();
+  const navigate = useNavigate();
   const opId = new URLSearchParams(window.location.search).get('opId');
   const from = new URLSearchParams(window.location.search).get('from');
   const [area, setArea] = useState(null);
@@ -35,6 +36,7 @@ export default function PatioSummary() {
 
   const stages = getApplicableStages(data);
   const categories = getSelectedCategories(data);
+  const flagSet = new Set(data._flags || []);
 
   // Find missing info
   const missingInfo = [];
@@ -51,9 +53,14 @@ export default function PatioSummary() {
         <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="h-4 w-4 mr-2" /> Print
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/patio-wizard/${areaId}?opId=${opId || data.id}`)}>
+            <Pencil className="h-4 w-4 mr-1" /> Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-1" /> Print
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card border rounded-xl p-8 print:border-0 print:shadow-none">
@@ -66,6 +73,14 @@ export default function PatioSummary() {
             <div><span className="text-muted-foreground">Area:</span> <span className="font-medium">{area?.name}</span></div>
           </div>
         </div>
+
+        {flagSet.size > 0 && (
+          <div className="mb-6 flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-300 text-orange-800 text-sm">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <span className="font-medium">{flagSet.size} item{flagSet.size !== 1 ? 's' : ''} flagged for review.</span>
+            <span className="text-orange-600">Click Edit to go straight to the first flagged item.</span>
+          </div>
+        )}
 
         {/* Categories List */}
         <div className="mb-8">

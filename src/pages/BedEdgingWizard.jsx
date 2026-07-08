@@ -68,9 +68,9 @@ export default function BedEdgingWizard() {
           break;
         }
       }
-    }, 100);
+    }, 150);
     return () => clearTimeout(timer);
-  }, [step]);
+  }, [step, form._flags]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 

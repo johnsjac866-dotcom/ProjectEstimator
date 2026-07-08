@@ -67,9 +67,9 @@ export default function BouldersWizard() {
           break;
         }
       }
-    }, 100);
+    }, 150);
     return () => clearTimeout(timer);
-  }, [step]);
+  }, [step, form._flags]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   function toggleFlag(key, label) {

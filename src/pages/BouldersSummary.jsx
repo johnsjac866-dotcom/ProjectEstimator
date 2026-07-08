@@ -13,8 +13,8 @@ function SummaryRow({ label, value, isFlagged }) {
         {isFlagged && <Flag className="h-3 w-3 text-orange-500" fill="currentColor" />}
         {label}
       </span>
-      <span className={`font-medium text-right max-w-[60%] ${!hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
-        {hasVal ? String(value) : '— not set'}
+      <span className={`font-medium text-right max-w-[60%] ${!hasVal && isFlagged ? 'text-orange-600 italic' : !hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
+        {hasVal ? String(value) : isFlagged ? 'Missing — needs review' : '— not set'}
       </span>
     </div>
   );
@@ -57,15 +57,16 @@ export default function BouldersSummary() {
           <p className="text-muted-foreground text-sm mt-0.5">{project?.name} — {area?.name}</p>
           <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 font-medium">{subType}</span>
         </div>
-        <Button variant="outline" size="sm" onClick={() => navigate(`/boulders-wizard/${areaId}?opId=${entry.id}`)}>
+        <Button variant="outline" size="sm" onClick={() => navigate(`/boulders-wizard/${areaId}?opId=${opId || entry.id}`)}>
           <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
         </Button>
       </div>
 
       {flagSet.size > 0 && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-sm mb-4">
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-300 text-orange-800 text-sm mb-4">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention</span>
+          <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention.</span>
+          <span className="text-orange-600">Click Edit to go straight to the first flagged item.</span>
         </div>
       )}
 

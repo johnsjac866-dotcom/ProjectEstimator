@@ -109,9 +109,9 @@ export default function BedPrepWizard() {
           break;
         }
       }
-    }, 100);
+    }, 150);
     return () => clearTimeout(timer);
-  }, [step]);
+  }, [step, data._flags]);
 
   function renderField(field) {
     if (field.type === "checkbox") return (

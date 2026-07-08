@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { parseOps } from "@/lib/opsUtils";
 
 function Row({ label, value }) {
@@ -16,6 +17,7 @@ function Row({ label, value }) {
 
 export default function HardscapeRepairSummary() {
   const { areaId } = useParams();
+  const navigate = useNavigate();
   const opId = new URLSearchParams(window.location.search).get("opId");
   const from = new URLSearchParams(window.location.search).get("from");
   const [area, setArea] = useState(null);
@@ -43,9 +45,22 @@ export default function HardscapeRepairSummary() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-        <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
-      </Link>
+      <div className="flex items-center justify-between mb-4">
+        <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
+        </Link>
+        <Button variant="outline" size="sm" onClick={() => navigate(`/hardscape-repair-wizard/${areaId}?opId=${opId || entry.id}`)}>
+          <Pencil className="h-4 w-4 mr-1" /> Edit
+        </Button>
+      </div>
+
+      {(entry._flags || []).length > 0 && (
+        <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-300 text-orange-800 text-sm">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span className="font-medium">{(entry._flags || []).length} item{(entry._flags || []).length !== 1 ? 's' : ''} flagged for review.</span>
+          <span className="text-orange-600">Click Edit to go straight to the first flagged item.</span>
+        </div>
+      )}
 
       <div className="mb-6 pb-4 border-b">
         <h1 className="text-2xl font-bold">Hardscape - Repair Existing</h1>

@@ -19,8 +19,8 @@ function SummaryRow({ label, value, isFlagged }) {
         <span className="h-2 w-2 rounded-full bg-red-400 flex-shrink-0 mt-1.5" />
       )}
       <span className="text-muted-foreground min-w-0">{label}:</span>
-      <span className={`font-medium ${!hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
-        {hasVal ? String(value) : '— not set'}
+      <span className={`font-medium ${!hasVal && isFlagged ? 'text-orange-600 italic' : !hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
+        {hasVal ? String(value) : isFlagged ? 'Missing — needs review' : '— not set'}
       </span>
     </div>
   );
@@ -62,7 +62,7 @@ export default function DemolitionSummary() {
           <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate(`/demolition-wizard/${areaId}?opId=${data.id}`)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/demolition-wizard/${areaId}?opId=${opId || data.id}`)}>
             <Pencil className="h-4 w-4 mr-1" /> Edit
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}>
@@ -83,9 +83,10 @@ export default function DemolitionSummary() {
         </div>
 
         {flagSet.size > 0 && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-300 text-orange-800 text-sm">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention</span>
+            <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention.</span>
+            <span className="text-orange-600">Click Edit to go straight to the first flagged item.</span>
           </div>
         )}
 
