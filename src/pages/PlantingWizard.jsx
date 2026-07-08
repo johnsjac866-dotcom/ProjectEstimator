@@ -233,6 +233,20 @@ export default function PlantingWizard() {
     })();
   }, [areaId, opId]);
 
+  // Scroll to first flagged field when editing
+  useEffect(() => {
+    if (step !== 2 || !(form._flags?.length > 0)) return;
+    const timer = setTimeout(() => {
+      for (const el of document.querySelectorAll('[data-flagfield]')) {
+        if ((form._flags || []).includes(el.getAttribute('data-flagfield'))) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [step]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   function toggleFlag(key, label) {

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Pencil, Flag, AlertTriangle } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
 function getCategory(data) {
@@ -12,30 +12,104 @@ function getCategory(data) {
   if (data.planting_type === "Perennials") {
     const hasLarge = (data.large_plants || []).some(p => p.count && Number(p.count) > 0);
     const hasSmall = (data.small_plants || []).some(p => p.count && Number(p.count) > 0);
-    // legacy support
-    const hasLargeLegacy = data.large_count && Number(data.large_count) > 0;
-    const hasSmallLegacy = data.small_count && Number(data.small_count) > 0;
-    if ((hasLarge || hasLargeLegacy) && (hasSmall || hasSmallLegacy)) return "Planting - Large Perennials / Planting - Small Perennials";
-    if (hasLarge || hasLargeLegacy) return "Planting - Large Perennials";
-    if (hasSmall || hasSmallLegacy) return "Planting - Small Perennials";
+    if (hasLarge && hasSmall) return "Planting - Large Perennials / Planting - Small Perennials";
+    if (hasLarge) return "Planting - Large Perennials";
+    if (hasSmall) return "Planting - Small Perennials";
     return "Planting - Perennials";
   }
   return null;
 }
 
-function Row({ label, value }) {
-  if (!value && value !== 0) return null;
+function SummaryRow({ label, value, unit, flagSet, flagKey }) {
+  const hasVal = value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0);
+  const isFlagged = flagKey && flagSet.has(flagKey);
   return (
-    <div className="flex items-start gap-2 text-sm">
-      <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
+    <div className={`flex items-start gap-2 text-sm py-1.5 ${isFlagged ? 'bg-orange-50 rounded px-2 -mx-2' : ''}`}>
+      {isFlagged ? (
+        <Flag className="h-3.5 w-3.5 text-orange-500 flex-shrink-0 mt-0.5" fill="currentColor" />
+      ) : (
+        <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
+      )}
       <span className="text-muted-foreground">{label}:</span>
-      <span className="font-medium">{String(value)}</span>
+      <span className={`font-medium ${!hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
+        {hasVal ? (unit ? `${String(value)} ${unit}` : String(value)) : '— not set'}
+      </span>
     </div>
   );
 }
 
+function PlantListSection({ title, plants, flagSet, flagKey }) {
+  if (!plants || plants.length === 0) return null;
+  const isFlagged = flagSet.has(flagKey);
+  return (
+    <div className={`rounded-lg p-3 ${isFlagged ? 'bg-orange-50 border border-orange-200' : 'border'}`}>
+      <div className="flex items-center gap-2 mb-2">
+        {isFlagged && <Flag className="h-3.5 w-3.5 text-orange-500" fill="currentColor" />}
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      </div>
+      <div className="space-y-1">
+        {plants.map((plant, idx) => (
+          <div key={plant.id || idx} className="flex items-start gap-2 text-sm">
+            <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
+            <span className="font-medium">{plant.name || plant.type || "Plant"}</span>
+            {plant.count && <span className="text-muted-foreground">× {plant.count}</span>}
+            {plant.size && <span className="text-muted-foreground">— {plant.size}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const TREE_SHRUB_FIELDS = [
+  { k: "mycorrhizae_tablets", l: "Mycorrhizae Tablets", unit: "count" },
+  { k: "hand_vs_machine", l: "Excavation: Hand or Machine" },
+  { k: "machine_type", l: "Machine Type", show: d => d.hand_vs_machine === "Machine" },
+  { k: "ball_cart", l: "Ball Cart" },
+  { k: "tree_sling", l: "Tree Sling" },
+  { k: "tree_boom", l: "Tree Boom" },
+  { k: "ramps", l: "Ramps", unit: "count" },
+  { k: "stake_kit", l: "Stake Kit" },
+  { k: "cage", l: "Cage" },
+  { k: "mulch_ring", l: "Mulch Ring" },
+  { k: "haul_off_debris", l: "Haul Off Debris" },
+  { k: "watering_hours", l: "Watering Hours", unit: "hrs" },
+  { k: "watering_days", l: "Watering Days", unit: "days" },
+  { k: "water_access", l: "Water Access" },
+  { k: "delivery_by", l: "Delivery By" },
+  { k: "box_truck", l: "Box Truck" },
+  { k: "flatbed", l: "Flatbed" },
+  { k: "forklift", l: "Forklift" },
+];
+
+const PERENNIAL_FIELDS = [
+  { k: "large_spacing", l: "Large Perennial Spacing", show: d => (d.large_plants || []).length > 0 },
+  { k: "small_spacing", l: "Small Perennial Spacing", show: d => (d.small_plants || []).length > 0 },
+  { k: "bed_condition", l: "Bed Condition" },
+  { k: "mycorrhizae_tablets", l: "Mycorrhizae Tablets", unit: "count" },
+  { k: "watering_hours", l: "Time for Watering", unit: "hrs" },
+  { k: "water_access", l: "Water Access" },
+];
+
+const BULB_FIELDS = [
+  { k: "mulched_soil", l: "Mulched Soil" },
+  { k: "bulb_fertilizer", l: "Bulb Fertilizer" },
+  { k: "milwaukee_drill", l: "Milwaukee Drill" },
+  { k: "drill_auger", l: "Drill Auger" },
+  { k: "bulb_plugger", l: "Bulb Plugger" },
+  { k: "cut_weed_barrier", l: "Cut Weed Barrier" },
+  { k: "watering_hours", l: "Time for Watering", unit: "hrs" },
+  { k: "water_access", l: "Water Access" },
+];
+
+const ANNUAL_FIELDS = [
+  { k: "watering_hours", l: "Time for Watering", unit: "hrs" },
+  { k: "water_access", l: "Water Access" },
+];
+
 export default function PlantingSummary() {
   const { areaId } = useParams();
+  const navigate = useNavigate();
   const opId = new URLSearchParams(window.location.search).get("opId");
   const from = new URLSearchParams(window.location.search).get("from");
   const [area, setArea] = useState(null);
@@ -59,6 +133,13 @@ export default function PlantingSummary() {
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
 
   const category = getCategory(data);
+  const flagSet = new Set(data._flags || []);
+
+  let typeFields = [];
+  if (data.planting_type === "Trees & Shrubs") typeFields = TREE_SHRUB_FIELDS;
+  else if (data.planting_type === "Perennials") typeFields = PERENNIAL_FIELDS;
+  else if (data.planting_type === "Bulbs") typeFields = BULB_FIELDS;
+  else if (data.planting_type === "Annuals") typeFields = ANNUAL_FIELDS;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -66,9 +147,14 @@ export default function PlantingSummary() {
         <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="h-4 w-4 mr-2" /> Print
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/planting-wizard/${areaId}?opId=${data.id}`)}>
+            <Pencil className="h-4 w-4 mr-1" /> Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-1" /> Print
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card border rounded-xl p-8 print:border-0 space-y-6">
@@ -83,6 +169,13 @@ export default function PlantingSummary() {
           </div>
         </div>
 
+        {flagSet.size > 0 && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-sm">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention</span>
+          </div>
+        )}
+
         {/* Estimate Category */}
         {category && (
           <div>
@@ -94,108 +187,65 @@ export default function PlantingSummary() {
           </div>
         )}
 
-        {/* Planting Type */}
-        <div className="text-sm">
-          <span className="text-muted-foreground">Planting Type:</span>{" "}
-          <span className="font-medium text-primary">{data.planting_type}</span>
+        {/* Planting Type + Time */}
+        <div className="text-sm flex flex-wrap gap-4">
+          <span><span className="text-muted-foreground">Planting Type:</span>{" "}<span className="font-medium text-primary">{data.planting_type}</span></span>
+          <span><span className="text-muted-foreground">Time Estimate:</span>{" "}<span className="font-medium">{data.time_estimate ? `${data.time_estimate} hrs` : '— not set'}</span></span>
         </div>
 
-        {/* Trees & Shrubs — plant list */}
-        {data.planting_type === "Trees & Shrubs" && (data.plants || []).length > 0 && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Plants</h3>
-            <div className="space-y-2">
-              {data.plants.map((plant, idx) => (
-                <div key={plant.id || idx} className="flex items-start gap-2 text-sm">
-                  <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
-                  <span className="font-medium">{plant.type || "Plant"}</span>
-                  {plant.count && <span className="text-muted-foreground">× {plant.count}</span>}
-                  {plant.size && <span className="text-muted-foreground">— {plant.size}</span>}
-                </div>
-              ))}
-            </div>
-            {data.hand_vs_machine && (
-              <div className="mt-3 pt-3 border-t">
-                <Row label="Hand vs Machine" value={data.hand_vs_machine} />
-              </div>
-            )}
+        {/* Plant Lists */}
+        {data.planting_type === "Trees & Shrubs" && (
+          <div className="border rounded-lg p-4 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Plant Lists</h3>
+            <PlantListSection title="Trees" plants={data.trees} flagSet={flagSet} flagKey="trees" />
+            <PlantListSection title="Shrubs" plants={data.shrubs} flagSet={flagSet} flagKey="shrubs" />
           </div>
         )}
-
-        {/* Perennials */}
         {data.planting_type === "Perennials" && (
-          <div className="border rounded-lg p-4 space-y-4">
-            {/* Large */}
-            {(data.large_plants || []).length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Large Perennials</h3>
-                <div className="space-y-1">
-                  {data.large_plants.map((plant, idx) => (
-                    <div key={plant.id || idx} className="flex items-start gap-2 text-sm">
-                      <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
-                      <span className="font-medium">{plant.name || "Plant"}</span>
-                      {plant.count && <span className="text-muted-foreground">× {plant.count}</span>}
-                    </div>
-                  ))}
-                </div>
-                {data.large_spacing && <p className="text-sm text-muted-foreground mt-2">Spacing: {data.large_spacing}</p>}
-              </div>
-            )}
-            {/* Legacy support */}
-            {!data.large_plants && data.large_count && <Row label="Large Perennials — Count" value={data.large_count} />}
-            {/* Small */}
-            {(data.small_plants || []).length > 0 && (
-              <div className={(data.large_plants || []).length > 0 ? "pt-3 border-t" : ""}>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Small Perennials</h3>
-                <div className="space-y-1">
-                  {data.small_plants.map((plant, idx) => (
-                    <div key={plant.id || idx} className="flex items-start gap-2 text-sm">
-                      <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
-                      <span className="font-medium">{plant.name || "Plant"}</span>
-                      {plant.count && <span className="text-muted-foreground">× {plant.count}</span>}
-                    </div>
-                  ))}
-                </div>
-                {data.small_spacing && <p className="text-sm text-muted-foreground mt-2">Spacing: {data.small_spacing}</p>}
-              </div>
-            )}
-            {/* Legacy support */}
-            {!data.small_plants && data.small_count && <Row label="Small Perennials — Count" value={data.small_count} />}
-            {data.bed_condition && <div className="pt-3 border-t"><Row label="Bed Condition" value={data.bed_condition} /></div>}
+          <div className="border rounded-lg p-4 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Plant Lists</h3>
+            <PlantListSection title="Large Perennials" plants={data.large_plants} flagSet={flagSet} flagKey="large_plants" />
+            <PlantListSection title="Small Perennials" plants={data.small_plants} flagSet={flagSet} flagKey="small_plants" />
+          </div>
+        )}
+        {data.planting_type === "Bulbs" && (
+          <div className="border rounded-lg p-4 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Plant List</h3>
+            <PlantListSection title="Bulbs" plants={data.bulbs} flagSet={flagSet} flagKey="bulbs" />
+          </div>
+        )}
+        {data.planting_type === "Annuals" && (
+          <div className="border rounded-lg p-4 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Plant List</h3>
+            <PlantListSection title="Annuals" plants={data.annuals} flagSet={flagSet} flagKey="annuals" />
           </div>
         )}
 
-        {/* Bulbs / Annuals */}
-        {(data.planting_type === "Bulbs" || data.planting_type === "Annuals") && data.count && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
-            <div className="space-y-2">
-              <Row label="Count" value={data.count} />
-            </div>
+        {/* All Type-Specific Fields */}
+        <div className="border rounded-lg p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
+          <div className="space-y-1">
+            {typeFields.map(field => {
+              const show = !field.show || field.show(data);
+              if (!show) return null;
+              return <SummaryRow key={field.k} flagKey={field.k} label={field.l} value={data[field.k]} unit={field.unit} flagSet={flagSet} />;
+            })}
           </div>
-        )}
+        </div>
 
-        {/* Shared details */}
-        {(data.time_estimate || data.additional_time_rocky || data.additional_time_roots || data.delivery_method || data.water_access) && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Logistics</h3>
-            <div className="space-y-2">
-              {data.time_estimate && <Row label="Time Estimate" value={`${data.time_estimate} hrs`} />}
-              {data.additional_time_rocky === "Yes" && <Row label="Additional Time — Rocky Soil" value="Yes" />}
-              {data.additional_time_roots === "Yes" && <Row label="Additional Time — Roots" value="Yes" />}
-              <Row label="Delivery Method" value={data.delivery_method} />
-              <Row label="Water Access" value={data.water_access} />
-            </div>
+        {/* Additional Time Factors */}
+        <div className="border rounded-lg p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Additional Time Factors</h3>
+          <div className="space-y-1">
+            <SummaryRow flagKey="additional_time_rocky" label="Rocky Soil" value={data.additional_time_rocky} flagSet={flagSet} />
+            <SummaryRow flagKey="additional_time_roots" label="Roots" value={data.additional_time_roots} flagSet={flagSet} />
           </div>
-        )}
+        </div>
 
         {/* Notes */}
-        {data.notes && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Notes</h3>
-            <p className="text-sm">{data.notes}</p>
-          </div>
-        )}
+        <div className="border rounded-lg p-4">
+          <SummaryRow flagKey="notes" label="Notes" value={data.notes} flagSet={flagSet} />
+        </div>
       </div>
     </div>
   );

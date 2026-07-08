@@ -46,6 +46,15 @@ For Lawn Repair & Install operations, extract:
 - sf_width: Width in feet (number)
 - seed_type: One of "Madison Parks", "Tough Stuff", "Shady Place", "Carefree No Mow" (if mentioned)
 
+For Planting operations, extract:
+- planting_type: One of "Trees & Shrubs", "Perennials", "Bulbs", "Annuals"
+- planting_fields: object with all extracted form field values:
+  Common (all types): time_estimate (hrs), additional_time_rocky ("Yes"/"No"), additional_time_roots ("Yes"/"No"), notes
+  Trees & Shrubs: trees (array of {type, count, size}), shrubs (array of {type, count, size}), mycorrhizae_tablets (count), hand_vs_machine ("Hand"/"Machine"), machine_type ("Vermeer"/"Dingo" if machine), ball_cart ("Yes"/"No"), tree_sling ("Yes"/"No"), tree_boom ("Yes"/"No"), ramps (count), stake_kit ("Yes"/"No"), cage ("Yes"/"No"), mulch_ring ("Yes"/"No"), haul_off_debris ("Yes"/"No"), watering_hours, watering_days, water_access ("Yes"/"No"), delivery_by ("By Aspen"/"By Others"), box_truck ("Yes"/"No"), flatbed ("Yes"/"No"), forklift ("Yes"/"No")
+  Perennials: large_plants (array of {name, count}), large_spacing, small_plants (array of {name, count}), small_spacing, bed_condition ("Unprepared bed"/"Prepared bed"), mycorrhizae_tablets (count), watering_hours, water_access ("Yes"/"No")
+  Bulbs: bulbs (array of {name, count}), mulched_soil ("Yes"/"No"), bulb_fertilizer ("Yes"/"No"), milwaukee_drill ("Yes"/"No"), drill_auger ("Yes"/"No"), bulb_plugger ("Yes"/"No"), cut_weed_barrier ("Yes"/"No"), watering_hours, water_access ("Yes"/"No")
+  Annuals: annuals (array of {name, count}), watering_hours, water_access ("Yes"/"No")
+
 For Bed Edging operations, extract ALL fields that are mentioned:
 - edge_type: One of "Brick", "Metal", "Bullet", "Natural Edge", "Poly", "Snapped Limestone"
 - lf: Total linear feet (number)
@@ -234,7 +243,9 @@ Leave unknown fields blank or null.\n\nVoice Notes:\n${transcripts.map((t, i) =>
                 drain_type: { type: 'string', description: 'For Drainage: "Buried Downspout", "Buried Drain", "Buried Sump Line", "Curtain Drain", "French Drain", "Dry Stream Bed", or "Impervious Membrane"' },
                 drainage_fields: { type: 'object', description: 'For Drainage: all extracted form field key-value pairs' },
                 lawn_type: { type: 'string', description: 'For Lawn Repair: "Sod Installation", "Seed Install", or "Top Dress Lawn"' },
-                lawn_fields: { type: 'object', description: 'For Lawn Repair: all extracted form field key-value pairs' }
+                lawn_fields: { type: 'object', description: 'For Lawn Repair: all extracted form field key-value pairs' },
+                planting_type: { type: 'string', description: 'For Planting: "Trees & Shrubs", "Perennials", "Bulbs", or "Annuals"' },
+                planting_fields: { type: 'object', description: 'For Planting: all extracted form field key-value pairs including arrays of plant objects' }
               },
               required: ['operation_type', 'description']
             },

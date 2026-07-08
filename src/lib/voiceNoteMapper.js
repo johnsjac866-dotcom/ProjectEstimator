@@ -560,6 +560,135 @@ export function mapLawnEntry(op) {
 }
 
 /**
+ * Map AI-extracted data to a Planting entry with auto-flagging.
+ */
+export function mapPlantingEntry(op) {
+  const type = op.planting_type || '';
+  if (!type) return null;
+
+  const f = op.planting_fields || {};
+  const flags = [], flagLabels = {};
+  const addFlag = (k, l) => { flags.push(k); flagLabels[k] = l; };
+  const v = (key) => s(f[key] ?? op[key]);
+  const arr = (key) => Array.isArray(f[key]) ? f[key] : (Array.isArray(op[key]) ? op[key] : []);
+
+  const entry = { planting_type: type, sub_type: type, time_estimate: v('time_estimate'), notes: v('notes') };
+  if (!entry.time_estimate) addFlag('time_estimate', 'Time Estimate (hrs)');
+
+  entry.additional_time_rocky = v('additional_time_rocky');
+  if (!entry.additional_time_rocky) addFlag('additional_time_rocky', 'Rocky Soil');
+  entry.additional_time_roots = v('additional_time_roots');
+  if (!entry.additional_time_roots) addFlag('additional_time_roots', 'Roots');
+
+  if (type === 'Trees & Shrubs') {
+    entry.trees = arr('trees');
+    entry.shrubs = arr('shrubs');
+    if (!entry.trees.length && !entry.shrubs.length) addFlag('trees', 'Trees or Shrubs list');
+
+    entry.mycorrhizae_tablets = v('mycorrhizae_tablets');
+    if (!entry.mycorrhizae_tablets) addFlag('mycorrhizae_tablets', 'Mycorrhizae Tablets (count)');
+
+    entry.hand_vs_machine = v('hand_vs_machine');
+    if (!entry.hand_vs_machine) addFlag('hand_vs_machine', 'Excavation: Hand or Machine?');
+    if (entry.hand_vs_machine === 'Machine') {
+      entry.machine_type = v('machine_type');
+      if (!entry.machine_type) addFlag('machine_type', 'Machine Type');
+    }
+
+    entry.ball_cart = v('ball_cart');
+    if (!entry.ball_cart) addFlag('ball_cart', 'Ball Cart?');
+    entry.tree_sling = v('tree_sling');
+    if (!entry.tree_sling) addFlag('tree_sling', 'Tree Sling?');
+    entry.tree_boom = v('tree_boom');
+    if (!entry.tree_boom) addFlag('tree_boom', 'Tree Boom?');
+    entry.ramps = v('ramps');
+    if (!entry.ramps) addFlag('ramps', 'Ramps (count)');
+    entry.stake_kit = v('stake_kit');
+    if (!entry.stake_kit) addFlag('stake_kit', 'Stake Kit?');
+    entry.cage = v('cage');
+    if (!entry.cage) addFlag('cage', 'Cage?');
+
+    entry.mulch_ring = v('mulch_ring');
+    if (!entry.mulch_ring) addFlag('mulch_ring', 'Mulch Ring?');
+    entry.haul_off_debris = v('haul_off_debris');
+    if (!entry.haul_off_debris) addFlag('haul_off_debris', 'Haul Off Debris?');
+
+    entry.watering_hours = v('watering_hours');
+    if (!entry.watering_hours) addFlag('watering_hours', 'Watering Hours');
+    entry.watering_days = v('watering_days');
+    if (!entry.watering_days) addFlag('watering_days', 'Watering Days');
+    entry.water_access = v('water_access');
+    if (!entry.water_access) addFlag('water_access', 'Water Access?');
+
+    entry.delivery_by = v('delivery_by');
+    if (!entry.delivery_by) addFlag('delivery_by', 'By Aspen or By Others?');
+    entry.box_truck = v('box_truck');
+    if (!entry.box_truck) addFlag('box_truck', 'Box Truck?');
+    entry.flatbed = v('flatbed');
+    if (!entry.flatbed) addFlag('flatbed', 'Flatbed?');
+    entry.forklift = v('forklift');
+    if (!entry.forklift) addFlag('forklift', 'Forklift?');
+  }
+
+  if (type === 'Perennials') {
+    entry.large_plants = arr('large_plants');
+    entry.large_spacing = v('large_spacing');
+    entry.small_plants = arr('small_plants');
+    entry.small_spacing = v('small_spacing');
+    if (!entry.large_plants.length && !entry.small_plants.length) addFlag('large_plants', 'Perennial plant lists');
+    if (entry.large_plants.length && !entry.large_spacing) addFlag('large_spacing', 'Large Perennial Spacing');
+    if (entry.small_plants.length && !entry.small_spacing) addFlag('small_spacing', 'Small Perennial Spacing');
+
+    entry.bed_condition = v('bed_condition');
+    if (!entry.bed_condition) addFlag('bed_condition', 'Bed Condition');
+
+    entry.mycorrhizae_tablets = v('mycorrhizae_tablets');
+    if (!entry.mycorrhizae_tablets) addFlag('mycorrhizae_tablets', 'Mycorrhizae Tablets (count)');
+
+    entry.watering_hours = v('watering_hours');
+    if (!entry.watering_hours) addFlag('watering_hours', 'Time for Watering (hrs)');
+    entry.water_access = v('water_access');
+    if (!entry.water_access) addFlag('water_access', 'Water Access?');
+  }
+
+  if (type === 'Bulbs') {
+    entry.bulbs = arr('bulbs');
+    if (!entry.bulbs.length) addFlag('bulbs', 'Bulbs list');
+
+    entry.mulched_soil = v('mulched_soil');
+    if (!entry.mulched_soil) addFlag('mulched_soil', 'Mulched Soil?');
+    entry.bulb_fertilizer = v('bulb_fertilizer');
+    if (!entry.bulb_fertilizer) addFlag('bulb_fertilizer', 'Bulb Fertilizer?');
+    entry.milwaukee_drill = v('milwaukee_drill');
+    if (!entry.milwaukee_drill) addFlag('milwaukee_drill', 'Milwaukee Drill?');
+    entry.drill_auger = v('drill_auger');
+    if (!entry.drill_auger) addFlag('drill_auger', 'Drill Auger?');
+    entry.bulb_plugger = v('bulb_plugger');
+    if (!entry.bulb_plugger) addFlag('bulb_plugger', 'Bulb Plugger?');
+    entry.cut_weed_barrier = v('cut_weed_barrier');
+    if (!entry.cut_weed_barrier) addFlag('cut_weed_barrier', 'Cut Weed Barrier?');
+
+    entry.watering_hours = v('watering_hours');
+    if (!entry.watering_hours) addFlag('watering_hours', 'Time for Watering (hrs)');
+    entry.water_access = v('water_access');
+    if (!entry.water_access) addFlag('water_access', 'Water Access?');
+  }
+
+  if (type === 'Annuals') {
+    entry.annuals = arr('annuals');
+    if (!entry.annuals.length) addFlag('annuals', 'Annuals list');
+
+    entry.watering_hours = v('watering_hours');
+    if (!entry.watering_hours) addFlag('watering_hours', 'Time for Watering (hrs)');
+    entry.water_access = v('water_access');
+    if (!entry.water_access) addFlag('water_access', 'Water Access?');
+  }
+
+  if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
+  return entry;
+}
+
+/**
  * Map AI-extracted data to a Mulch entry with auto-flagging.
  */
 export function mapMulchEntry(op) {
