@@ -31,32 +31,37 @@ function SummaryRow({ label, value, unit, flagSet, flagKey }) {
         <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
       )}
       <span className="text-muted-foreground">{label}:</span>
-      <span className={`font-medium ${!hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
-        {hasVal ? (unit ? `${String(value)} ${unit}` : String(value)) : '— not set'}
+      <span className={`font-medium ${!hasVal && isFlagged ? 'text-orange-600 italic' : !hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
+        {hasVal ? (unit ? `${String(value)} ${unit}` : String(value)) : isFlagged ? 'Missing — needs review' : '— not set'}
       </span>
     </div>
   );
 }
 
 function PlantListSection({ title, plants, flagSet, flagKey }) {
-  if (!plants || plants.length === 0) return null;
+  const hasPlants = plants && plants.length > 0;
   const isFlagged = flagSet.has(flagKey);
+  if (!hasPlants && !isFlagged) return null;
   return (
     <div className={`rounded-lg p-3 ${isFlagged ? 'bg-orange-50 border border-orange-200' : 'border'}`}>
       <div className="flex items-center gap-2 mb-2">
         {isFlagged && <Flag className="h-3.5 w-3.5 text-orange-500" fill="currentColor" />}
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
       </div>
-      <div className="space-y-1">
-        {plants.map((plant, idx) => (
-          <div key={plant.id || idx} className="flex items-start gap-2 text-sm">
-            <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
-            <span className="font-medium">{plant.name || plant.type || "Plant"}</span>
-            {plant.count && <span className="text-muted-foreground">× {plant.count}</span>}
-            {plant.size && <span className="text-muted-foreground">— {plant.size}</span>}
-          </div>
-        ))}
-      </div>
+      {hasPlants ? (
+        <div className="space-y-1">
+          {plants.map((plant, idx) => (
+            <div key={plant.id || idx} className="flex items-start gap-2 text-sm">
+              <span className="h-2 w-2 rounded-full bg-teal-400 flex-shrink-0 mt-1.5" />
+              <span className="font-medium">{plant.name || plant.type || "Plant"}</span>
+              {plant.count && <span className="text-muted-foreground">× {plant.count}</span>}
+              {plant.size && <span className="text-muted-foreground">— {plant.size}</span>}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm font-medium text-orange-600 italic">Missing — needs review</p>
+      )}
     </div>
   );
 }
@@ -148,7 +153,7 @@ export default function PlantingSummary() {
           <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate(`/planting-wizard/${areaId}?opId=${data.id}`)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/planting-wizard/${areaId}?opId=${opId || data.id}`)}>
             <Pencil className="h-4 w-4 mr-1" /> Edit
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}>
@@ -172,7 +177,8 @@ export default function PlantingSummary() {
         {flagSet.size > 0 && (
           <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-sm">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention</span>
+            <span className="font-medium">{flagSet.size} flagged item{flagSet.size !== 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} attention.</span>
+            <span className="text-orange-600">Click Edit to go straight to the first flagged item.</span>
           </div>
         )}
 
