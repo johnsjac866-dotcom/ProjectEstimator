@@ -7,7 +7,7 @@ import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hamme
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 import VoiceNotes from "@/components/VoiceNotes";
-import { mapDemolitionEntry, mapBouldersEntry, mapDrainageEntry, mapLawnEntry, mapMulchEntry, mapPlantingEntry } from "@/lib/voiceNoteMapper";
+import { mapDemolitionEntry, mapBouldersEntry, mapDrainageEntry, mapLawnEntry, mapMulchEntry, mapPlantingEntry, mapRoughGradingEntry } from "@/lib/voiceNoteMapper";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
@@ -244,17 +244,11 @@ export default function AreaDetail() {
               notes: operation.notes || '',
               priority: operation.priority || 'medium',
               ...(operation.time_estimate != null && { time_estimate: String(operation.time_estimate) }),
-              // For Rough Grading: include structured form fields
-              ...(operation.operation_type === 'Rough Grading & Hauling' && {
-                sub_type: operation.sub_type || '',
-                sf_length: sfLength,
-                sf_width: sfWidth,
-                sf,
-                depth_inches: operation.depth_inches != null ? String(operation.depth_inches) : '',
-                machine_type: operation.machine_type || '',
-                sod_vegetation_removed: operation.sod_vegetation_removed || '',
-                disposal_needed: operation.disposal_needed || '',
-              }),
+              // For Rough Grading & Hauling: type-specific field mapping with auto-flagging
+              ...(operation.operation_type === 'Rough Grading & Hauling' && (() => {
+                const mapped = mapRoughGradingEntry(operation);
+                return mapped || {};
+              })()),
 
               // For Mulch: include mulch_type and dimensions
               ...(operation.operation_type === 'Mulch' && operation.mulch_type && {

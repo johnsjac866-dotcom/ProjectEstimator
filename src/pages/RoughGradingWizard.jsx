@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,35 @@ export default function RoughGradingWizard() {
     });
   }
   const flags = data._flags || [];
+
+  // When editing an entry with flags, auto-navigate to the step containing the first flag
+  // and scroll to it.
+  const flagStepMap = useRef(null);
+  useEffect(() => {
+    if (!opId || !flags.length) return;
+    // Determine which step the first flag belongs to
+    const step2Keys = (fields.step2 || []).map(f => f.key);
+    const step2Extra = ['sf', 'sf_length', 'sf_width', 'depth_inches', 'soil_types'];
+    const firstFlag = flags[0];
+    let targetStep;
+    if (step2Keys.includes(firstFlag) || step2Extra.includes(firstFlag) || firstFlag === 'time_estimate') {
+      targetStep = 1;
+    } else {
+      targetStep = 2;
+    }
+    if (step < targetStep) setStep(targetStep);
+    flagStepMap.current = targetStep;
+    // Scroll after render
+    const timer = setTimeout(() => {
+      for (const el of document.querySelectorAll('[data-flagfield]')) {
+        if (flags.includes(el.getAttribute('data-flagfield'))) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [opId, data.sub_type]);
 
   function setDim(key, value) {
     setData(d => {

@@ -1,4 +1,5 @@
 import { DEMO_FIELDS } from './demolitionStages';
+import { RG_FIELDS } from './roughGradingStages';
 
 const s = (v) => (v != null && v !== '') ? String(v) : '';
 
@@ -682,6 +683,71 @@ export function mapPlantingEntry(op) {
     if (!entry.watering_hours) addFlag('watering_hours', 'Time for Watering (hrs)');
     entry.water_access = v('water_access');
     if (!entry.water_access) addFlag('water_access', 'Water Access?');
+  }
+
+  if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
+  return entry;
+}
+
+/**
+ * Map AI-extracted data to a Rough Grading & Hauling entry with auto-flagging.
+ */
+export function mapRoughGradingEntry(op) {
+  const sub = op.sub_type || op.rg_sub_type || '';
+  if (!sub) return null;
+
+  const f = op.rg_fields || {};
+  const flags = [], flagLabels = {};
+  const addFlag = (k, l) => { flags.push(k); flagLabels[k] = l; };
+  const v = (key) => s(f[key] ?? op[key]);
+  const arr = (key) => Array.isArray(f[key]) ? f[key] : (Array.isArray(op[key]) ? op[key] : []);
+
+  const sfLen = v('sf_length');
+  const sfWid = v('sf_width');
+  const sf = sfLen && sfWid ? String(Math.round(parseFloat(sfLen) * parseFloat(sfWid))) : '';
+
+  const entry = { sub_type: sub, time_estimate: v('time_estimate'), notes: v('notes') };
+  if (!entry.time_estimate) addFlag('time_estimate', 'Time Estimate (hrs)');
+
+  entry.sf_length = sfLen;
+  entry.sf_width = sfWid;
+  entry.sf = sf;
+  if (!sf) addFlag('sf', 'Square Footage');
+  entry.depth_inches = v('depth_inches');
+  if (!entry.depth_inches) addFlag('depth_inches', 'Depth (inches)');
+
+  // Step 2 fields per sub-type
+  const cfg = RG_FIELDS[sub];
+  if (cfg) {
+    for (const field of cfg.step2) {
+      entry[field.key] = v(field.key);
+      if (!entry[field.key]) addFlag(field.key, field.label);
+    }
+  }
+
+  // Soil types (importation sub-types)
+  if (sub === 'importation_hand' || sub === 'importation_machine') {
+    entry.soil_types = arr('soil_types');
+    if (!entry.soil_types.length) addFlag('soil_types', 'Soil Type (select all that apply)');
+  }
+
+  // Step 3 fields per sub-type (respect conditions)
+  if (cfg) {
+    for (const field of cfg.step3) {
+      const condMet = !field.condition || entry[field.condition.key] === field.condition.value;
+      entry[field.key] = v(field.key);
+      if (!entry[field.key] && condMet) addFlag(field.key, field.label);
+    }
+  }
+
+  // Disposal details (excavation_machine only, when disposal_needed = Yes)
+  if (sub === 'excavation_machine' && entry.disposal_needed === 'Yes') {
+    entry.disposal_material_type = v('disposal_material_type');
+    if (!entry.disposal_material_type) addFlag('disposal_material_type', 'Material Type');
+    entry.disposal_dry_wet = v('disposal_dry_wet');
+    if (!entry.disposal_dry_wet) addFlag('disposal_dry_wet', 'Dry or Wet');
+    entry.disposal_fees = arr('disposal_fees');
+    if (!entry.disposal_fees.length) addFlag('disposal_fees', 'Disposal Fees (select all that apply)');
   }
 
   if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
