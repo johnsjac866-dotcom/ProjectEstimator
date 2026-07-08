@@ -78,9 +78,9 @@ export default function MulchWizard() {
           break;
         }
       }
-    }, 100);
+    }, 150);
     return () => clearTimeout(timer);
-  }, [step]);
+  }, [step, form._flags]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 

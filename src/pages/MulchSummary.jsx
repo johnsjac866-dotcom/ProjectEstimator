@@ -1,23 +1,56 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Pencil, Flag, AlertTriangle } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
 
-function Row({ label, value, highlight }) {
-  if (!value && value !== 0) return null;
+function Row({ label, value, unit, flagSet, flagKey }) {
+  const hasVal = value != null && value !== '' && !(Array.isArray(value) && value.length === 0);
+  const isFlagged = flagKey && flagSet.has(flagKey);
   return (
-    <div className={`flex items-start gap-2 text-sm ${highlight ? "font-semibold" : ""}`}>
-      <span className="h-2 w-2 rounded-full bg-yellow-400 flex-shrink-0 mt-1.5" />
+    <div className={`flex items-start gap-2 text-sm py-1.5 ${isFlagged ? 'bg-orange-50 rounded px-2 -mx-2' : ''}`}>
+      {isFlagged ? (
+        <Flag className="h-3.5 w-3.5 text-orange-500 flex-shrink-0 mt-0.5" fill="currentColor" />
+      ) : (
+        <span className="h-2 w-2 rounded-full bg-yellow-400 flex-shrink-0 mt-1.5" />
+      )}
       <span className="text-muted-foreground">{label}:</span>
-      <span className="font-medium">{String(value)}</span>
+      <span className={`font-medium ${!hasVal && isFlagged ? 'text-orange-600 italic' : !hasVal ? 'text-muted-foreground/50 italic' : ''}`}>
+        {hasVal ? (unit ? `${String(value)} ${unit}` : String(value)) : isFlagged ? 'Missing — needs review' : '— not set'}
+      </span>
     </div>
   );
 }
 
+// All fields per mulch type, in the order they appear in the wizard
+const COMMON_FIELDS = [
+  { k: "time_estimate", l: "Time Estimate", unit: "hrs" },
+  { k: "length", l: "Length", unit: "ft" },
+  { k: "width", l: "Width", unit: "ft" },
+  { k: "depth", l: "Depth", unit: "in" },
+  { k: "bed_type", l: "Bed Type" },
+];
+
+const ORGANIC_FIELDS = [
+  { k: "install_type", l: "Install Type" },
+  { k: "organic_subtype", l: "Mulch Subtype" },
+  { k: "distance_to_truck", l: "Distance to Truck", unit: "ft" },
+];
+
+const STONE_FIELDS = [
+  { k: "fabric_needed", l: "Fabric Needed" },
+  { k: "fabric_sf", l: "Fabric SF", show: d => d.fabric_needed === "Yes" },
+];
+
+const COMMON_TAIL_FIELDS = [
+  { k: "machine_access", l: "Machine Access" },
+  { k: "notes", l: "Notes" },
+];
+
 export default function MulchSummary() {
   const { areaId } = useParams();
+  const navigate = useNavigate();
   const opId = new URLSearchParams(window.location.search).get("opId");
   const from = new URLSearchParams(window.location.search).get("from");
   const [area, setArea] = useState(null);
@@ -40,7 +73,17 @@ export default function MulchSummary() {
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
 
+  const flagSet = new Set(data._flags || []);
   const category = data.mulch_type ? `Mulch - ${data.mulch_type}` : null;
+
+  let typeFields = [...COMMON_FIELDS];
+  if (data.mulch_type === "Organic") typeFields = [...typeFields, ...ORGANIC_FIELDS];
+  if (data.mulch_type === "Stone") typeFields = [...typeFields, ...STONE_FIELDS];
+  typeFields = [...typeFields, ...COMMON_TAIL_FIELDS];
+
+  function handleEdit() {
+    navigate(`/mulch-wizard/${areaId}?opId=${opId || data.id}`);
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -48,10 +91,23 @@ export default function MulchSummary() {
         <Link to={from === 'project-summary' ? `/project-summary/${area?.project_id}` : `/area/${areaId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> {from === 'project-summary' ? 'Back to Project Summary' : 'Back to Area'}
         </Link>
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="h-4 w-4 mr-2" /> Print
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleEdit}>
+            <Pencil className="h-4 w-4 mr-2" /> Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-2" /> Print
+          </Button>
+        </div>
       </div>
+
+      {flagSet.size > 0 && (
+        <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-300 text-orange-800 text-sm">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span className="font-medium">{flagSet.size} field{flagSet.size > 1 ? 's' : ''} need{flagSet.size === 1 ? 's' : ''} review.</span>
+          <span className="text-orange-600">Click Edit to go straight to the first flagged item.</span>
+        </div>
+      )}
 
       <div className="bg-card border rounded-xl p-8 print:border-0 space-y-6">
         {/* Header */}
@@ -76,19 +132,18 @@ export default function MulchSummary() {
           </div>
         )}
 
-        {/* Type */}
-        <div className="text-sm">
-          <span className="text-muted-foreground">Mulch Type:</span>{" "}
-          <span className="font-medium text-primary">{data.mulch_type}</span>
-        </div>
+        {/* Mulch Type */}
+        <Row flagKey="mulch_type" label="Mulch Type" value={data.mulch_type} flagSet={flagSet} />
 
-        {/* Measurements & Calculations */}
+        {/* All fields */}
         <div className="border rounded-lg p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Measurements</h3>
-          <div className="space-y-2">
-            <Row label="Length" value={data.length ? `${data.length} ft` : null} />
-            <Row label="Width" value={data.width ? `${data.width} ft` : null} />
-            <Row label="Depth" value={data.depth ? `${data.depth} in` : null} />
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
+          <div className="space-y-1">
+            {typeFields.map(field => {
+              const show = !field.show || field.show(data);
+              if (!show) return null;
+              return <Row key={field.k} flagKey={field.k} label={field.l} value={data[field.k]} unit={field.unit} flagSet={flagSet} />;
+            })}
           </div>
         </div>
 
@@ -96,32 +151,26 @@ export default function MulchSummary() {
         {(data.sf || data.cy || data.tons) && (
           <div className="border rounded-lg p-4 bg-muted/20">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Calculated Results</h3>
-            <div className="space-y-2">
-              <Row label="Square Footage" value={data.sf ? `${data.sf} SF` : null} />
-              <Row label="Cubic Yards" value={data.cy ? `${data.cy} CY` : null} />
-              <Row label="Estimated Weight" value={data.tons ? `${data.tons} tons` : null} />
+            <div className="grid grid-cols-3 gap-3">
+              {data.sf && (
+                <div className="text-sm">
+                  <p className="text-xs text-muted-foreground">Square Footage</p>
+                  <p className="font-bold text-lg">{data.sf} SF</p>
+                </div>
+              )}
+              {data.cy && (
+                <div className="text-sm">
+                  <p className="text-xs text-muted-foreground">Cubic Yards</p>
+                  <p className="font-bold text-lg">{data.cy} CY</p>
+                </div>
+              )}
+              {data.tons && (
+                <div className="text-sm bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                  <p className="text-xs text-yellow-700 font-semibold">Estimated Weight</p>
+                  <p className="font-bold text-lg text-yellow-800">{data.tons} tons</p>
+                </div>
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Details */}
-        {(data.time_estimate || data.bed_type || data.install_type || data.machine_access) && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Details</h3>
-            <div className="space-y-2">
-              {data.time_estimate && <Row label="Time Estimate" value={`${data.time_estimate} hrs`} />}
-              <Row label="Bed Type" value={data.bed_type} />
-              {data.mulch_type === "Organic" && <Row label="Install Type" value={data.install_type} />}
-              <Row label="Machine Access" value={data.machine_access} />
-            </div>
-          </div>
-        )}
-
-        {/* Notes */}
-        {data.notes && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Notes</h3>
-            <p className="text-sm">{data.notes}</p>
           </div>
         )}
       </div>
