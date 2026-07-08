@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, ArrowRight, Check, AlertTriangle, Leaf } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, AlertTriangle, Leaf, Info } from "lucide-react";
 import FlagField from "@/components/FlagField";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { RG_SUB_TYPES, RG_FIELDS, calcCY, calcCYFluff } from "@/lib/roughGradingStages";
+import { RG_SUB_TYPES, RG_FIELDS, calcCY, calcCYFluff, calcEstimatedTons, SOIL_IMPORT_TYPES, DISPOSAL_MATERIAL_TYPES, DISPOSAL_FEE_OPTIONS } from "@/lib/roughGradingStages";
 import { parseOps } from "@/lib/opsUtils";
 
 const STEPS = ["Sub-Type", "Measurements", "Details & Constraints"];
@@ -135,6 +135,16 @@ export default function RoughGradingWizard() {
     );
   }
 
+  // Multi-select soil types toggle
+  function toggleSoilType(type) {
+    const current = data.soil_types || [];
+    const updated = current.includes(type) ? current.filter(t => t !== type) : [...current, type];
+    set("soil_types", updated);
+  }
+
+  // Estimated tons for disposal
+  const estTons = calcEstimatedTons(data.cy || cy, data.disposal_material_type, data.disposal_dry_wet);
+
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
 
   if (showBedPrepDialog) return (
@@ -203,12 +213,120 @@ export default function RoughGradingWizard() {
               </div>
             </div>
             {fields.step2.map(renderField)}
+
+            {/* Soil Type multi-select for importation sub-types */}
+            {(data.sub_type === "importation_hand" || data.sub_type === "importation_machine") && (
+              <FlagField fieldKey="soil_types" label="Soil Type (select all that apply)" flags={flags} onToggle={toggleFlag}>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {SOIL_IMPORT_TYPES.map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => toggleSoilType(t)}
+                      className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${(data.soil_types || []).includes(t) ? "border-primary bg-primary/5 font-medium text-primary" : "border-border hover:bg-muted/50"}`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </FlagField>
+            )}
           </>
         )}
         {step === 2 && (
           <>
             <div><h2 className="text-lg font-bold">Details &amp; Constraints</h2></div>
-            {fields.step3.length > 0 ? <div className="space-y-5">{fields.step3.map(renderField)}</div> : <p className="text-sm text-muted-foreground italic">No additional details required.</p>}
+            <div className="space-y-5">
+              {fields.step3.map(f => {
+                // Inject disposal material/fees section right after disposal_needed for excavation_machine
+                if (f.key === "disposal_needed") {
+                  return (
+                    <div key="disposal_block" className="space-y-5">
+                      {renderField(f)}
+                      {data.sub_type === "excavation_machine" && data.disposal_needed === "Yes" && (
+                        <div className="rounded-lg border border-orange-200 bg-orange-50/40 p-4 space-y-4">
+                          <p className="text-sm font-semibold text-orange-800">Disposal Details</p>
+
+                          <FlagField fieldKey="disposal_material_type" label="Material Type" flags={flags} onToggle={toggleFlag}>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {DISPOSAL_MATERIAL_TYPES.map(t => (
+                                <button key={t} type="button"
+                                  onClick={() => set("disposal_material_type", t)}
+                                  className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${data.disposal_material_type === t ? "border-orange-500 bg-orange-100 font-medium" : "border-border hover:bg-muted/50"}`}>
+                                  {t}
+                                </button>
+                              ))}
+                            </div>
+                          </FlagField>
+
+                          <FlagField fieldKey="disposal_dry_wet" label="Dry or Wet" flags={flags} onToggle={toggleFlag}>
+                            <div className="flex gap-2 mt-1">
+                              {["Dry", "Wet"].map(v => (
+                                <button key={v} type="button"
+                                  onClick={() => set("disposal_dry_wet", v)}
+                                  className={`px-4 py-1.5 rounded-lg border text-sm transition-colors ${data.disposal_dry_wet === v ? "border-orange-500 bg-orange-100 font-medium" : "border-border hover:bg-muted/50"}`}>
+                                  {v}
+                                </button>
+                              ))}
+                            </div>
+                          </FlagField>
+
+                          {estTons != null && (
+                            <div className="flex items-center gap-2 p-3 rounded-lg bg-white border border-orange-200 text-sm">
+                              <Info className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                              <span className="text-muted-foreground">Estimated weight:</span>
+                              <span className="font-semibold text-orange-800">{estTons} tons</span>
+                              {data.disposal_material_type && data.disposal_dry_wet && (
+                                <span className="text-xs text-muted-foreground">({data.disposal_material_type}, {data.disposal_dry_wet})</span>
+                              )}
+                            </div>
+                          )}
+
+                          <FlagField fieldKey="disposal_fees" label="Disposal Fees (select all that apply)" flags={flags} onToggle={toggleFlag}>
+                            <div className="flex flex-col gap-2 mt-1">
+                              {DISPOSAL_FEE_OPTIONS.map(fee => {
+                                const selected = (data.disposal_fees || []).includes(fee);
+                                return (
+                                  <button key={fee} type="button"
+                                    onClick={() => {
+                                      const curr = data.disposal_fees || [];
+                                      set("disposal_fees", selected ? curr.filter(f => f !== fee) : [...curr, fee]);
+                                    }}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm text-left transition-colors ${selected ? "border-primary bg-primary/5 font-medium" : "border-border hover:bg-muted/50"}`}>
+                                    <span className={`h-4 w-4 rounded flex-shrink-0 border-2 flex items-center justify-center ${selected ? "border-primary bg-primary" : "border-muted-foreground/40"}`}>
+                                      {selected && <Check className="h-2.5 w-2.5 text-white" />}
+                                    </span>
+                                    {fee}
+                                    {fee === "Dumpster – Up to 10 Yds" && <span className="ml-1 text-xs text-orange-600 font-normal">(Add St. Occ Permit)</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </FlagField>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return renderField(f);
+              })}
+
+              {/* Distance warning for hand sub-types */}
+              {(data.sub_type === "excavation_hand" || data.sub_type === "importation_hand") &&
+                data.distance_to_parking && Number(data.distance_to_parking) > 50 && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-sm">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <span className="font-medium">Additional time for long distance</span>
+                </div>
+              )}
+              {(data.sub_type === "importation_hand" || data.sub_type === "importation_machine") &&
+                data.carry_distance && Number(data.carry_distance) > 50 && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-sm">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <span className="font-medium">Additional time for long distance</span>
+                </div>
+              )}
+            </div>
             <FlagField fieldKey="notes" label="Additional Notes" flags={flags} onToggle={toggleFlag}>
               <Textarea rows={3} placeholder="Any other notes..." value={data.notes || ""} onChange={e => set("notes", e.target.value)} />
             </FlagField>
