@@ -807,11 +807,10 @@ export function mapMulchEntry(op) {
  * Map AI-extracted data to a Site Management & Daily Cleanup entry with auto-flagging.
  */
 export function mapSiteManagementEntry(op) {
-  const f = op.sm_fields || {};
   const flags = [], flagLabels = {};
   const addFlag = (k, l) => { flags.push(k); flagLabels[k] = l; };
   const v = (key) => {
-    const val = f[key] ?? op[key];
+    const val = op[key];
     if (val === true || val === 'true' || val === 'Yes' || val === 'yes') return true;
     if (val === false || val === 'false' || val === 'No' || val === 'no') return false;
     return (val != null && val !== '') ? String(val) : '';
