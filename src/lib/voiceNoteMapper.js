@@ -461,8 +461,8 @@ export function mapLawnEntry(op) {
   const entry = { lawn_type: type, sub_type: type, time_estimate: v('time_estimate'), notes: v('notes') };
   if (!entry.time_estimate) addFlag('time_estimate', 'Time Estimate (hrs)');
 
-  entry.length = v('length') || (op.sf_length != null ? String(op.sf_length) : '');
-  entry.width = v('width') || (op.sf_width != null ? String(op.sf_width) : '');
+  entry.length = v('length');
+  entry.width = v('width');
   if (!entry.length) addFlag('length', 'Length (ft)');
   if (!entry.width) addFlag('width', 'Width (ft)');
 

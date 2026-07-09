@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { parseOps } from "@/lib/opsUtils";
 import VoiceNotes from "@/components/VoiceNotes";
 import { mapDemolitionEntry, mapBouldersEntry, mapDrainageEntry, mapLawnEntry, mapMulchEntry, mapPlantingEntry, mapRoughGradingEntry, mapSiteManagementEntry } from "@/lib/voiceNoteMapper";
-import { mapPatioEntry, mapHardscapeRepairEntry, mapMaintenanceEntry, mapSteppingStoneEntry, mapRetainingWallEntry } from "@/lib/voiceNoteMapperExtended";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
@@ -522,31 +521,6 @@ export default function AreaDetail() {
               // For Site Management & Daily Cleanup: field mapping with auto-flagging
               ...(operation.operation_type === 'Site Management & Daily Cleanup' && (() => {
                 const mapped = mapSiteManagementEntry(operation);
-                return mapped || {};
-              })()),
-              // For Walkway/Patio: field mapping with auto-flagging
-              ...(operation.operation_type === 'Walkway/Patio' && (() => {
-                const mapped = mapPatioEntry(operation);
-                return mapped || {};
-              })()),
-              // For Hardscape - Repair Existing: field mapping with auto-flagging
-              ...(operation.operation_type === 'Hardscape - Repair Existing' && (() => {
-                const mapped = mapHardscapeRepairEntry(operation);
-                return mapped || {};
-              })()),
-              // For Maintenance: field mapping with auto-flagging
-              ...(operation.operation_type === 'Maintenance' && (() => {
-                const mapped = mapMaintenanceEntry(operation);
-                return mapped || {};
-              })()),
-              // For Pathway / Steps: field mapping with auto-flagging
-              ...(operation.operation_type === 'Pathway / Steps' && (() => {
-                const mapped = mapSteppingStoneEntry(operation);
-                return mapped || {};
-              })()),
-              // For Retaining Wall: field mapping with auto-flagging
-              ...(operation.operation_type === 'Retaining Wall' && (() => {
-                const mapped = mapRetainingWallEntry(operation);
                 return mapped || {};
               })()),
             };
