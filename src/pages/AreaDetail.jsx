@@ -7,7 +7,7 @@ import { ArrowLeft, ClipboardList, FileText, Settings, Leaf, Plus, Shovel, Hamme
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { parseOps } from "@/lib/opsUtils";
 import VoiceNotes from "@/components/VoiceNotes";
-import { mapDemolitionEntry, mapBouldersEntry, mapDrainageEntry, mapLawnEntry, mapMulchEntry, mapPlantingEntry, mapRoughGradingEntry } from "@/lib/voiceNoteMapper";
+import { mapDemolitionEntry, mapBouldersEntry, mapDrainageEntry, mapLawnEntry, mapMulchEntry, mapPlantingEntry, mapRoughGradingEntry, mapSiteManagementEntry } from "@/lib/voiceNoteMapper";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
@@ -224,6 +224,7 @@ export default function AreaDetail() {
       <div className="mt-6">
         <VoiceNotes 
           areaId={areaId}
+          operationType={area?.operation_type}
           initialAnalysis={area?.voice_notes_analysis}
           onCreateOperation={async (operation) => {
             // Find the matching operation definition
@@ -515,6 +516,11 @@ export default function AreaDetail() {
               // For Planting: type-specific field mapping with auto-flagging
               ...(operation.operation_type === 'Planting' && (() => {
                 const mapped = mapPlantingEntry(operation);
+                return mapped || {};
+              })()),
+              // For Site Management & Daily Cleanup: field mapping with auto-flagging
+              ...(operation.operation_type === 'Site Management & Daily Cleanup' && (() => {
+                const mapped = mapSiteManagementEntry(operation);
                 return mapped || {};
               })()),
             };

@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { dataUrls } = await req.json();
+    const { dataUrls, operation_type } = await req.json();
     if (!dataUrls || !Array.isArray(dataUrls)) return Response.json({ error: 'Missing dataUrls array' }, { status: 400 });
 
     // Transcribe all audio files
@@ -24,6 +24,37 @@ Deno.serve(async (req) => {
     if (transcripts.length === 0) {
       console.error('No transcripts generated from URLs:', dataUrls);
       return Response.json({ error: 'No transcripts generated' }, { status: 400 });
+    }
+
+    // Site Management focused analysis — only extract Site Management & Daily Cleanup fields
+    if (operation_type === 'Site Management & Daily Cleanup') {
+      const analysis = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract ALL site management and daily cleanup details.\n\nThe ONLY valid operation type is "Site Management & Daily Cleanup". Return exactly one operation of this type.\n\nExtract the following fields into sm_fields (use true/false for checkboxes, numbers for number fields, strings for text fields). Leave fields not mentioned as null (for checkboxes, use false if not mentioned):\n\nTAX STATUS:\n- tax_status_nontaxable (boolean): true if non-taxable\n- tax_status_taxable (boolean): true if taxable\n\nPARKING / STORAGE / SITE ORGANIZATION:\n- street_occupancy_permit (boolean): street occupancy permit needed\n- parking_spot_days (number, if street_occupancy_permit): days parking spot needed\n- trailer_dumpster_days (number, if street_occupancy_permit): days trailer/dumpster/material on street\n- no_parking_signs (boolean, if street_occupancy_permit): no parking signs needed\n- sidewalk_closed_signage_days (number, if street_occupancy_permit): days sidewalk closed signage needed\n- job_box (boolean): job box needed\n- jobsite_trailer (boolean): jobsite trailer needed\n- pallet_use (boolean): pallet use needed\n- porta_potty (boolean): porta potty needed\n\nACCESS NEEDS:\n- ground_protection (boolean): ground protection needed\n- plywood_ea (number, if ground_protection): plywood each count\n- rubber_access_mats_lf (number, if ground_protection): rubber access mats linear feet\n- tree_protection (boolean): tree protection / tie back needed\n- tree_protection_lf (number, if tree_protection): tree protection linear feet\n- foam_board (boolean): foam board padding needed\n- foam_board_ea (number, if foam_board): foam board each count\n- ramp_creation (boolean): ramp creation for machine access needed\n- ramp_creation_notes (text, if ramp_creation): ramp creation notes\n\nSTORMWATER MANAGEMENT:\n- downspout_extensions (boolean): downspout extensions needed\n- downspout_sections (number, if downspout_extensions): number of sections\n- downspout_lf (number, if downspout_extensions): linear feet total\n- silt_fence (boolean): silt fence needed\n- silt_fence_sections (number, if silt_fence): number of sections\n- silt_fence_lf (number, if silt_fence): linear feet total\n- erosion_logs (boolean): erosion logs needed\n- erosion_logs_sections (number, if erosion_logs): number of sections\n- erosion_logs_lf (number, if erosion_logs): linear feet total\n- tarps (boolean): tarps needed\n- tarps_16x24_qty (number, if tarps): 16x24 tarp quantity\n- tarps_8x12_qty (number, if tarps): 8x12 tarp quantity\n- tarps_other1_size (text, if tarps): other tarp size #1\n- tarps_other1_qty (number, if tarps): other tarp #1 quantity\n- tarps_other2_size (text, if tarps): other tarp size #2\n- tarps_other2_qty (number, if tarps): other tarp #2 quantity\n\nPARKING COORDINATION:\n- parking_coordination (boolean): parking coordination needed\n- parking_days (number, if parking_coordination): days on project\n- parking_hours (number, if parking_coordination): hours coordinating\n\nMOVING ITEMS:\n- moving_items (boolean): moving items multiple times needed\n- moving_items_hours (number, if moving_items): hours coordinating\n\nREMOVE AND REINSTALL:\n- remove_reinstall (boolean): remove and reinstall site elements needed\n- remove_reinstall_purchase (text, if remove_reinstall): time to purchase/deliver\n- remove_reinstall_install (text, if remove_reinstall): time to install\n- remove_reinstall_manage (text, if remove_reinstall): time to daily manage\n- remove_reinstall_remove (text, if remove_reinstall): time to remove/restock\n\nAlso extract:\n- time_estimate (number): total time estimate in hours\n- notes (string): any additional notes\n\nVoice Notes:\n${transcripts.map((t, i) => 'Note ' + (i + 1) + ':\n' + t).join('\n\n')}`,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            summary: { type: 'string', description: 'Overall summary of all notes' },
+            key_items: { type: 'array', items: { type: 'string' }, description: 'Key observations and action items' },
+            tags: { type: 'array', items: { type: 'string' }, description: 'Relevant tags' },
+            recommended_operations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  operation_type: { type: 'string', description: 'Must be "Site Management & Daily Cleanup"' },
+                  description: { type: 'string', description: 'Brief description of site management needs' },
+                  priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+                  time_estimate: { type: ['number', 'null'], description: 'Time estimate in hours' },
+                  sm_fields: { type: 'object', description: 'All extracted site management field key-value pairs' }
+                },
+                required: ['operation_type', 'description']
+              },
+              description: 'Site management operations'
+            }
+          }
+        }
+      });
+      return Response.json({ analysis });
     }
 
     // Analyze all transcripts together

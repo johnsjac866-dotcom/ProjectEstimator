@@ -126,7 +126,7 @@ function NotePlayer({ note, onDelete, onRetry }) {
   );
 }
 
-export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis }) {
+export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis, operationType }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
@@ -219,7 +219,8 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis 
     setAnalyzing(true);
     try {
       const res = await base44.functions.invoke('analyzeVoiceNote', {
-        dataUrls: syncedNotes.map(n => n.audio_url)
+        dataUrls: syncedNotes.map(n => n.audio_url),
+        ...(operationType && { operation_type: operationType })
       });
       if (res.data?.analysis) {
         setSavedAnalysis(res.data.analysis);

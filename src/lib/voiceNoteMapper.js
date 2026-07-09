@@ -1,5 +1,6 @@
 import { DEMO_FIELDS } from './demolitionStages';
 import { RG_FIELDS } from './roughGradingStages';
+import { SM_STAGES } from './siteManagementStages';
 
 const s = (v) => (v != null && v !== '') ? String(v) : '';
 
@@ -797,6 +798,39 @@ export function mapMulchEntry(op) {
 
   entry.machine_access = v('machine_access');
   if (!entry.machine_access) addFlag('machine_access', 'Machine Access');
+
+  if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
+  return entry;
+}
+
+/**
+ * Map AI-extracted data to a Site Management & Daily Cleanup entry with auto-flagging.
+ */
+export function mapSiteManagementEntry(op) {
+  const f = op.sm_fields || {};
+  const flags = [], flagLabels = {};
+  const addFlag = (k, l) => { flags.push(k); flagLabels[k] = l; };
+  const v = (key) => {
+    const val = f[key] ?? op[key];
+    if (val === true || val === 'true' || val === 'Yes' || val === 'yes') return true;
+    if (val === false || val === 'false' || val === 'No' || val === 'no') return false;
+    return (val != null && val !== '') ? String(val) : '';
+  };
+
+  const entry = { sub_type: 'Site Management', time_estimate: v('time_estimate'), notes: v('notes') };
+  if (!entry.time_estimate) addFlag('time_estimate', 'Time Estimate (hrs)');
+
+  for (const stage of SM_STAGES) {
+    for (const field of stage.fields) {
+      const val = v(field.key);
+      entry[field.key] = val;
+      // Only flag non-checkbox fields (number, text) when condition is met and value is missing
+      if (field.type !== 'checkbox') {
+        const condMet = !field.condition || entry[field.condition.key] === field.condition.value;
+        if (condMet && !val) addFlag(field.key, field.label);
+      }
+    }
+  }
 
   if (flags.length > 0) { entry._flags = flags; entry._flag_labels = flagLabels; }
   return entry;
