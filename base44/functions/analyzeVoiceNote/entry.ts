@@ -142,7 +142,9 @@ const PROMPT_LAWN = `For Lawn Repair & Install operations, extract:
   Seed Install: sf_seed, seed_type ("Madison Parks"/"Shady Place"/"Survivor"), seed_lbs, extra_seed ("Yes"/"No"), cover_method ("Mulch Pellet"/"Straw Netting"), mulch_bags, mulch_buckets, straw_mat_type ("Single Net 60"/"Curlex Doublenet"), straw_rolls, straw_sod_staples, temp_downspout_needed ("Yes"/"No"), temp_downspout_lf, water_access ("Yes"/"No"), fertilizer ("Yes"/"No"), bed_prep_needed ("Yes"/"No")
   Top Dress Lawn: top_dress_depth (in), material ("Compost"/"Soil Blend"), overseed ("Yes"/"No"), aerate ("Yes"/"No")`;
 
-const PROMPT_DEMO = `For Demolition & Removals operations, extract:
+const PROMPT_DEMO = `For Demolition & Removals operations, ONLY create an operation if the voice notes describe tearing out, removing, or demolishing EXISTING hardscape (patios, walls, decks, edging) or vegetation (trees, shrubs, sod, perennials). Do NOT create a Demolition operation for new excavation, grading, or soil removal — that is "Rough Grading & Hauling".
+
+Extract:
 - demo_group: "hardscape" or "vegetation"
 - demo_sub_type: One of:
   Hardscape: "deck_timber_wall", "patio", "hand_removal_reuse" (brick/flag hand removal for reuse), "stone_retaining_wall"
@@ -152,7 +154,9 @@ const PROMPT_DEMO = `For Demolition & Removals operations, extract:
 - demo_fields: object with all other extracted form field values. Possible keys:
   machine_use ("Yes"/"No"), machine_type ("Dingo"/"Vermeer"), disposal_needed ("Yes"/"No"), disposal_location, disposal_method, dumpster_needed ("Yes"/"No"), distance_to_truck (ft), pallets_needed, road_gravel_tons, thickness (in), thickness_base (in), removal_of_base ("Yes"/"No"), hydraulic_tiller ("Yes"/"No"), skil_saw ("Yes"/"No"), recip_saw ("Yes"/"No"), existing_material, drainage_rock_below ("Yes"/"No"), drainage_rock_depth, drainage_rock_sf, remove_backfill_hrs, patio_material ("Concrete"/"Asphalt"/"Paver"/"Flagstone"), breaker_hammer ("Yes"/"No"), mandt_type, scope_quantity, pallet_count, reuse_storage_plan, lf, width, wall_height, remove_stone_hrs, reuse_vs_disposal ("Reuse"/"Disposal"), chainsaw ("Yes"/"No"), brush_chipper ("Yes"/"No"), stumps_excluded ("Yes"/"No"), time_to_cut, tons_material, loading_tarping_time, round_trip_disposal, time_remove_stump, bucket_stump_ripper ("Yes"/"No"), stump_mature_type, stump_mature_count, stump_large_type, stump_large_count, stump_medium_type, stump_medium_count, stump_small_type, stump_small_count, approx_time_dig, remove_vs_reuse ("Remove"/"Reuse"), dump_location, method ("Hand"/"Machine"), treatment_sf, client_approval ("Yes"/"Not Yet"), treatment_timing, nearby_plantings, plants_list, time_dig_hours, time_replant_hours, fill_holes_hours, watering_on_install ("Yes"/"No"), time_water_1x_hours, root_ball_difficulty, dig_pot_labor_hours, small_pots_count, hold_duration, storage_location, watering_system ("Yes"/"No"), watering_events, time_per_watering, travel_per_watering, replanting_plants ("Yes"/"No"), pm_travel_hours, sod_cutter ("Yes"/"No"), ramps_needed ("Yes"/"No"), obstacle_removal_hours, tilling ("Yes"/"No"), distance_from_truck, removal_labor_hours, edging_type_plastic ("Yes"/"No"), edging_type_brick ("Yes"/"No"), disposition ("Reuse"/"Reinstall"/"Dispose"), disposal_travel_hrs, equip_operator_hours, time_to_remove, trash_bags_fabric ("Yes"/"No"), removal_time, trash_bags_needed ("Yes"/"No"), inorganic_debris_bags ("Yes"/"No"), bags_needed, removal_type ("Full Removal"/"Partial Disturbance"), buried_condition, contamination ("Yes"/"No"), material_type, approx_time`;
 
-const PROMPT_DRAINAGE = `For Drainage operations, extract:
+const PROMPT_DRAINAGE = `For Drainage operations, ONLY create an operation if the voice notes describe installing drainage systems (buried downspouts, French drains, curtain drains, dry stream beds, catch basins, impervious membranes). Do NOT create a Drainage operation for excavation, grading, or soil removal — that is "Rough Grading & Hauling".
+
+Extract:
 - drain_type: One of "Buried Downspout", "Buried Drain", "Buried Sump Line", "Curtain Drain", "French Drain", "Dry Stream Bed", "Impervious Membrane"
 - drainage_fields: object with all extracted form field values:
   Common (all except Impervious Membrane): lf (linear feet), excavation_mode ("Machine"/"Hand"), excavation_machine_type ("Vermeer"/"Dingo" if machine), trencher_attachment ("Yes"/"No"), excavation_depth (in), soil_composition (array of "Rubble"/"Dirt"/"Sod"/"Stone"), spoil_type ("Remain on site"/"Hauled off"), disposal_site, sod_removal ("Yes"/"No"), obstruction_hours, zip_level ("Yes"/"No")
@@ -167,6 +171,12 @@ const PROMPT_DRAINAGE = `For Drainage operations, extract:
 const PROMPT_FOOTER = (notesText) => `
 For ALL operation types, also extract:
 - time_estimate: Time in hours mentioned for this operation. Look for phrases like "2 hours", "about 3 hrs", "half a day" (=4hrs), "a full day" (=8hrs), "45 minutes" (=0.75hrs). Null if no time is mentioned.
+
+IMPORTANT RULES:
+- ONLY create an operation if the voice notes clearly and specifically describe that operation type. If the notes describe excavation, grading, or hauling of soil, that is "Rough Grading & Hauling" — do NOT create a Demolition or Drainage operation for it.
+- Do NOT create operations for work that is only tangentially mentioned or could belong to a different operation type. When in doubt, do not create the operation.
+- Keep the summary to 1-2 concise sentences. Do not repeat information.
+- List each key item only once. Be concise — no duplicate or near-duplicate items.
 
 Leave unknown fields blank or null.
 
@@ -325,6 +335,93 @@ const SCHEMA_C = {
   }
 };
 
+// ── Deduplication helpers ────────────────────────────────────────────────────
+function normalizeText(text) {
+  return (text || '').toLowerCase().trim()
+    .replace(/(\d)x(\d)/g, '$1 $2') // split "56x60" into "56 60"
+    .replace(/[^a-z0-9\s]/g, ' ') // replace non-alphanumeric with space (not remove)
+    .replace(/\s+/g, ' ');
+}
+
+function tokenize(text) {
+  const normalized = normalizeText(text);
+  return normalized.split(' ').filter(w => {
+    if (/\d/.test(w)) return true; // keep tokens containing numbers (56, 60, 56x60, 4inch, etc.)
+    return w.length > 2; // keep words longer than 2 chars
+  });
+}
+
+function wordOverlap(a, b) {
+  const na = normalizeText(a);
+  const nb = normalizeText(b);
+  if (!na || !nb) return 0;
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.85;
+  const wordsA = new Set(tokenize(a));
+  const wordsB = new Set(tokenize(b));
+  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+  const intersection = [...wordsA].filter(w => wordsB.has(w));
+  return intersection.length / Math.max(wordsA.size, wordsB.size);
+}
+
+function dedupeKeyItems(items) {
+  const result = [];
+  for (const item of items) {
+    if (!item || !item.trim()) continue;
+    if (!result.some(r => wordOverlap(r, item) > 0.5)) {
+      result.push(item.trim());
+    }
+  }
+  return result;
+}
+
+function dedupeTags(tags) {
+  const seen = new Set();
+  const result = [];
+  for (const tag of tags) {
+    if (!tag || !tag.trim()) continue;
+    const normalized = normalizeText(tag);
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      result.push(tag.trim());
+    }
+  }
+  return result;
+}
+
+function countNonEmptyFields(op) {
+  let count = 0;
+  for (const [key, val] of Object.entries(op)) {
+    if (['operation_type', 'description', 'priority', 'estimated_quantity', 'materials', 'notes'].includes(key)) continue;
+    if (val === null || val === undefined || val === '') continue;
+    if (typeof val === 'object') {
+      const subVals = Object.values(val).filter(v => v !== null && v !== undefined && v !== '');
+      count += subVals.length;
+    } else {
+      count++;
+    }
+  }
+  return count;
+}
+
+function dedupeOperations(ops) {
+  const result = [];
+  for (const op of ops) {
+    if (!op || !op.operation_type) continue;
+    const dupIndex = result.findIndex(r => wordOverlap(r.description || '', op.description || '') > 0.55);
+    if (dupIndex === -1) {
+      result.push(op);
+    } else {
+      // Keep the one with more extracted field data
+      const existing = result[dupIndex];
+      if (countNonEmptyFields(op) > countNonEmptyFields(existing)) {
+        result[dupIndex] = op;
+      }
+    }
+  }
+  return result;
+}
+
 // ── Handler ──────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   try {
@@ -458,11 +555,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'All analysis calls failed' }, { status: 500 });
     }
 
+    // Pick the longest summary (most comprehensive) instead of concatenating all
+    const allSummaries = results.map(r => r?.summary).filter(Boolean);
+    const bestSummary = allSummaries.length > 0
+      ? allSummaries.reduce((longest, current) => current.length > longest.length ? current : longest)
+      : '';
+
     const analysis = {
-      summary: results.map(r => r?.summary).filter(Boolean).join('\n\n'),
-      key_items: results.flatMap(r => r?.key_items || []),
-      tags: [...new Set(results.flatMap(r => r?.tags || []))],
-      recommended_operations: results.flatMap(r => r?.recommended_operations || [])
+      summary: bestSummary,
+      key_items: dedupeKeyItems(results.flatMap(r => r?.key_items || [])),
+      tags: dedupeTags(results.flatMap(r => r?.tags || [])),
+      recommended_operations: dedupeOperations(results.flatMap(r => r?.recommended_operations || []))
     };
 
     return Response.json({ analysis });
