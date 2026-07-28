@@ -63,14 +63,16 @@ For REPROFILING (repro_*) also extract:
 - repro_amend_amendment_depth_in: Amendment depth in inches (number, if amendments)
 - repro_chicken_crumbles: "Yes" or "No" (if amendments)
 - fertilizer_hours: Hours for fertilizer (number)
-- finish_bed_hours: Hours to finish bed by hand (number)`;
+- finish_bed_hours: Hours to finish bed by hand (number)
+- missing_critical_data: If bed_main_type or bed_sub_type is null, include { field: "bed_sub_type", question: "Which bed preparation type?", options: ["till_1in", "till_3in", "notill_hand", "notill_machine", "notill_deadsod", "lawn_none", "lawn_1in", "repro_hardscape", "repro_narrow", "repro_sloped", "repro_soil"] }. Empty if bed_sub_type is determined.`;
 
 const PROMPT_MULCH = `For Mulch operations, extract:
 - mulch_type: "Organic" or "Stone"
 - mulch_fields: object with all extracted form field values:
   Common (all types): time_estimate (hrs), length (ft), width (ft), depth (in), bed_type, machine_access ("Vermeer"/"Dingo"/"None")
   Organic: install_type ("Refresh"/"Full Install"), organic_subtype ("Shredded Hardwood"/"Dyed"/"Red Cedar"), distance_to_truck (ft)
-  Stone: fabric_needed ("Yes"/"No"), fabric_sf`;
+  Stone: fabric_needed ("Yes"/"No"), fabric_sf
+- missing_critical_data: If mulch_type is null, include { field: "mulch_type", question: "Is this Organic or Stone mulch?", options: ["Organic", "Stone"] }. Empty if mulch_type is determined.`;
 
 const PROMPT_PLANTING = `For Planting operations, extract:
 - planting_type: One of "Trees & Shrubs", "Perennials", "Bulbs", "Annuals"
@@ -79,7 +81,8 @@ const PROMPT_PLANTING = `For Planting operations, extract:
   Trees & Shrubs: trees (array of {type, count, size}), shrubs (array of {type, count, size}), mycorrhizae_tablets (count), hand_vs_machine ("Hand"/"Machine"), machine_type ("Vermeer"/"Dingo" if machine), ball_cart ("Yes"/"No"), tree_sling ("Yes"/"No"), tree_boom ("Yes"/"No"), ramps (count), stake_kit ("Yes"/"No"), cage ("Yes"/"No"), mulch_ring ("Yes"/"No"), haul_off_debris ("Yes"/"No"), watering_hours, watering_days, water_access ("Yes"/"No"), delivery_by ("By Aspen"/"By Others"), box_truck ("Yes"/"No"), flatbed ("Yes"/"No"), forklift ("Yes"/"No")
   Perennials: large_plants (array of {name, count}), large_spacing, small_plants (array of {name, count}), small_spacing, bed_condition ("Unprepared bed"/"Prepared bed"), mycorrhizae_tablets (count), watering_hours, water_access ("Yes"/"No")
   Bulbs: bulbs (array of {name, count}), mulched_soil ("Yes"/"No"), bulb_fertilizer ("Yes"/"No"), milwaukee_drill ("Yes"/"No"), drill_auger ("Yes"/"No"), bulb_plugger ("Yes"/"No"), cut_weed_barrier ("Yes"/"No"), watering_hours, water_access ("Yes"/"No")
-  Annuals: annuals (array of {name, count}), watering_hours, water_access ("Yes"/"No")`;
+  Annuals: annuals (array of {name, count}), watering_hours, water_access ("Yes"/"No")
+- missing_critical_data: If planting_type is null, include { field: "planting_type", question: "What type of planting?", options: ["Trees & Shrubs", "Perennials", "Bulbs", "Annuals"] }. Empty if planting_type is determined.`;
 
 const PROMPT_BED_EDGING = `For Bed Edging operations, extract ALL fields that are mentioned:
 - edge_type: One of "Brick", "Metal", "Bullet", "Natural Edge", "Poly", "Snapped Limestone"
@@ -123,7 +126,8 @@ SNAPPED LIMESTONE fields:
 - snapped_prep_hours: Hours to prep area (number)
 - snapped_cut_off_saw: "Yes" or "No"
 ALL Bed Edging:
-- bed_edger_needed: "Yes" or "No" (if mentioned)`;
+- bed_edger_needed: "Yes" or "No" (if mentioned)
+- missing_critical_data: If edge_type is null, include { field: "edge_type", question: "Which edging type?", options: ["Brick", "Metal", "Bullet", "Natural Edge", "Poly", "Snapped Limestone"] }. Empty if edge_type is determined.`;
 
 const PROMPT_BOULDERS = `For Boulders/Accents & Structures operations, extract:
 - boulders_type: "Boulders / Accents", "Structures - Fence", "Structures - Arbor", or "Raised Garden Bed"
@@ -131,7 +135,8 @@ const PROMPT_BOULDERS = `For Boulders/Accents & Structures operations, extract:
   Boulders: count_24_30, count_18_24, count_12_18 (counts by size range), color_preference, ball_cart_needed ("Yes"/"No"), dump_trailer_needed ("Yes"/"No"), machine_access ("Vermeer"/"Dingo"/"None"), delivery_supplier ("Midwest"/"Madison Block"/"Special Order"), delivery_special_order, constraints
   Fence: lf (linear feet), height (ft), gate_count, gate_width (ft), fence_cedar_2x2 (count), fence_cedar_4x4 (count), fence_fasteners (count), post_spacing (ft), fence_dig_mode ("Hand"/"Machine"), fence_machine_type ("Dingo"/"Vermeer"), fence_dig_hours
   Arbor: count, length (ft), height (ft), width (ft), footing, material, arbor_dig_mode ("Hand"/"Machine"), arbor_machine_type ("Dingo"/"Vermeer"), arbor_dig_hours, needs_level_pad ("Yes"/"No"), remove_count
-  Raised Garden Bed: material ("Wood"/"Metal"), quantity, length (ft), width (ft), soil_depth (in), base_level ("Yes"/"No"), machine_access ("Vermeer"/"Dingo"/"None")`;
+  Raised Garden Bed: material ("Wood"/"Metal"), quantity, length (ft), width (ft), soil_depth (in), base_level ("Yes"/"No"), machine_access ("Vermeer"/"Dingo"/"None")
+- missing_critical_data: If boulders_type is null, include { field: "boulders_type", question: "What type of boulders/structures work?", options: ["Boulders / Accents", "Structures - Fence", "Structures - Arbor", "Raised Garden Bed"] }. Empty if boulders_type is determined.`;
 
 const PROMPT_LAWN = `For Lawn Repair & Install operations, extract:
 - lawn_type: One of "Sod Installation", "Seed Install", "Top Dress Lawn"
@@ -145,7 +150,8 @@ const PROMPT_LAWN = `For Lawn Repair & Install operations, extract:
   Common (all types): time_estimate (hrs), length (ft), width (ft)
   Sod Installation: on_slope ("Yes"/"No"), sf_waste, diff_easy_hours, diff_avg_hours, diff_hard_hours, diff_very_hard_hours, sod_staples_needed ("Yes"/"No"), sod_staples_count, pallets_needed ("Yes"/"No"), pallets_count, watering_on_install ("Yes"/"No"), water_access ("Yes"/"No"), watering_time_hours, fertilizer ("Yes"/"No"), fertilizer_sf_override, distance_to_truck (ft), machine_access ("Dingo"/"Vermeer"/"None"), sod_type ("Bluegrass"/"Tall Fescue Blend")
   Seed Install: sf_seed, seed_type ("Madison Parks"/"Shady Place"/"Survivor"), seed_lbs, extra_seed ("Yes"/"No"), cover_method ("Mulch Pellet"/"Straw Netting"), mulch_bags, mulch_buckets, straw_mat_type ("Single Net 60"/"Curlex Doublenet"), straw_rolls, straw_sod_staples, temp_downspout_needed ("Yes"/"No"), temp_downspout_lf, water_access ("Yes"/"No"), fertilizer ("Yes"/"No"), bed_prep_needed ("Yes"/"No")
-  Top Dress Lawn: top_dress_depth (in), material ("Compost"/"Soil Blend"), overseed ("Yes"/"No"), aerate ("Yes"/"No")`;
+  Top Dress Lawn: top_dress_depth (in), material ("Compost"/"Soil Blend"), overseed ("Yes"/"No"), aerate ("Yes"/"No")
+- missing_critical_data: If lawn_type is null, include { field: "lawn_type", question: "What type of lawn work?", options: ["Sod Installation", "Seed Install", "Top Dress Lawn"] }. Empty if lawn_type is determined.`;
 
 const PROMPT_DEMO = `For Demolition & Removals operations, ONLY create an operation if the voice notes describe tearing out, removing, or demolishing EXISTING hardscape (patios, walls, decks, edging) or vegetation (trees, shrubs, sod, perennials). Do NOT create a Demolition operation for new excavation, grading, or soil removal — that is "Rough Grading & Hauling".
 
@@ -157,7 +163,8 @@ Extract:
 - sf_length, sf_width: dimensions in feet (for deck_timber_wall, patio, strip_sod, stone_mulch, wood_mulch)
 - depth_inches: depth in inches (for strip_sod, stone_mulch, wood_mulch)
 - demo_fields: object with all other extracted form field values. Possible keys:
-  machine_use ("Yes"/"No"), machine_type ("Dingo"/"Vermeer"), disposal_needed ("Yes"/"No"), disposal_location, disposal_method, dumpster_needed ("Yes"/"No"), distance_to_truck (ft), pallets_needed, road_gravel_tons, thickness (in), thickness_base (in), removal_of_base ("Yes"/"No"), hydraulic_tiller ("Yes"/"No"), skil_saw ("Yes"/"No"), recip_saw ("Yes"/"No"), existing_material, drainage_rock_below ("Yes"/"No"), drainage_rock_depth, drainage_rock_sf, remove_backfill_hrs, patio_material ("Concrete"/"Asphalt"/"Paver"/"Flagstone"), breaker_hammer ("Yes"/"No"), mandt_type, scope_quantity, pallet_count, reuse_storage_plan, lf, width, wall_height, remove_stone_hrs, reuse_vs_disposal ("Reuse"/"Disposal"), chainsaw ("Yes"/"No"), brush_chipper ("Yes"/"No"), stumps_excluded ("Yes"/"No"), time_to_cut, tons_material, loading_tarping_time, round_trip_disposal, time_remove_stump, bucket_stump_ripper ("Yes"/"No"), stump_mature_type, stump_mature_count, stump_large_type, stump_large_count, stump_medium_type, stump_medium_count, stump_small_type, stump_small_count, approx_time_dig, remove_vs_reuse ("Remove"/"Reuse"), dump_location, method ("Hand"/"Machine"), treatment_sf, client_approval ("Yes"/"Not Yet"), treatment_timing, nearby_plantings, plants_list, time_dig_hours, time_replant_hours, fill_holes_hours, watering_on_install ("Yes"/"No"), time_water_1x_hours, root_ball_difficulty, dig_pot_labor_hours, small_pots_count, hold_duration, storage_location, watering_system ("Yes"/"No"), watering_events, time_per_watering, travel_per_watering, replanting_plants ("Yes"/"No"), pm_travel_hours, sod_cutter ("Yes"/"No"), ramps_needed ("Yes"/"No"), obstacle_removal_hours, tilling ("Yes"/"No"), distance_from_truck, removal_labor_hours, edging_type_plastic ("Yes"/"No"), edging_type_brick ("Yes"/"No"), disposition ("Reuse"/"Reinstall"/"Dispose"), disposal_travel_hrs, equip_operator_hours, time_to_remove, trash_bags_fabric ("Yes"/"No"), removal_time, trash_bags_needed ("Yes"/"No"), inorganic_debris_bags ("Yes"/"No"), bags_needed, removal_type ("Full Removal"/"Partial Disturbance"), buried_condition, contamination ("Yes"/"No"), material_type, approx_time`;
+  machine_use ("Yes"/"No"), machine_type ("Dingo"/"Vermeer"), disposal_needed ("Yes"/"No"), disposal_location, disposal_method, dumpster_needed ("Yes"/"No"), distance_to_truck (ft), pallets_needed, road_gravel_tons, thickness (in), thickness_base (in), removal_of_base ("Yes"/"No"), hydraulic_tiller ("Yes"/"No"), skil_saw ("Yes"/"No"), recip_saw ("Yes"/"No"), existing_material, drainage_rock_below ("Yes"/"No"), drainage_rock_depth, drainage_rock_sf, remove_backfill_hrs, patio_material ("Concrete"/"Asphalt"/"Paver"/"Flagstone"), breaker_hammer ("Yes"/"No"), mandt_type, scope_quantity, pallet_count, reuse_storage_plan, lf, width, wall_height, remove_stone_hrs, reuse_vs_disposal ("Reuse"/"Disposal"), chainsaw ("Yes"/"No"), brush_chipper ("Yes"/"No"), stumps_excluded ("Yes"/"No"), time_to_cut, tons_material, loading_tarping_time, round_trip_disposal, time_remove_stump, bucket_stump_ripper ("Yes"/"No"), stump_mature_type, stump_mature_count, stump_large_type, stump_large_count, stump_medium_type, stump_medium_count, stump_small_type, stump_small_count, approx_time_dig, remove_vs_reuse ("Remove"/"Reuse"), dump_location, method ("Hand"/"Machine"), treatment_sf, client_approval ("Yes"/"Not Yet"), treatment_timing, nearby_plantings, plants_list, time_dig_hours, time_replant_hours, fill_holes_hours, watering_on_install ("Yes"/"No"), time_water_1x_hours, root_ball_difficulty, dig_pot_labor_hours, small_pots_count, hold_duration, storage_location, watering_system ("Yes"/"No"), watering_events, time_per_watering, travel_per_watering, replanting_plants ("Yes"/"No"), pm_travel_hours, sod_cutter ("Yes"/"No"), ramps_needed ("Yes"/"No"), obstacle_removal_hours, tilling ("Yes"/"No"), distance_from_truck, removal_labor_hours, edging_type_plastic ("Yes"/"No"), edging_type_brick ("Yes"/"No"), disposition ("Reuse"/"Reinstall"/"Dispose"), disposal_travel_hrs, equip_operator_hours, time_to_remove, trash_bags_fabric ("Yes"/"No"), removal_time, trash_bags_needed ("Yes"/"No"), inorganic_debris_bags ("Yes"/"No"), bags_needed, removal_type ("Full Removal"/"Partial Disturbance"), buried_condition, contamination ("Yes"/"No"), material_type, approx_time
+- missing_critical_data: If demo_sub_type or demo_group is null, include { field: "demo_sub_type", question: "What type of demolition?", options: ["deck_timber_wall", "patio", "hand_removal_reuse", "stone_retaining_wall", "woody_flush_cut", "woody_incl_stumps", "perennials_dig", "perennials_herbicide", "transplant_direct", "transplant_dig_hold", "herbicide_cut_treat", "strip_sod", "landscape_edging", "stone_mulch", "weed_fabric", "wood_mulch", "misc_items"] }. Empty if demo_sub_type is determined.`;
 
 const PROMPT_DRAINAGE = `For Drainage operations, ONLY create an operation if the voice notes describe installing drainage systems (buried downspouts, French drains, curtain drains, dry stream beds, catch basins, impervious membranes). Do NOT create a Drainage operation for excavation, grading, or soil removal — that is "Rough Grading & Hauling".
 
@@ -171,7 +178,8 @@ Extract:
   Curtain Drain: pipe_size, existing_drain, existing_lf, stone_needed ("Yes"/"No"), fabric_needed ("Yes"/"No"), fabric_sf, sod_disposal_method
   French Drain: pipe_size, existing_drain, existing_lf, corrugated_tile_needed ("Yes"/"No"), tile_perforated_sock_count, tile_solid_count, pvc_cleanout_needed ("Yes"/"No"), pvc_cleanout_count, misc_drainage_needed ("Yes"/"No"), misc_drainage_notes, coarse_sand_needed ("Yes"/"No"), coarse_sand_tons, drainage_rock_needed ("Yes"/"No"), drainage_rock_tons, stone_needed, fabric_needed, fabric_sf
   Dry Stream Bed: width (ft), stream_depth (in), existing_downspout, existing_lf, ball_cart_needed ("Yes"/"No"), boulders_needed ("Yes"/"No"), fieldstone_10_18, fieldstone_18_24, fieldstone_24_30, drainage_rock_needed ("Yes"/"No"), drainage_rock_cy, stone_type, stream_purpose ("Decorative"/"Functional")
-  Impervious Membrane: rough_grading_needed ("Yes"/"No"), mem_length, mem_width, mem_depth, excavation_mode, excavation_machine_type, detail_excavation_hours, place_membrane_hours, roofing_membrane_needed ("Yes"/"No"), roofing_membrane_rolls, woven_fabric_needed ("Yes"/"No"), woven_fabric_sf, place_stone_hours, drainage_rock_needed ("Yes"/"No"), drainage_rock_tons, edging_needed ("Yes"/"No"), poly_plastic_needed ("Yes"/"No"), poly_plastic_rolls`;
+  Impervious Membrane: rough_grading_needed ("Yes"/"No"), mem_length, mem_width, mem_depth, excavation_mode, excavation_machine_type, detail_excavation_hours, place_membrane_hours, roofing_membrane_needed ("Yes"/"No"), roofing_membrane_rolls, woven_fabric_needed ("Yes"/"No"), woven_fabric_sf, place_stone_hours, drainage_rock_needed ("Yes"/"No"), drainage_rock_tons, edging_needed ("Yes"/"No"), poly_plastic_needed ("Yes"/"No"), poly_plastic_rolls
+- missing_critical_data: If drain_type is null, include { field: "drain_type", question: "What type of drainage system?", options: ["Buried Downspout", "Buried Drain", "Buried Sump Line", "Curtain Drain", "French Drain", "Dry Stream Bed", "Impervious Membrane"] }. Empty if drain_type is determined.`;
 
 // ── Router prompt & schema ───────────────────────────────────────────────────
 const ROUTER_PROMPT = (notesText) => `You are a landscaping project analyst. Analyze these voice notes and determine EXACTLY which operational categories are explicitly described as required work.
@@ -343,7 +351,20 @@ const SCHEMA_BP = {
           } },
           planting_fields: { type: 'object', additionalProperties: true, properties: {
             time_estimate:{type:['number','null']}, notes:{type:['string','null']}, additional_time_rocky:{type:['string','null']}, additional_time_roots:{type:['string','null']}, trees:{type:'array',items:{type:'object',additionalProperties:true}}, shrubs:{type:'array',items:{type:'object',additionalProperties:true}}, mycorrhizae_tablets:{type:['number','null']}, hand_vs_machine:{type:['string','null']}, machine_type:{type:['string','null']}, ball_cart:{type:['string','null']}, tree_sling:{type:['string','null']}, tree_boom:{type:['string','null']}, ramps:{type:['number','null']}, stake_kit:{type:['string','null']}, cage:{type:['string','null']}, mulch_ring:{type:['string','null']}, haul_off_debris:{type:['string','null']}, watering_hours:{type:['number','null']}, watering_days:{type:['number','null']}, water_access:{type:['string','null']}, delivery_by:{type:['string','null']}, box_truck:{type:['string','null']}, flatbed:{type:['string','null']}, forklift:{type:['string','null']}, large_plants:{type:'array',items:{type:'object',additionalProperties:true}}, large_spacing:{type:['string','null']}, small_plants:{type:'array',items:{type:'object',additionalProperties:true}}, small_spacing:{type:['string','null']}, bed_condition:{type:['string','null']}, bulbs:{type:'array',items:{type:'object',additionalProperties:true}}, mulched_soil:{type:['string','null']}, bulb_fertilizer:{type:['string','null']}, milwaukee_drill:{type:['string','null']}, drill_auger:{type:['string','null']}, bulb_plugger:{type:['string','null']}, cut_weed_barrier:{type:['string','null']}, annuals:{type:'array',items:{type:'object',additionalProperties:true}}
-          } }
+          } },
+          missing_critical_data: {
+            type: 'array',
+            description: 'Critical fields that are null and need user clarification.',
+            items: {
+              type: 'object',
+              properties: {
+                field: { type: 'string' },
+                question: { type: 'string' },
+                options: { type: 'array', items: { type: 'string' } }
+              },
+              required: ['field', 'question', 'options']
+            }
+          }
         },
         required: ['operation_type', 'description']
       }
@@ -381,7 +402,20 @@ const SCHEMA_B = {
           } },
           demo_fields: { type: 'object', additionalProperties: true, properties: {
             machine_use:{type:['string','null']}, machine_type:{type:['string','null']}, disposal_needed:{type:['string','null']}, disposal_location:{type:['string','null']}, disposal_method:{type:['string','null']}, dumpster_needed:{type:['string','null']}, distance_to_truck:{type:['number','null']}, pallets_needed:{type:['string','null']}, road_gravel_tons:{type:['number','null']}, thickness:{type:['number','null']}, thickness_base:{type:['number','null']}, removal_of_base:{type:['string','null']}, hydraulic_tiller:{type:['string','null']}, skil_saw:{type:['string','null']}, recip_saw:{type:['string','null']}, existing_material:{type:['string','null']}, drainage_rock_below:{type:['string','null']}, drainage_rock_depth:{type:['number','null']}, drainage_rock_sf:{type:['number','null']}, remove_backfill_hrs:{type:['number','null']}, patio_material:{type:['string','null']}, breaker_hammer:{type:['string','null']}, mandt_type:{type:['string','null']}, scope_quantity:{type:['string','null']}, pallet_count:{type:['number','null']}, reuse_storage_plan:{type:['string','null']}, lf:{type:['number','null']}, width:{type:['number','null']}, wall_height:{type:['number','null']}, remove_stone_hrs:{type:['number','null']}, reuse_vs_disposal:{type:['string','null']}, chainsaw:{type:['string','null']}, brush_chipper:{type:['string','null']}, stumps_excluded:{type:['string','null']}, time_to_cut:{type:['string','null']}, tons_material:{type:['number','null']}, loading_tarping_time:{type:['string','null']}, round_trip_disposal:{type:['string','null']}, time_remove_stump:{type:['string','null']}, bucket_stump_ripper:{type:['string','null']}, stump_mature_type:{type:['string','null']}, stump_mature_count:{type:['number','null']}, stump_large_type:{type:['string','null']}, stump_large_count:{type:['number','null']}, stump_medium_type:{type:['string','null']}, stump_medium_count:{type:['number','null']}, stump_small_type:{type:['string','null']}, stump_small_count:{type:['number','null']}, approx_time_dig:{type:['string','null']}, remove_vs_reuse:{type:['string','null']}, dump_location:{type:['string','null']}, method:{type:['string','null']}, treatment_sf:{type:['number','null']}, client_approval:{type:['string','null']}, treatment_timing:{type:['string','null']}, nearby_plantings:{type:['string','null']}, plants_list:{type:['string','null']}, time_dig_hours:{type:['number','null']}, time_replant_hours:{type:['number','null']}, fill_holes_hours:{type:['number','null']}, watering_on_install:{type:['string','null']}, time_water_1x_hours:{type:['number','null']}, root_ball_difficulty:{type:['string','null']}, dig_pot_labor_hours:{type:['number','null']}, small_pots_count:{type:['number','null']}, hold_duration:{type:['string','null']}, storage_location:{type:['string','null']}, watering_system:{type:['string','null']}, watering_events:{type:['string','null']}, time_per_watering:{type:['string','null']}, travel_per_watering:{type:['string','null']}, replanting_plants:{type:['string','null']}, pm_travel_hours:{type:['number','null']}, sod_cutter:{type:['string','null']}, ramps_needed:{type:['string','null']}, obstacle_removal_hours:{type:['number','null']}, tilling:{type:['string','null']}, distance_from_truck:{type:['number','null']}, removal_labor_hours:{type:['number','null']}, edging_type_plastic:{type:['string','null']}, edging_type_brick:{type:['string','null']}, disposition:{type:['string','null']}, disposal_travel_hrs:{type:['number','null']}, equip_operator_hours:{type:['number','null']}, time_to_remove:{type:['string','null']}, trash_bags_fabric:{type:['string','null']}, removal_time:{type:['string','null']}, trash_bags_needed:{type:['string','null']}, inorganic_debris_bags:{type:['string','null']}, bags_needed:{type:['number','null']}, removal_type:{type:['string','null']}, buried_condition:{type:['string','null']}, contamination:{type:['string','null']}, material_type:{type:['string','null']}, approx_time:{type:['string','null']}
-          } }
+          } },
+          missing_critical_data: {
+            type: 'array',
+            description: 'Critical fields that are null and need user clarification.',
+            items: {
+              type: 'object',
+              properties: {
+                field: { type: 'string' },
+                question: { type: 'string' },
+                options: { type: 'array', items: { type: 'string' } }
+              },
+              required: ['field', 'question', 'options']
+            }
+          }
         },
         required: ['operation_type', 'description']
       }
@@ -410,7 +444,20 @@ const SCHEMA_C = {
           drain_type: { type: ['string', 'null'] },
           drainage_fields: { type: 'object', additionalProperties: true, properties: {
             time_estimate:{type:['number','null']}, notes:{type:['string','null']}, lf:{type:['number','null']}, excavation_mode:{type:['string','null']}, excavation_machine_type:{type:['string','null']}, trencher_attachment:{type:['string','null']}, excavation_depth:{type:['number','null']}, soil_composition:{type:'array',items:{type:'string'}}, spoil_type:{type:['string','null']}, disposal_site:{type:['string','null']}, sod_removal:{type:['string','null']}, obstruction_hours:{type:['number','null']}, zip_level:{type:['string','null']}, pipe_size:{type:['number','null']}, existing_downspout:{type:['string','null']}, existing_lf:{type:['number','null']}, pvc_supplies_needed:{type:['string','null']}, pvc_supplies_count:{type:['number','null']}, pvc_fittings_needed:{type:['string','null']}, fit_90_long_turn:{type:['number','null']}, fit_90_tight:{type:['number','null']}, fit_22_5_elbow:{type:['number','null']}, fit_hub_45_elbow:{type:['number','null']}, fit_tee:{type:['number','null']}, fit_wye:{type:['number','null']}, fit_cleanout:{type:['number','null']}, downspout_connection_needed:{type:['string','null']}, downspout_connection_size:{type:['string','null']}, downspout_connection_count:{type:['number','null']}, catch_basin_needed:{type:['string','null']}, catch_basin_size:{type:['string','null']}, catch_basin_count:{type:['number','null']}, miter_drain:{type:['string','null']}, miter_drain_type:{type:['string','null']}, miter_drain_count:{type:['number','null']}, lawn_repair:{type:['string','null']}, existing_drain:{type:['string','null']}, atrium_drain_needed:{type:['string','null']}, atrium_drain_count:{type:['number','null']}, freezedrain_needed:{type:['string','null']}, freezedrain_count:{type:['number','null']}, topsoil_needed:{type:['string','null']}, topsoil_cy:{type:['number','null']}, stone_needed:{type:['string','null']}, fabric_needed:{type:['string','null']}, fabric_sf:{type:['number','null']}, sod_disposal_method:{type:['string','null']}, corrugated_tile_needed:{type:['string','null']}, tile_perforated_sock_count:{type:['number','null']}, tile_solid_count:{type:['number','null']}, pvc_cleanout_needed:{type:['string','null']}, pvc_cleanout_count:{type:['number','null']}, misc_drainage_needed:{type:['string','null']}, misc_drainage_notes:{type:['string','null']}, coarse_sand_needed:{type:['string','null']}, coarse_sand_tons:{type:['number','null']}, drainage_rock_needed:{type:['string','null']}, drainage_rock_tons:{type:['number','null']}, drainage_rock_cy:{type:['number','null']}, stone_type:{type:['string','null']}, stream_purpose:{type:['string','null']}, stream_depth:{type:['number','null']}, ball_cart_needed:{type:['string','null']}, boulders_needed:{type:['string','null']}, fieldstone_10_18:{type:['number','null']}, fieldstone_18_24:{type:['number','null']}, fieldstone_24_30:{type:['number','null']}, rough_grading_needed:{type:['string','null']}, mem_length:{type:['number','null']}, mem_width:{type:['number','null']}, mem_depth:{type:['number','null']}, detail_excavation_hours:{type:['number','null']}, place_membrane_hours:{type:['number','null']}, roofing_membrane_needed:{type:['string','null']}, roofing_membrane_rolls:{type:['number','null']}, woven_fabric_needed:{type:['string','null']}, woven_fabric_sf:{type:['number','null']}, place_stone_hours:{type:['number','null']}, edging_needed:{type:['string','null']}, poly_plastic_needed:{type:['string','null']}, poly_plastic_rolls:{type:['number','null']}
-          } }
+          } },
+          missing_critical_data: {
+            type: 'array',
+            description: 'Critical fields that are null and need user clarification.',
+            items: {
+              type: 'object',
+              properties: {
+                field: { type: 'string' },
+                question: { type: 'string' },
+                options: { type: 'array', items: { type: 'string' } }
+              },
+              required: ['field', 'question', 'options']
+            }
+          }
         },
         required: ['operation_type', 'description']
       }
