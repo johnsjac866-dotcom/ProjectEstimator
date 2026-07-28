@@ -259,40 +259,12 @@ const SCHEMA_A = {
       type: 'array',
       items: {
         type: 'object',
+        additionalProperties: true,
         properties: {
           operation_type: { type: 'string' },
           description: { type: 'string' },
           priority: { type: 'string', enum: ['high', 'medium', 'low'] },
-          estimated_quantity: { type: ['string', 'null'] },
-          materials: { type: 'array', items: { type: 'string' } },
-          notes: { type: ['string', 'null'] },
-          sub_type: { type: ['string', 'null'] },
-          time_estimate: { type: ['number', 'null'] },
-          mulch_type: { type: ['string', 'null'] },
-          edge_type: { type: ['string', 'null'] },
-          bed_main_type: { type: ['string', 'null'] },
-          bed_sub_type: { type: ['string', 'null'] },
-          rg_fields: { type: 'object', additionalProperties: true, properties: {
-            time_estimate:{type:['number','null']}, sf_length:{type:['number','null']}, sf_width:{type:['number','null']}, depth_inches:{type:['number','null']}, notes:{type:['string','null']}, machine_type:{type:['string','null']}, hydraulic_tiller:{type:['string','null']}, rock_hound:{type:['string','null']}, machine_access_width:{type:['number','null']}, distance_to_parking:{type:['number','null']}, carry_distance:{type:['number','null']}, soil_types:{type:'array',items:{type:'string'}}, dump_trailer_needed:{type:['string','null']}, ramps_needed:{type:['number','null']}, sod_vegetation_removed:{type:['string','null']}, disposal_needed:{type:['string','null']}, disposal_location:{type:['string','null']}, disposal_material_type:{type:['string','null']}, disposal_dry_wet:{type:['string','null']}, disposal_fees:{type:'array',items:{type:'string'}}, store_on_site:{type:['string','null']}, surface_protection:{type:['string','null']}, utilities_checked:{type:['string','null']}, grading_plan_required:{type:['string','null']}
-          } },
-          mulch_fields: { type: 'object', additionalProperties: true, properties: {
-            time_estimate:{type:['number','null']}, length:{type:['number','null']}, width:{type:['number','null']}, depth:{type:['number','null']}, bed_type:{type:['string','null']}, machine_access:{type:['string','null']}, install_type:{type:['string','null']}, organic_subtype:{type:['string','null']}, distance_to_truck:{type:['number','null']}, fabric_needed:{type:['string','null']}, fabric_sf:{type:['number','null']}
-          } },
-          lf: { type: ['number', 'null'] }, lf_straight: { type: ['number', 'null'] }, lf_curved: { type: ['number', 'null'] },
-          brick_width:{type:['string','null']}, brick_color:{type:['string','null']}, brick_ends_cut:{type:['string','null']}, brick_prep_hours:{type:['number','null']}, brick_sand_needed:{type:['string','null']}, brick_cut_off_saw:{type:['string','null']}, brick_disposal_hours:{type:['number','null']},
-          metal_type:{type:['string','null']}, metal_lf:{type:['number','null']}, metal_corners:{type:['number','null']}, metal_splicers:{type:['number','null']}, metal_cut_off_saw:{type:['string','null']}, metal_remove_sod_hours:{type:['number','null']},
-          bullet_supplier:{type:['string','null']}, bullet_lf:{type:['number','null']}, bullet_color:{type:['string','null']}, bullet_prep_hours:{type:['number','null']}, bullet_permeable_chips:{type:['string','null']}, bullet_cut_off_saw:{type:['string','null']}, bullet_disposal_hours:{type:['number','null']},
-          natural_method:{type:['string','null']}, natural_lf:{type:['number','null']},
-          poly_lf:{type:['number','null']}, poly_angular_connectors:{type:['number','null']}, poly_remove_sod_hours:{type:['number','null']},
-          snapped_lf:{type:['number','null']}, snapped_ends_cut:{type:['string','null']}, snapped_sand_needed:{type:['string','null']}, snapped_prep_hours:{type:['number','null']}, snapped_cut_off_saw:{type:['string','null']},
-          bed_edger_needed:{type:['string','null']},
-          sf_length:{type:['number','null']}, sf_width:{type:['number','null']},
-          till_tilling_mode:{type:['string','null']}, till_hand_tiller_type:{type:['string','null']}, till_hand_tiller_hours:{type:['number','null']}, till_machine_type:{type:['string','null']}, till_hydraulic_tiller:{type:['string','null']},
-          remove_rock_hours:{type:['number','null']}, fertilizer_hours:{type:['number','null']}, chicken_crumbles:{type:['string','null']}, amend_amendment_type:{type:['string','null']}, amend_amendment_depth_in:{type:['number','null']}, finish_bed_hours:{type:['number','null']},
-          lawn_tilling_mode:{type:['string','null']}, lawn_hand_tiller_type:{type:['string','null']}, lawn_hand_tiller_hours:{type:['number','null']}, lawn_machine_type:{type:['string','null']}, lawn_hydraulic_tiller:{type:['string','null']},
-          slope_distance_hours:{type:['number','null']}, notill_machine_type:{type:['string','null']},
-          repro_tilling:{type:['string','null']}, repro_till_tilling_mode:{type:['string','null']}, repro_till_hand_tiller_type:{type:['string','null']}, repro_till_hand_tiller_hours:{type:['number','null']}, repro_till_machine_type:{type:['string','null']}, repro_till_hydraulic_tiller:{type:['string','null']},
-          repro_amendments:{type:['string','null']}, repro_amend_amendment_type:{type:['string','null']}, repro_amend_amendment_depth_in:{type:['number','null']}, repro_chicken_crumbles:{type:['string','null']}
+          time_estimate: { type: ['number', 'null'] }
         },
         required: ['operation_type', 'description']
       }
@@ -310,22 +282,12 @@ const SCHEMA_BP = {
       type: 'array',
       items: {
         type: 'object',
+        additionalProperties: true,
         properties: {
           operation_type: { type: 'string' },
           description: { type: 'string' },
           priority: { type: 'string', enum: ['high', 'medium', 'low'] },
-          estimated_quantity: { type: ['string', 'null'] },
-          materials: { type: 'array', items: { type: 'string' } },
-          notes: { type: ['string', 'null'] },
-          time_estimate: { type: ['number', 'null'] },
-          boulders_type: { type: ['string', 'null'] },
-          planting_type: { type: ['string', 'null'] },
-          boulders_fields: { type: 'object', additionalProperties: true, properties: {
-            time_estimate:{type:['number','null']}, notes:{type:['string','null']}, count_24_30:{type:['number','null']}, count_18_24:{type:['number','null']}, count_12_18:{type:['number','null']}, color_preference:{type:['string','null']}, ball_cart_needed:{type:['string','null']}, dump_trailer_needed:{type:['string','null']}, machine_access:{type:['string','null']}, delivery_supplier:{type:['string','null']}, delivery_special_order:{type:['string','null']}, constraints:{type:['string','null']}, lf:{type:['number','null']}, height:{type:['number','null']}, gate_count:{type:['number','null']}, gate_width:{type:['number','null']}, fence_cedar_2x2:{type:['number','null']}, fence_cedar_4x4:{type:['number','null']}, fence_fasteners:{type:['number','null']}, post_spacing:{type:['number','null']}, fence_dig_mode:{type:['string','null']}, fence_machine_type:{type:['string','null']}, fence_dig_hours:{type:['number','null']}, count:{type:['number','null']}, length:{type:['number','null']}, width:{type:['number','null']}, footing:{type:['string','null']}, material:{type:['string','null']}, arbor_dig_mode:{type:['string','null']}, arbor_machine_type:{type:['string','null']}, arbor_dig_hours:{type:['number','null']}, needs_level_pad:{type:['string','null']}, remove_count:{type:['number','null']}, quantity:{type:['number','null']}, soil_depth:{type:['number','null']}, base_level:{type:['string','null']}
-          } },
-          planting_fields: { type: 'object', additionalProperties: true, properties: {
-            time_estimate:{type:['number','null']}, notes:{type:['string','null']}, additional_time_rocky:{type:['string','null']}, additional_time_roots:{type:['string','null']}, trees:{type:'array',items:{type:'object',additionalProperties:true}}, shrubs:{type:'array',items:{type:'object',additionalProperties:true}}, mycorrhizae_tablets:{type:['number','null']}, hand_vs_machine:{type:['string','null']}, machine_type:{type:['string','null']}, ball_cart:{type:['string','null']}, tree_sling:{type:['string','null']}, tree_boom:{type:['string','null']}, ramps:{type:['number','null']}, stake_kit:{type:['string','null']}, cage:{type:['string','null']}, mulch_ring:{type:['string','null']}, haul_off_debris:{type:['string','null']}, watering_hours:{type:['number','null']}, watering_days:{type:['number','null']}, water_access:{type:['string','null']}, delivery_by:{type:['string','null']}, box_truck:{type:['string','null']}, flatbed:{type:['string','null']}, forklift:{type:['string','null']}, large_plants:{type:'array',items:{type:'object',additionalProperties:true}}, large_spacing:{type:['string','null']}, small_plants:{type:'array',items:{type:'object',additionalProperties:true}}, small_spacing:{type:['string','null']}, bed_condition:{type:['string','null']}, bulbs:{type:'array',items:{type:'object',additionalProperties:true}}, mulched_soil:{type:['string','null']}, bulb_fertilizer:{type:['string','null']}, milwaukee_drill:{type:['string','null']}, drill_auger:{type:['string','null']}, bulb_plugger:{type:['string','null']}, cut_weed_barrier:{type:['string','null']}, annuals:{type:'array',items:{type:'object',additionalProperties:true}}
-          } }
+          time_estimate: { type: ['number', 'null'] }
         },
         required: ['operation_type', 'description']
       }
@@ -343,27 +305,12 @@ const SCHEMA_B = {
       type: 'array',
       items: {
         type: 'object',
+        additionalProperties: true,
         properties: {
           operation_type: { type: 'string' },
           description: { type: 'string' },
           priority: { type: 'string', enum: ['high', 'medium', 'low'] },
-          estimated_quantity: { type: ['string', 'null'] },
-          materials: { type: 'array', items: { type: 'string' } },
-          notes: { type: ['string', 'null'] },
-          time_estimate: { type: ['number', 'null'] },
-          lawn_type: { type: ['string', 'null'] },
-          seed_type: { type: ['string', 'null'] },
-          sf_length: { type: ['number', 'null'] },
-          sf_width: { type: ['number', 'null'] },
-          demo_group: { type: ['string', 'null'] },
-          demo_sub_type: { type: ['string', 'null'] },
-          depth_inches: { type: ['number', 'null'] },
-          lawn_fields: { type: 'object', additionalProperties: true, properties: {
-            time_estimate:{type:['number','null']}, notes:{type:['string','null']}, length:{type:['number','null']}, width:{type:['number','null']}, on_slope:{type:['string','null']}, sf_waste:{type:['number','null']}, diff_easy_hours:{type:['number','null']}, diff_avg_hours:{type:['number','null']}, diff_hard_hours:{type:['number','null']}, diff_very_hard_hours:{type:['number','null']}, sod_staples_needed:{type:['string','null']}, sod_staples_count:{type:['number','null']}, pallets_needed:{type:['string','null']}, pallets_count:{type:['number','null']}, watering_on_install:{type:['string','null']}, water_access:{type:['string','null']}, watering_time_hours:{type:['number','null']}, fertilizer:{type:['string','null']}, fertilizer_sf_override:{type:['number','null']}, distance_to_truck:{type:['number','null']}, machine_access:{type:['string','null']}, sod_type:{type:['string','null']}, sf_seed:{type:['number','null']}, seed_type:{type:['string','null']}, seed_lbs:{type:['number','null']}, extra_seed:{type:['string','null']}, cover_method:{type:['string','null']}, mulch_bags:{type:['number','null']}, mulch_buckets:{type:['number','null']}, straw_mat_type:{type:['string','null']}, straw_rolls:{type:['number','null']}, straw_sod_staples:{type:['number','null']}, temp_downspout_needed:{type:['string','null']}, temp_downspout_lf:{type:['number','null']}, bed_prep_needed:{type:['string','null']}, top_dress_depth:{type:['number','null']}, material:{type:['string','null']}, overseed:{type:['string','null']}, aerate:{type:['string','null']}
-          } },
-          demo_fields: { type: 'object', additionalProperties: true, properties: {
-            machine_use:{type:['string','null']}, machine_type:{type:['string','null']}, disposal_needed:{type:['string','null']}, disposal_location:{type:['string','null']}, disposal_method:{type:['string','null']}, dumpster_needed:{type:['string','null']}, distance_to_truck:{type:['number','null']}, pallets_needed:{type:['string','null']}, road_gravel_tons:{type:['number','null']}, thickness:{type:['number','null']}, thickness_base:{type:['number','null']}, removal_of_base:{type:['string','null']}, hydraulic_tiller:{type:['string','null']}, skil_saw:{type:['string','null']}, recip_saw:{type:['string','null']}, existing_material:{type:['string','null']}, drainage_rock_below:{type:['string','null']}, drainage_rock_depth:{type:['number','null']}, drainage_rock_sf:{type:['number','null']}, remove_backfill_hrs:{type:['number','null']}, patio_material:{type:['string','null']}, breaker_hammer:{type:['string','null']}, mandt_type:{type:['string','null']}, scope_quantity:{type:['string','null']}, pallet_count:{type:['number','null']}, reuse_storage_plan:{type:['string','null']}, lf:{type:['number','null']}, width:{type:['number','null']}, wall_height:{type:['number','null']}, remove_stone_hrs:{type:['number','null']}, reuse_vs_disposal:{type:['string','null']}, chainsaw:{type:['string','null']}, brush_chipper:{type:['string','null']}, stumps_excluded:{type:['string','null']}, time_to_cut:{type:['string','null']}, tons_material:{type:['number','null']}, loading_tarping_time:{type:['string','null']}, round_trip_disposal:{type:['string','null']}, time_remove_stump:{type:['string','null']}, bucket_stump_ripper:{type:['string','null']}, stump_mature_type:{type:['string','null']}, stump_mature_count:{type:['number','null']}, stump_large_type:{type:['string','null']}, stump_large_count:{type:['number','null']}, stump_medium_type:{type:['string','null']}, stump_medium_count:{type:['number','null']}, stump_small_type:{type:['string','null']}, stump_small_count:{type:['number','null']}, approx_time_dig:{type:['string','null']}, remove_vs_reuse:{type:['string','null']}, dump_location:{type:['string','null']}, method:{type:['string','null']}, treatment_sf:{type:['number','null']}, client_approval:{type:['string','null']}, treatment_timing:{type:['string','null']}, nearby_plantings:{type:['string','null']}, plants_list:{type:['string','null']}, time_dig_hours:{type:['number','null']}, time_replant_hours:{type:['number','null']}, fill_holes_hours:{type:['number','null']}, watering_on_install:{type:['string','null']}, time_water_1x_hours:{type:['number','null']}, root_ball_difficulty:{type:['string','null']}, dig_pot_labor_hours:{type:['number','null']}, small_pots_count:{type:['number','null']}, hold_duration:{type:['string','null']}, storage_location:{type:['string','null']}, watering_system:{type:['string','null']}, watering_events:{type:['string','null']}, time_per_watering:{type:['string','null']}, travel_per_watering:{type:['string','null']}, replanting_plants:{type:['string','null']}, pm_travel_hours:{type:['number','null']}, sod_cutter:{type:['string','null']}, ramps_needed:{type:['string','null']}, obstacle_removal_hours:{type:['number','null']}, tilling:{type:['string','null']}, distance_from_truck:{type:['number','null']}, removal_labor_hours:{type:['number','null']}, edging_type_plastic:{type:['string','null']}, edging_type_brick:{type:['string','null']}, disposition:{type:['string','null']}, disposal_travel_hrs:{type:['number','null']}, equip_operator_hours:{type:['number','null']}, time_to_remove:{type:['string','null']}, trash_bags_fabric:{type:['string','null']}, removal_time:{type:['string','null']}, trash_bags_needed:{type:['string','null']}, inorganic_debris_bags:{type:['string','null']}, bags_needed:{type:['number','null']}, removal_type:{type:['string','null']}, buried_condition:{type:['string','null']}, contamination:{type:['string','null']}, material_type:{type:['string','null']}, approx_time:{type:['string','null']}
-          } }
+          time_estimate: { type: ['number', 'null'] }
         },
         required: ['operation_type', 'description']
       }
@@ -381,18 +328,12 @@ const SCHEMA_C = {
       type: 'array',
       items: {
         type: 'object',
+        additionalProperties: true,
         properties: {
           operation_type: { type: 'string' },
           description: { type: 'string' },
           priority: { type: 'string', enum: ['high', 'medium', 'low'] },
-          estimated_quantity: { type: ['string', 'null'] },
-          materials: { type: 'array', items: { type: 'string' } },
-          notes: { type: ['string', 'null'] },
-          time_estimate: { type: ['number', 'null'] },
-          drain_type: { type: ['string', 'null'] },
-          drainage_fields: { type: 'object', additionalProperties: true, properties: {
-            time_estimate:{type:['number','null']}, notes:{type:['string','null']}, lf:{type:['number','null']}, excavation_mode:{type:['string','null']}, excavation_machine_type:{type:['string','null']}, trencher_attachment:{type:['string','null']}, excavation_depth:{type:['number','null']}, soil_composition:{type:'array',items:{type:'string'}}, spoil_type:{type:['string','null']}, disposal_site:{type:['string','null']}, sod_removal:{type:['string','null']}, obstruction_hours:{type:['number','null']}, zip_level:{type:['string','null']}, pipe_size:{type:['number','null']}, existing_downspout:{type:['string','null']}, existing_lf:{type:['number','null']}, pvc_supplies_needed:{type:['string','null']}, pvc_supplies_count:{type:['number','null']}, pvc_fittings_needed:{type:['string','null']}, fit_90_long_turn:{type:['number','null']}, fit_90_tight:{type:['number','null']}, fit_22_5_elbow:{type:['number','null']}, fit_hub_45_elbow:{type:['number','null']}, fit_tee:{type:['number','null']}, fit_wye:{type:['number','null']}, fit_cleanout:{type:['number','null']}, downspout_connection_needed:{type:['string','null']}, downspout_connection_size:{type:['string','null']}, downspout_connection_count:{type:['number','null']}, catch_basin_needed:{type:['string','null']}, catch_basin_size:{type:['string','null']}, catch_basin_count:{type:['number','null']}, miter_drain:{type:['string','null']}, miter_drain_type:{type:['string','null']}, miter_drain_count:{type:['number','null']}, lawn_repair:{type:['string','null']}, existing_drain:{type:['string','null']}, atrium_drain_needed:{type:['string','null']}, atrium_drain_count:{type:['number','null']}, freezedrain_needed:{type:['string','null']}, freezedrain_count:{type:['number','null']}, topsoil_needed:{type:['string','null']}, topsoil_cy:{type:['number','null']}, stone_needed:{type:['string','null']}, fabric_needed:{type:['string','null']}, fabric_sf:{type:['number','null']}, sod_disposal_method:{type:['string','null']}, corrugated_tile_needed:{type:['string','null']}, tile_perforated_sock_count:{type:['number','null']}, tile_solid_count:{type:['number','null']}, pvc_cleanout_needed:{type:['string','null']}, pvc_cleanout_count:{type:['number','null']}, misc_drainage_needed:{type:['string','null']}, misc_drainage_notes:{type:['string','null']}, coarse_sand_needed:{type:['string','null']}, coarse_sand_tons:{type:['number','null']}, drainage_rock_needed:{type:['string','null']}, drainage_rock_tons:{type:['number','null']}, drainage_rock_cy:{type:['number','null']}, stone_type:{type:['string','null']}, stream_purpose:{type:['string','null']}, stream_depth:{type:['number','null']}, ball_cart_needed:{type:['string','null']}, boulders_needed:{type:['string','null']}, fieldstone_10_18:{type:['number','null']}, fieldstone_18_24:{type:['number','null']}, fieldstone_24_30:{type:['number','null']}, rough_grading_needed:{type:['string','null']}, mem_length:{type:['number','null']}, mem_width:{type:['number','null']}, mem_depth:{type:['number','null']}, detail_excavation_hours:{type:['number','null']}, place_membrane_hours:{type:['number','null']}, roofing_membrane_needed:{type:['string','null']}, roofing_membrane_rolls:{type:['number','null']}, woven_fabric_needed:{type:['string','null']}, woven_fabric_sf:{type:['number','null']}, place_stone_hours:{type:['number','null']}, edging_needed:{type:['string','null']}, poly_plastic_needed:{type:['string','null']}, poly_plastic_rolls:{type:['number','null']}
-          } }
+          time_estimate: { type: ['number', 'null'] }
         },
         required: ['operation_type', 'description']
       }
