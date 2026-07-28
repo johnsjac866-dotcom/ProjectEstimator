@@ -12,7 +12,12 @@ const PROMPT_RG = `For Rough Grading & Hauling operations, extract:
   excavation_hand: distance_to_parking (ft), dump_trailer_needed ("Yes"/"No"), ramps_needed (count), sod_vegetation_removed ("Yes"/"No"), disposal_needed ("Yes"/"No"), disposal_location ("Mandt - 2079 Hwy MM, Fitchburg"/"Homburg - 5715 Milwaukee St, Madison" if disposal needed), store_on_site ("Yes"/"No"), grading_plan_required ("Yes"/"No")
   excavation_machine: machine_type ("Vermeer"/"Dingo"), hydraulic_tiller ("Yes"/"No" if Dingo), rock_hound ("Yes"/"No" if Dingo), machine_access_width (ft), sod_vegetation_removed ("Yes"/"No"), disposal_needed ("Yes"/"No"), disposal_material_type ("Gravel"/"Rock"/"Sand"/"Topsoil"/"Clay" if disposal needed), disposal_dry_wet ("Dry"/"Wet" if disposal needed), disposal_fees (array of fee strings if disposal needed), surface_protection ("Yes"/"No"), utilities_checked ("Confirmed"/"Not Yet Checked"), grading_plan_required ("Yes"/"No")
   importation_hand: time_estimate (hrs), carry_distance (ft), soil_types (array of "Fill Soil (for rough grading)"/"Garden Mix (topsoil/compost)"/"Topsoil (Unscreened for rough grading)"/"Coarse / Washed Sand"), dump_trailer_needed ("Yes"/"No"), ramps_needed (count), grading_plan_required ("Yes"/"No")
-  importation_machine: time_estimate (hrs), machine_type ("Vermeer"/"Dingo"), machine_access_width (ft), soil_types (array of types listed above), dump_trailer_needed ("Yes"/"No"), ramps_needed (count), surface_protection ("Yes"/"No"), utilities_checked ("Confirmed"/"Not Yet Checked"), grading_plan_required ("Yes"/"No")`;
+  importation_machine: time_estimate (hrs), machine_type ("Vermeer"/"Dingo"), machine_access_width (ft), soil_types (array of types listed above), dump_trailer_needed ("Yes"/"No"), ramps_needed (count), surface_protection ("Yes"/"No"), utilities_checked ("Confirmed"/"Not Yet Checked"), grading_plan_required ("Yes"/"No")
+- missing_critical_data: If sub_type is null (you cannot determine if this is excavation or importation, or if it's by hand or machine), include clarification questions for EACH unknown axis:
+  - If you can't tell if it's excavation or importation: { field: "grading_direction", question: "Is this Rough Grading for Excavation (hauling away) or Importation (bringing in soil)?", options: ["Excavation", "Importation"] }
+  - If you can't tell if it's by hand or machine: { field: "access_method", question: "Are we using heavy machinery or is this a hand-access job?", options: ["By Hand", "By Machine"] }
+  - If the sub_type involves machine (excavation_machine or importation_machine) but you can't determine if Vermeer or Dingo: { field: "machine_type", question: "Vermeer or Dingo?", options: ["Vermeer", "Dingo"] }
+  Include ALL applicable questions. Return an empty array if sub_type is fully determined.`;
 
 const PROMPT_BED_PREP = `For Bed Preparation operations, extract:
 - bed_main_type: One of "till", "no_till", "lawn", "reprofiling"
@@ -292,7 +297,20 @@ const SCHEMA_A = {
           lawn_tilling_mode:{type:['string','null']}, lawn_hand_tiller_type:{type:['string','null']}, lawn_hand_tiller_hours:{type:['number','null']}, lawn_machine_type:{type:['string','null']}, lawn_hydraulic_tiller:{type:['string','null']},
           slope_distance_hours:{type:['number','null']}, notill_machine_type:{type:['string','null']},
           repro_tilling:{type:['string','null']}, repro_till_tilling_mode:{type:['string','null']}, repro_till_hand_tiller_type:{type:['string','null']}, repro_till_hand_tiller_hours:{type:['number','null']}, repro_till_machine_type:{type:['string','null']}, repro_till_hydraulic_tiller:{type:['string','null']},
-          repro_amendments:{type:['string','null']}, repro_amend_amendment_type:{type:['string','null']}, repro_amend_amendment_depth_in:{type:['number','null']}, repro_chicken_crumbles:{type:['string','null']}
+          repro_amendments:{type:['string','null']}, repro_amend_amendment_type:{type:['string','null']}, repro_amend_amendment_depth_in:{type:['number','null']}, repro_chicken_crumbles:{type:['string','null']},
+          missing_critical_data: {
+            type: 'array',
+            description: 'Critical fields that are null and need user clarification before the operation can be added. Empty if sub_type is fully determined.',
+            items: {
+              type: 'object',
+              properties: {
+                field: { type: 'string' },
+                question: { type: 'string' },
+                options: { type: 'array', items: { type: 'string' } }
+              },
+              required: ['field', 'question', 'options']
+            }
+          }
         },
         required: ['operation_type', 'description']
       }

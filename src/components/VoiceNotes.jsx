@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, Square, Play, Pause, Trash2, MicOff, RefreshCw, CloudOff, Cloud, Upload, CheckCircle } from "lucide-react";
 import { VoiceNotes as OfflineVoiceNotes, syncAllPendingVoiceNotes } from "@/lib/offlineVoiceNotes";
 import { base44 } from "@/api/base44Client";
+import ClarificationDialog from "@/components/ClarificationDialog";
+import { needsClarification } from "@/lib/clarificationRules";
 
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
@@ -134,6 +136,8 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis,
   const [permitted, setPermitted] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [savedAnalysis, setSavedAnalysis] = useState(initialAnalysis ? JSON.parse(initialAnalysis) : null);
+  const [clarificationQueue, setClarificationQueue] = useState([]);
+  const [clarificationIndex, setClarificationIndex] = useState(0);
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -226,6 +230,14 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis,
         setSavedAnalysis(res.data.analysis);
         const { Areas: OfflineAreasModule } = await import("@/lib/offlineStore");
         await OfflineAreasModule.update(areaId, { voice_notes_analysis: JSON.stringify(res.data.analysis) });
+        // Check for operations needing clarification (e.g., Rough Grading with null sub_type)
+        const opsNeedingClarification = (res.data.analysis.recommended_operations || [])
+          .map((op, idx) => ({ op, idx }))
+          .filter(({ op }) => needsClarification(op));
+        if (opsNeedingClarification.length > 0) {
+          setClarificationQueue(opsNeedingClarification);
+          setClarificationIndex(0);
+        }
       } else if (res.data?.error) {
         const errorData = { error: res.data.error };
         setSavedAnalysis(errorData);
@@ -242,6 +254,37 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis,
 
   const pendingCount = notes.filter(n => n._pending).length;
   const syncedNotes = notes.filter(n => !n._pending);
+
+  async function handleClarificationResolve(resolvedOp) {
+    if (!savedAnalysis) return;
+    const queueItem = clarificationQueue[clarificationIndex];
+    if (!queueItem) return;
+
+    // Update the operation in savedAnalysis
+    const updatedOps = [...(savedAnalysis.recommended_operations || [])];
+    updatedOps[queueItem.idx] = resolvedOp;
+    const updatedAnalysis = { ...savedAnalysis, recommended_operations: updatedOps };
+    setSavedAnalysis(updatedAnalysis);
+
+    // Persist updated analysis
+    const { Areas: OfflineAreasModule } = await import("@/lib/offlineStore");
+    await OfflineAreasModule.update(areaId, { voice_notes_analysis: JSON.stringify(updatedAnalysis) });
+
+    // Move to next or close
+    if (clarificationIndex + 1 < clarificationQueue.length) {
+      setClarificationIndex(clarificationIndex + 1);
+    } else {
+      setClarificationQueue([]);
+      setClarificationIndex(0);
+    }
+  }
+
+  function handleClarificationClose() {
+    setClarificationQueue([]);
+    setClarificationIndex(0);
+  }
+
+  const currentClarificationOp = clarificationQueue.length > 0 ? clarificationQueue[clarificationIndex]?.op : null;
 
   return (
     <div className="rounded-xl border bg-muted/20 p-4">
@@ -381,6 +424,15 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis,
           )}
         </div>
       )}
+
+      <ClarificationDialog
+        open={clarificationQueue.length > 0}
+        operation={currentClarificationOp}
+        onResolve={handleClarificationResolve}
+        onClose={handleClarificationClose}
+        index={clarificationIndex}
+        total={clarificationQueue.length}
+      />
     </div>
   );
 }
