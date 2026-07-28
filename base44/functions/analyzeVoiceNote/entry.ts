@@ -196,11 +196,22 @@ Valid operation categories:
 - "Drainage"
 
 RULES:
-- ONLY include an operation if the voice notes clearly and specifically describe that work being done.
-- If excavation, grading, or soil hauling is mentioned, that is "Rough Grading & Hauling" — do NOT also include Demolition or Drainage for it.
+- Each operation category is INDEPENDENT and non-exclusive. If the notes mention multiple categories, include ALL of them. For example, "rough grading, bed prep, and mulch" means all three should be detected.
+- Common synonyms — map these to the correct category:
+  • "Rough Grading & Hauling": excavation, grading, hauling soil, removing soil, cut and fill, rough grade, machine work for dirt
+  • "Bed Preparation": bed prep, tilling, amend soil, compost amendment, prepare beds, no-till, reprofile beds
+  • "Mulch": mulching, mulch install, wood mulch, stone mulch, refresh mulch, dyed mulch
+  • "Planting": planting, plants, trees, shrubs, perennials, bulbs, annuals, install plants
+  • "Bed Edging": edging, brick edge, metal edge, natural edge, limestone edge, poly edge, bullet edge
+  • "Boulders/Accents & Structures": boulders, accent stones, fence, arbor, raised bed, structures
+  • "Lawn Repair & Install": sod, seed, lawn install, top dress lawn, lawn repair
+  • "Demolition & Removals": tear out, remove existing, demo, strip sod, remove patio/wall/plants
+  • "Drainage": buried downspout, French drain, curtain drain, dry stream bed, catch basin, impervious membrane, sump line
+- If excavation, grading, or soil hauling is mentioned, that is "Rough Grading & Hauling" — do NOT also include Demolition or Drainage for the SAME dirt work. But DO include Demolition separately if there is also tearing out of existing hardscape/vegetation, and DO include Drainage separately if drainage systems are being installed.
 - Demolition is for tearing out/removing EXISTING hardscape or vegetation only.
 - Drainage is for installing drainage systems (buried downspouts, French drains, etc.) only.
-- When in doubt, do NOT include the operation.
+- IMPORTANT: Categories like "Bed Preparation" and "Mulch" are often mentioned as follow-up steps after grading or planting. Include them whenever they are mentioned as part of the project scope, even briefly.
+- When in doubt about whether a category applies, INCLUDE it — the downstream workers will filter out operations that lack sufficient detail.
 
 Also extract shared site context that may apply across multiple operations:
 - machine_used: What machine (if any) is mentioned for the project? ("Dingo", "Vermeer", "Hand", or null if not mentioned)
