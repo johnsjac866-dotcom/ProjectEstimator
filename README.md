@@ -1,39 +1,24 @@
-**Welcome to your Base44 project** 
+**ProjectEstimator**
 
-**About**
+A landscaping/patio/drainage job-estimation tool. Originally built on base44; now a plain Vite/React app backed by Supabase (Postgres + Auth + Storage + Edge Functions) and OpenAI (transcription + LLM extraction for voice notes).
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+**Local setup**
 
-This project contains everything you need to run your app locally.
+1. `npm install`
+2. Create a [Supabase](https://supabase.com) project.
+3. Run the SQL in [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) against it (SQL editor, or `supabase db push` if you're using the Supabase CLI).
+4. Copy `.env.example` to `.env.local` and fill in your project's `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (Project Settings → API).
+5. Deploy the Edge Function: `supabase functions deploy analyze-voice-note`, then set its secret: `supabase secrets set OPENAI_API_KEY=sk-...`.
+6. Create your own user: add them in Supabase Auth (dashboard → Authentication → Users → Invite), then insert a matching row into `public.profiles` (SQL editor: `insert into profiles (id, role) values ('<their auth uuid>', 'admin');`) — there's no self-service signup, matching the app's original invite-only behavior.
+7. `npm run dev`
 
-**Edit the code in your local development environment**
+**Migrating existing base44 data**
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+See [scripts/migrate-data.mjs](scripts/migrate-data.mjs) for a one-off script that imports a base44 entity export (Project/Area/VoiceNote JSON) into the new Supabase tables, including re-uploading voice-note audio into Supabase Storage.
 
-**Prerequisites:** 
+**Scripts**
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
-
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
-```
-
-Run the app: `npm run dev`
-
-**Publish your changes**
-
-Open [Base44.com](http://Base44.com) and click on Publish.
-
-**Docs & Support**
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+- `npm run dev` — local dev server
+- `npm run build` — production build
+- `npm run lint` / `npm run lint:fix`
+- `npm run typecheck`

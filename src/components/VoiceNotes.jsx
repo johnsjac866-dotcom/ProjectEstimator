@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, Square, Play, Pause, Trash2, MicOff, RefreshCw, CloudOff, Cloud, Upload, CheckCircle } from "lucide-react";
 import { VoiceNotes as OfflineVoiceNotes, syncAllPendingVoiceNotes } from "@/lib/offlineVoiceNotes";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import ClarificationDialog from "@/components/ClarificationDialog";
 import { needsClarification } from "@/lib/clarificationRules";
 
@@ -60,8 +60,14 @@ function NotePlayer({ note, onDelete, onRetry }) {
           setBlobReady(true);
         }
       } else {
-        if (audioRef.current) audioRef.current.src = note.audio_url;
-        setBlobReady(true);
+        // audio_url is a private storage path — resolve a short-lived signed URL to play it.
+        const { data, error } = await supabase.storage
+          .from('voice-notes')
+          .createSignedUrl(note.audio_url, 3600);
+        if (!cancelled && !error && audioRef.current) {
+          audioRef.current.src = data.signedUrl;
+          setBlobReady(true);
+        }
       }
     }
     loadAudio();
@@ -222,10 +228,13 @@ export default function VoiceNotes({ areaId, onCreateOperation, initialAnalysis,
     if (syncedNotes.length === 0) return;
     setAnalyzing(true);
     try {
-      const res = await base44.functions.invoke('analyzeVoiceNote', {
-        dataUrls: syncedNotes.map(n => n.audio_url),
-        ...(operationType && { operation_type: operationType })
+      const res = await supabase.functions.invoke('analyze-voice-note', {
+        body: {
+          audioPaths: syncedNotes.map(n => n.audio_url),
+          ...(operationType && { operation_type: operationType })
+        }
       });
+      if (res.error) throw res.error;
       if (res.data?.analysis) {
         setSavedAnalysis(res.data.analysis);
         const { Areas: OfflineAreasModule } = await import("@/lib/offlineStore");

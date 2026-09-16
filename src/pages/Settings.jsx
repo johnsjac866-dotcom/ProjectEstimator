@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabaseEntity } from "@/lib/supabaseEntities";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +16,12 @@ import {
 import { AlertTriangle, Trash2, UserCircle, FileText, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+const ProjectSdk = supabaseEntity("projects");
+const AreaSdk = supabaseEntity("areas");
+
 export default function Settings() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -28,17 +33,18 @@ export default function Settings() {
     setDeleting(true);
     try {
       // Delete all user projects and areas first
-      const projects = await base44.entities.Project.list();
+      const projects = await ProjectSdk.list();
       for (const p of projects) {
-        const areas = await base44.entities.Area.filter({ project_id: p.id });
+        const areas = await AreaSdk.filter({ project_id: p.id });
         for (const a of areas) {
-          await base44.entities.Area.delete(a.id);
+          await AreaSdk.delete(a.id);
         }
-        await base44.entities.Project.delete(p.id);
+        await ProjectSdk.delete(p.id);
       }
-      // Sign out — the platform handles account removal via support
-      // We clear all data and log out
-      base44.auth.logout("/");
+      // Row deletion above only removes app data — actual auth-account removal still
+      // needs a real flow (e.g. an admin-privileged Edge Function calling
+      // supabase.auth.admin.deleteUser); for now we clear data and sign out.
+      await logout(true);
     } catch {
       setDeleting(false);
     }
@@ -75,7 +81,7 @@ export default function Settings() {
         <CardContent>
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">Sign out of your account on this device.</p>
-            <Button variant="outline" size="sm" className="flex-shrink-0" onClick={() => base44.auth.logout("/")}>
+            <Button variant="outline" size="sm" className="flex-shrink-0" onClick={() => logout(true)}>
               Sign Out
             </Button>
           </div>

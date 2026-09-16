@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabaseEntity } from "@/lib/supabaseEntities";
 import { Link, useNavigate } from "react-router-dom";
+
+const ProjectSdk = supabaseEntity("projects");
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,7 +17,7 @@ export default function ArchivedProjects() {
   useEffect(() => { load(); }, []);
 
   async function load() {
-    const data = await base44.entities.Project.list("-created_date");
+    const data = await ProjectSdk.list("-created_date");
     setProjects(data.filter(p => p.status === "Archived"));
     setLoading(false);
   }
@@ -23,7 +25,7 @@ export default function ArchivedProjects() {
   async function handleUnarchive(e, p) {
     e.preventDefault();
     e.stopPropagation();
-    await base44.entities.Project.update(p.id, { status: "Active" });
+    await ProjectSdk.update(p.id, { status: "Active" });
     load();
   }
 
@@ -31,7 +33,7 @@ export default function ArchivedProjects() {
     e.preventDefault();
     e.stopPropagation();
     if (!confirm("Delete this project permanently? This cannot be undone.")) return;
-    await base44.entities.Project.delete(projectId);
+    await ProjectSdk.delete(projectId);
     load();
   }
 

@@ -5,9 +5,12 @@
  * Syncs after parent Area is confirmed on server.
  */
 
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { supabaseEntity } from "@/lib/supabaseEntities";
 import { resolveId } from "@/lib/offlineStore";
 import { storeBlob, getBlob, deleteBlob } from "@/lib/voiceNoteBlobs";
+
+const VoiceNoteSdk = supabaseEntity("voice_notes");
 
 const CACHE_KEY = 'offlineCache_VoiceNote';
 const TIMEOUT_MS = 15000;
@@ -68,11 +71,20 @@ async function _syncRecord(record) {
     const ext = (record._mimeType || 'audio/webm').split('/')[1] || 'webm';
     const file = new File([blob], `voice-note.${ext}`, { type: record._mimeType || 'audio/webm' });
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    // Store under the area so cascade-delete-by-prefix (if ever added) stays simple.
+    const storagePath = `${resolvedAreaId}/${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('voice-notes')
+      .upload(storagePath, file, { contentType: record._mimeType || 'audio/webm' });
+    if (uploadError) throw uploadError;
 
-    const serverRecord = await base44.entities.VoiceNote.create({
+    // audio_url stores the storage PATH, not a public URL — the bucket is private
+    // (same owner/admin-only access as the VoiceNote row itself). Callers resolve a
+    // signed URL on demand (see VoiceNotes.jsx) rather than persisting one, since
+    // signed URLs expire.
+    const serverRecord = await VoiceNoteSdk.create({
       area_id: resolvedAreaId,
-      audio_url: file_url,
+      audio_url: storagePath,
       duration: record.duration,
     });
 
@@ -106,7 +118,7 @@ export const VoiceNotes = {
 
     // Background: merge server records — never reinsert locally-deleted ones
     Promise.race([
-      base44.entities.VoiceNote.filter(query),
+      VoiceNoteSdk.filter(query),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), BACKGROUND_TIMEOUT_MS))
     ])
       .then(records => {
@@ -185,7 +197,7 @@ export const VoiceNotes = {
           ? { ...r, _deleted: true, _syncPending: true, _syncAction: "delete" }
           : r
       ));
-      withTimeout(base44.entities.VoiceNote.delete(id)).catch(() => {});
+      withTimeout(VoiceNoteSdk.delete(id)).catch(() => {});
     }
     notify();
   },

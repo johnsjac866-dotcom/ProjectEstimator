@@ -1,4 +1,58 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
+// Auto-injected by the Supabase Edge Functions runtime.
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// Set via: supabase secrets set OPENAI_API_KEY=sk-...
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!;
+
+/** Replaces base44.asServiceRole.integrations.Core.TranscribeAudio */
+async function transcribeAudio(supabaseAdmin, storagePath) {
+  const { data: blob, error } = await supabaseAdmin.storage.from('voice-notes').download(storagePath);
+  if (error) throw new Error(`Storage download failed: ${error.message}`);
+
+  const formData = new FormData();
+  formData.append('file', blob, 'audio.webm');
+  formData.append('model', 'whisper-1');
+
+  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+    body: formData,
+  });
+  if (!res.ok) throw new Error(`Transcription failed: ${await res.text()}`);
+  const json = await res.json();
+  return json.text;
+}
+
+/**
+ * Replaces base44.asServiceRole.integrations.Core.InvokeLLM.
+ * `strict: false` because these schemas use JSON-Schema union types
+ * (e.g. `type: ['number','null']`) that OpenAI's strict structured-output
+ * mode doesn't support — same "shape hint, not hard guarantee" behavior
+ * the base44 integration provided.
+ */
+async function invokeLLM({ prompt, response_json_schema }) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: {
+        type: 'json_schema',
+        json_schema: { name: 'analysis', schema: response_json_schema, strict: false },
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`LLM call failed: ${await res.text()}`);
+  const json = await res.json();
+  return JSON.parse(json.choices[0].message.content);
+}
 
 // ── Prompt sections for each operation type ──────────────────────────────────
 const PROMPT_RG = `For Rough Grading & Hauling operations, extract:
@@ -596,26 +650,33 @@ function dedupeOperations(ops) {
 // ── Handler ──────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    // Verify the caller's session using their own JWT (RLS-scoped client).
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user } } = await userClient.auth.getUser();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { dataUrls, operation_type } = await req.json();
-    if (!dataUrls || !Array.isArray(dataUrls)) return Response.json({ error: 'Missing dataUrls array' }, { status: 400 });
+    // Service-role client for storage downloads (bypasses RLS/signed-URL needs — never exposed to the client).
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { audioPaths, operation_type } = await req.json();
+    if (!audioPaths || !Array.isArray(audioPaths)) return Response.json({ error: 'Missing audioPaths array' }, { status: 400 });
 
     // Transcribe all audio files
     const transcripts = [];
-    for (const url of dataUrls) {
+    for (const path of audioPaths) {
       try {
-        const res = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url: url });
-        transcripts.push(res.transcript || res);
+        const transcript = await transcribeAudio(supabaseAdmin, path);
+        transcripts.push(transcript);
       } catch (err) {
         console.error('Transcription error:', err.message);
       }
     }
 
     if (transcripts.length === 0) {
-      console.error('No transcripts generated from URLs:', dataUrls);
+      console.error('No transcripts generated from paths:', audioPaths);
       return Response.json({ error: 'No transcripts generated' }, { status: 400 });
     }
 
@@ -623,7 +684,7 @@ Deno.serve(async (req) => {
 
     // Site Management focused analysis — only extract Site Management & Daily Cleanup fields
     if (operation_type === 'Site Management & Daily Cleanup') {
-      const analysis = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      const analysis = await invokeLLM({
         prompt: `You are a landscaping project analyst. Analyze these voice notes from a site visit and extract ALL site management and daily cleanup details into structured fields.\n\nThe ONLY valid operation type is "Site Management & Daily Cleanup". Return exactly one operation of this type.\n\nFor every field below, extract the value from the voice notes. Use true/false for checkbox fields, numbers for number fields, strings for text fields. If a field is NOT mentioned in the voice notes, use null. For checkboxes, use false if not mentioned.\n\nTAX STATUS:\n- tax_status_nontaxable: true if non-taxable\n- tax_status_taxable: true if taxable\n\nPARKING / STORAGE / SITE ORGANIZATION:\n- street_occupancy_permit: true if street occupancy permit needed\n- parking_spot_days: days parking spot needed (number)\n- trailer_dumpster_days: days trailer/dumpster/material on street (number)\n- no_parking_signs: true if no parking signs needed\n- sidewalk_closed_signage_days: days sidewalk closed signage needed (number)\n- job_box: true if job box needed\n- jobsite_trailer: true if jobsite trailer needed\n- pallet_use: true if pallet use needed\n- porta_potty: true if porta potty needed\n\nACCESS NEEDS:\n- ground_protection: true if ground protection needed\n- plywood_ea: plywood each count (number)\n- rubber_access_mats_lf: rubber access mats linear feet (number)\n- tree_protection: true if tree protection / tie back needed\n- tree_protection_lf: tree protection linear feet (number)\n- foam_board: true if foam board padding needed\n- foam_board_ea: foam board each count (number)\n- ramp_creation: true if ramp creation for machine access needed\n- ramp_creation_notes: ramp creation notes (string)\n\nSTORMWATER MANAGEMENT:\n- downspout_extensions: true if downspout extensions needed\n- downspout_sections: number of sections (number)\n- downspout_lf: linear feet total (number)\n- silt_fence: true if silt fence needed\n- silt_fence_sections: number of sections (number)\n- silt_fence_lf: linear feet total (number)\n- erosion_logs: true if erosion logs needed\n- erosion_logs_sections: number of sections (number)\n- erosion_logs_lf: linear feet total (number)\n- tarps: true if tarps needed\n- tarps_16x24_qty: 16x24 tarp quantity (number)\n- tarps_8x12_qty: 8x12 tarp quantity (number)\n- tarps_other1_size: other tarp size #1 (string)\n- tarps_other1_qty: other tarp #1 quantity (number)\n- tarps_other2_size: other tarp size #2 (string)\n- tarps_other2_qty: other tarp #2 quantity (number)\n\nPARKING COORDINATION:\n- parking_coordination: true if parking coordination needed\n- parking_days: days on project (number)\n- parking_hours: hours coordinating (number)\n\nMOVING ITEMS:\n- moving_items: true if moving items multiple times needed\n- moving_items_hours: hours coordinating (number)\n\nREMOVE AND REINSTALL:\n- remove_reinstall: true if remove and reinstall site elements needed\n- remove_reinstall_purchase: time to purchase/deliver (string)\n- remove_reinstall_install: time to install (string)\n- remove_reinstall_manage: time to daily manage (string)\n- remove_reinstall_remove: time to remove/restock (string)\n\nAlso extract:\n- time_estimate: total time estimate in hours (number)\n- notes: any additional notes (string)\n\nVoice Notes:\n${notesText}`,
         response_json_schema: {
           type: 'object',
@@ -700,7 +761,7 @@ Deno.serve(async (req) => {
 
     // ── ROUTER PHASE ──────────────────────────────────────────────────────────
     // Single LLM call to detect which operations are present and extract shared context.
-    const routerResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const routerResult = await invokeLLM({
       prompt: ROUTER_PROMPT(notesText),
       response_json_schema: ROUTER_SCHEMA
     });
@@ -735,7 +796,7 @@ Deno.serve(async (req) => {
       );
 
       try {
-        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        const result = await invokeLLM({
           prompt: group.buildPrompt(notesText, globalContext, opsForGroup),
           response_json_schema: group.schema
         });

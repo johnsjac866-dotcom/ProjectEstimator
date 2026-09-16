@@ -29,3 +29,10 @@ dist-ssr
 
 .env
 .vite
+
+# Data migration inputs — contain real user/record data, never commit
+/base44-export
+/scripts/user-id-map.json
+
+# Supabase CLI local state
+/supabase/.temp

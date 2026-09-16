@@ -84,6 +84,7 @@ const RetainingWallWizard = lazy(() => import('./pages/RetainingWallWizard'));
 const RetainingWallSummary = lazy(() => import('./pages/RetainingWallSummary'));
 const Settings = lazy(() => import('./pages/Settings'));
 const ArchivedProjects = lazy(() => import('./pages/ArchivedProjects'));
+const Login = lazy(() => import('./pages/Login'));
 
 const pageVariants = {
   initial: { opacity: 0, x: 16 },
@@ -163,9 +164,9 @@ function AnimatedRoutes() {
 }
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isAuthenticated, authError } = useAuth();
 
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if (isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -173,13 +174,16 @@ const AuthenticatedApp = () => {
     );
   }
 
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
-    }
+  if (authError?.type === 'user_not_registered') {
+    return <UserNotRegisteredError />;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Login />
+      </Suspense>
+    );
   }
 
   return <AnimatedRoutes />;

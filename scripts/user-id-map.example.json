@@ -1,0 +1,4 @@
+{
+  "_comment": "Copy this to user-id-map.json and fill in real values before running migrate-data.mjs. Keys are whatever identifies the user in your base44 export (check a record's created_by_id/created_by field) — values are the matching Supabase Auth user's UUID (create that user first).",
+  "example-base44-user-id-or-email": "00000000-0000-0000-0000-000000000000"
+}

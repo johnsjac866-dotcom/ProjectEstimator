@@ -11,10 +11,17 @@
  * - Duplicate prevention: server record replaces the local record on sync, not added alongside it.
  */
 
-import { base44 } from "@/api/base44Client";
+import { supabaseEntity } from "@/lib/supabaseEntities";
 
 const NETWORK_TIMEOUT_MS = 15000;
 const BACKGROUND_TIMEOUT_MS = 20000;
+
+// Map the base44-style entity names used throughout this file to Supabase table names.
+const entitySdks = {
+  Project: supabaseEntity("projects"),
+  Area: supabaseEntity("areas"),
+  VoiceNote: supabaseEntity("voice_notes"),
+};
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
 
@@ -123,7 +130,7 @@ function markDeleted(entityName, id) {
         : r
     ));
     // Fire server delete in background
-    withTimeout(base44.entities[entityName]?.delete(id), BACKGROUND_TIMEOUT_MS).catch(() => {});
+    withTimeout(entitySdks[entityName]?.delete(id), BACKGROUND_TIMEOUT_MS).catch(() => {});
   }
 }
 
@@ -158,7 +165,7 @@ function cascadeDeleteArea(areaId, triggerServerDelete = true) {
       if (triggerServerDelete) {
         vns.forEach(vn => {
           if (!vn._deleted && !vn._pending && !vn.id.startsWith('_local_') && !vn.id.startsWith('PENDING_') && vn.area_id === areaId) {
-            withTimeout(base44.entities.VoiceNote?.delete(vn.id), BACKGROUND_TIMEOUT_MS).catch(() => {});
+            withTimeout(entitySdks.VoiceNote?.delete(vn.id), BACKGROUND_TIMEOUT_MS).catch(() => {});
           }
         });
       }
@@ -181,7 +188,7 @@ function cascadeDeleteArea(areaId, triggerServerDelete = true) {
           ? { ...a, _deleted: true, _syncPending: true, _syncAction: "delete" }
           : a
       ));
-      withTimeout(base44.entities.Area?.delete(areaId), BACKGROUND_TIMEOUT_MS).catch(() => {});
+      withTimeout(entitySdks.Area?.delete(areaId), BACKGROUND_TIMEOUT_MS).catch(() => {});
     }
   }
 }
@@ -481,14 +488,14 @@ function createStore(entityName, sdk, { onAfterSync } = {}) {
 
 // ─── Named Stores ─────────────────────────────────────────────────────────────
 
-export const Projects = createStore("Project", base44.entities.Project, {
+export const Projects = createStore("Project", entitySdks.Project, {
   onAfterSync: (tempId, realId) => {
     // propagateIdRemap already updated Area.project_id references atomically
     scheduleDependentSync();
   },
 });
 
-export const Areas = createStore("Area", base44.entities.Area, {
+export const Areas = createStore("Area", entitySdks.Area, {
   onAfterSync: () => {
     import("@/lib/offlineVoiceNotes").then(({ syncPendingVoiceNotes }) => {
       syncPendingVoiceNotes();
@@ -516,6 +523,6 @@ function scheduleDependentSync() {
     const areaCache = readCache("Area") || [];
     areaCache
       .filter(r => r._pending && !r._deleted && !r.project_id?.startsWith('_local_'))
-      .forEach(p => retrySyncRecord("Area", p, base44.entities.Area, Areas._onAfterSync));
+      .forEach(p => retrySyncRecord("Area", p, entitySdks.Area, Areas._onAfterSync));
   }, 500);
 }
