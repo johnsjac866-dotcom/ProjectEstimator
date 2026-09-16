@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer, Pencil, Flag } from "lucide-react";
-import { RG_FIELDS, RG_SUB_TYPES, getRGSubTypeLabel, getRGCategory, SOIL_IMPORT_TYPES, DISPOSAL_MATERIAL_TYPES, DISPOSAL_FEE_OPTIONS, calcCY, calcCYFluff, calcEstimatedTons } from "@/lib/roughGradingStages";
+import { RG_FIELDS, getRGSubTypeLabel, getRGCategory, calcCY, calcCYFluff, calcEstimatedTons } from "@/lib/roughGradingStages";
 
 function parseOps(jsonStr) {
   try { const p = JSON.parse(jsonStr || '[]'); if (Array.isArray(p)) return p; if (p && typeof p === 'object' && Object.keys(p).length > 0) return [{ ...p, id: 'legacy' }]; } catch {}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";

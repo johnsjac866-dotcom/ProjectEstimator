@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { BED_MAIN_TYPES, BED_FIELDS, getSubTypes } from "@/lib/bedPrepStages";
-import { useRef } from "react";
 import { parseOps } from "@/lib/opsUtils";
 import FlagField from "@/components/FlagField";
 

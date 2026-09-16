@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import FlagField from "@/components/FlagField";
 import { SelectButtons } from "./shared";
 

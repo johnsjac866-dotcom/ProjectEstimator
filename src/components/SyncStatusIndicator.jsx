@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Wifi, WifiOff, RefreshCw, CheckCircle2 } from "lucide-react";
+import { WifiOff, RefreshCw, CheckCircle2 } from "lucide-react";
 
 export default function SyncStatusIndicator() {
   const [online, setOnline] = useState(navigator.onLine);

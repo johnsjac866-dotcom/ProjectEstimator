@@ -5,7 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 const ProjectSdk = supabaseEntity("projects");
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { MapPin, ChevronRight, FileText, Trash2, ArchiveRestore, FolderOpen, Search, ArrowLeft } from "lucide-react";
 
 export default function ArchivedProjects() {

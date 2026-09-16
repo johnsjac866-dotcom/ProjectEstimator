@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import FlagField from "@/components/FlagField";
 import { SelectButtons, CalcBox } from "./shared";

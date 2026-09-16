@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, AlertTriangle, Pencil, Flag } from "lucide-react";
-import { PATIO_STAGES, getApplicableStages, getSelectedCategories, getVisibleFields } from "@/lib/patioStages";
+import { ArrowLeft, Printer, AlertTriangle, Pencil } from "lucide-react";
+import { getApplicableStages, getSelectedCategories, getVisibleFields } from "@/lib/patioStages";
 
 function parseOps(jsonStr) {
   try { const p = JSON.parse(jsonStr || '[]'); if (Array.isArray(p)) return p; if (p && typeof p === 'object' && Object.keys(p).length > 0) return [{ ...p, id: 'legacy' }]; } catch {} return [];

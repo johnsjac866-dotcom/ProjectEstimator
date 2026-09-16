@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Areas as OfflineAreas } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { parseOps } from "@/lib/opsUtils";
 import FlagField from "@/components/FlagField";

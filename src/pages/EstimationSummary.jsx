@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Areas as OfflineAreas, Projects as OfflineProjects, resolveId } from "@/lib/offlineStore";
 import { ArrowLeft, MapPin, ChevronDown, ChevronRight, Flag, Download } from "lucide-react";
 import { parseOps } from "@/lib/opsUtils";
